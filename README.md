@@ -2,7 +2,9 @@
 
 A daily habit tracker with streaks, a GitHub-style activity heatmap and shareable public profiles.
 
-**Demo account:** `demo@streakly.dev` / `streakly-demo` · public profile at `/u/demo`
+**🌐 Live:** https://streakly-pied-six.vercel.app
+
+**Demo account:** `demo@streakly.dev` / `streakly-demo` · public profile: [/u/demo](https://streakly-pied-six.vercel.app/u/demo)
 
 ## Features
 
@@ -25,6 +27,7 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 | Backend | Supabase: Postgres, Auth, Row Level Security |
 | Charts | Recharts + a hand-made heatmap |
 | Tests | Vitest |
+| Hosting | Vercel (auto-deploy from `main`) |
 
 ## Architecture
 
