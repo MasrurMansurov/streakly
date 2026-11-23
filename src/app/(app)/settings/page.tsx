@@ -1,9 +1,11 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
 
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getMyProfile } from "@/lib/data"
 
+import { AvatarUploader } from "./avatar-uploader"
 import { ProfileForm } from "./profile-form"
 
 export const metadata: Metadata = { title: "Settings" }
@@ -24,5 +26,22 @@ export default function SettingsPage() {
 
 async function Settings() {
   const profile = await getMyProfile()
-  return <ProfileForm profile={profile} />
+  return (
+    <div className="grid gap-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Photo</CardTitle>
+          <CardDescription>Shown in the header and on your public page.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AvatarUploader
+            userId={profile.id}
+            avatarUrl={profile.avatar_url}
+            name={profile.display_name || profile.username}
+          />
+        </CardContent>
+      </Card>
+      <ProfileForm profile={profile} />
+    </div>
+  )
 }

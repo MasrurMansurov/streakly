@@ -4,7 +4,7 @@ import { ArchiveIcon, ExternalLinkIcon, LayoutDashboardIcon, LogOutIcon, Setting
 import Link from "next/link"
 
 import { signOut } from "@/app/actions/auth"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -21,9 +21,10 @@ type Props = {
   username: string
   displayName: string | null
   isPublic: boolean
+  avatarUrl: string | null
 }
 
-export function UserMenu({ email, username, displayName, isPublic }: Props) {
+export function UserMenu({ email, username, displayName, isPublic, avatarUrl }: Props) {
   const name = displayName || username
   return (
     <DropdownMenu>
@@ -33,6 +34,7 @@ export function UserMenu({ email, username, displayName, isPublic }: Props) {
         }
       >
         <Avatar className="size-8">
+          {avatarUrl && <AvatarImage src={avatarUrl} alt="" />}
           <AvatarFallback>{name.slice(0, 2).toUpperCase()}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>

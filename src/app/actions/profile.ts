@@ -36,3 +36,37 @@ export async function updateProfile(input: ProfileInput): Promise<ActionResult> 
   refresh()
   return { ok: true, message: "Profile saved" }
 }
+
+/**
+ * Save (or clear) the avatar URL after the client uploaded the file to Storage.
+ * Only URLs inside the user's own folder of the public "avatars" bucket are accepted.
+ */
+export async function updateAvatar(url: string | null): Promise<ActionResult> {
+  const user = await getCurrentUser()
+  if (!user) return { ok: false, error: "Not signed in" }
+
+  const prefix = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${user.id}/`
+  // only a plain file name inside the user's folder (no "../", no query string)
+  if (url !== null && (!url.startsWith(prefix) || !/^avatar-\d+\.(png|jpg|webp|gif)$/.test(url.slice(prefix.length)))) {
+    return { ok: false, error: "Invalid avatar URL" }
+  }
+
+  const supabase = await createClient()
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .update({ avatar_url: url })
+    .eq("id", user.id)
+    .select("username")
+    .single()
+  if (error) return { ok: false, error: error.message }
+
+  // remove older files from the user's folder
+  const keep = url?.slice(prefix.length)
+  const { data: files } = await supabase.storage.from("avatars").list(user.id)
+  const stale = (files ?? []).filter((f) => f.name !== keep).map((f) => `${user.id}/${f.name}`)
+  if (stale.length) await supabase.storage.from("avatars").remove(stale)
+
+  updateTag(`profile:${profile.username}`)
+  refresh()
+  return { ok: true, message: url ? "Avatar updated" : "Avatar removed" }
+}

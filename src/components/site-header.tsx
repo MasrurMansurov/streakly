@@ -39,7 +39,7 @@ async function UserArea() {
   const supabase = await createClient()
   const { data: profile } = await supabase
     .from("profiles")
-    .select("username, display_name, is_public")
+    .select("username, display_name, is_public, avatar_url")
     .eq("id", user.id)
     .single()
 
@@ -49,6 +49,7 @@ async function UserArea() {
       username={profile?.username ?? "me"}
       displayName={profile?.display_name ?? null}
       isPublic={profile?.is_public ?? false}
+      avatarUrl={profile?.avatar_url ?? null}
     />
   )
 }

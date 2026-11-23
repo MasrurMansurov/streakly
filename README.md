@@ -24,6 +24,8 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 - **Flexible goals:** every day or N× per week (weekly habits keep streaks in weeks)
 - **Activity heatmap** (26 weeks) and a 30-day bar chart (Recharts)
 - **Drag-and-drop ordering** (dnd-kit) — mouse, touch and keyboard, with screen reader announcements
+- **Habit page** with a 12-month heatmap, monthly chart and weekday breakdown; **archive** with restore and undo
+- **Profile photo** upload to Supabase Storage (per-user folder, size/type limits enforced by the bucket and RLS)
 - **Public profile** at `/u/<username>`, opt-in; archived habits stay private, with a generated OG image for link previews
 - **Auth:** email + password, optional GitHub / Google OAuth, via Supabase Auth with cookie sessions (`@supabase/ssr`)
 - **Timezone-aware:** "today" is computed in the user's own timezone, not the server's
@@ -37,7 +39,7 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 | Language | TypeScript (strict) |
 | UI | Tailwind CSS v4, shadcn/ui (Base UI), lucide-react, sonner, next-themes |
 | Forms | react-hook-form + zod (same schemas validate on client and server) |
-| Backend | Supabase: Postgres, Auth, Row Level Security |
+| Backend | Supabase: Postgres, Auth, Storage, Row Level Security |
 | Charts | Recharts + a hand-made heatmap |
 | Tests | Vitest (unit) + Playwright (e2e, desktop & mobile) |
 | CI | GitHub Actions: lint, typecheck, unit tests, build |

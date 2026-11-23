@@ -163,3 +163,28 @@ test("unknown habit id shows not found", async ({ page }) => {
   await page.goto("/habits/00000000-0000-0000-0000-000000000000")
   await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible()
 })
+
+// 1×1 PNG
+const PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+  "base64"
+)
+
+test("upload and remove a profile photo", async ({ page }) => {
+  await page.goto("/settings", { waitUntil: "networkidle" }) // wait for hydration before using the file input
+  await withServerAction(page, () =>
+    page.getByLabel("Upload profile photo").setInputFiles({ name: "me.png", mimeType: "image/png", buffer: PNG })
+  )
+  await expect(page.getByText("Avatar updated")).toBeVisible()
+  await expect(page.locator("header img")).toHaveAttribute("src", /\/storage\/v1\/object\/public\/avatars\//)
+
+  await withServerAction(page, () => page.getByRole("button", { name: "Remove" }).click())
+  await expect(page.getByText("Avatar removed")).toBeVisible()
+  await expect(page.locator("header img")).toHaveCount(0)
+})
+
+test("rejects non-image files before uploading", async ({ page }) => {
+  await page.goto("/settings", { waitUntil: "networkidle" })
+  await page.getByLabel("Upload profile photo").setInputFiles({ name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("hi") })
+  await expect(page.getByText("Use a PNG, JPG, WebP or GIF image")).toBeVisible()
+})
