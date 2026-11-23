@@ -11,6 +11,11 @@ export const size = { width: 1200, height: 630 }
 export const contentType = "image/png"
 
 const WEEKS = 16
+
+/** The Streakly mark (same as public/brand/mark.svg) as a data URI for the image renderer. */
+const LOGO = `data:image/svg+xml;base64,${Buffer.from(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="b" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse"><stop stop-color="#34D399"/><stop offset="1" stop-color="#047857"/></linearGradient></defs><rect width="64" height="64" rx="18" fill="url(#b)"/><path fill="#fff" d="M32 53C23.7 53 17 46.4 17 38c0-7.4 2.4-13.4 4.5-18.5 1.5 4.9 3.5 7.9 6.1 9.3C27 20.6 29.8 13.4 34 8c1.2 6.6 5.6 10.6 9.2 15.8 2.5 3.6 3.8 7.8 3.8 12.8C47 46 40.3 53 32 53Z"/><path fill="none" stroke="#059669" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round" d="m24.8 38.6 5.1 5 9.4-10.4"/></svg>`
+).toString("base64")}`
 const SHADES = ["#27272a", "#064e3b", "#047857", "#10b981", "#6ee7b7"]
 
 export default async function Image({ params }: { params: Promise<{ username: string; locale: string }> }) {
@@ -53,9 +58,7 @@ export default async function Image({ params }: { params: Promise<{ username: st
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 32, color: "#a1a1aa" }}>
-          <div style={{ width: 48, height: 48, borderRadius: 12, background: "#10b981", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 30 }}>
-            🔥
-          </div>
+          <img src={LOGO} width={48} height={48} alt="" />
           Streakly
         </div>
 

@@ -1,4 +1,6 @@
-# 🔥 Streakly
+<img src="public/brand/mark.svg" width="56" alt="" />
+
+# Streakly
 
 [![CI](https://github.com/MasrurMansurov/streakly/actions/workflows/ci.yml/badge.svg)](https://github.com/MasrurMansurov/streakly/actions/workflows/ci.yml)
 
@@ -38,7 +40,8 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 - **Daily reminders (Web Push):** pick a time; a notification arrives only if habits are still due today. Supabase `pg_cron` calls an Edge Function every 15 min; VAPID keys and the cron token live in Supabase Vault
 - **English & Russian:** `/en/…` and `/ru/…` URLs (language picked from the browser, switcher in the header), proper Russian plurals via `Intl.PluralRules`, localized dates, validation messages and push notifications
 - **Installable (PWA):** add to the home screen and open full-screen, with app icons and theme colors
-- **3D icons & motion:** a custom clay-style 3D icon set, staggered entrance, check-in confetti, floating hero icons — all CSS, disabled for `prefers-reduced-motion`
+- **Brand & type:** custom logo (a flame with a check mark cut in — streak + habit done), Unbounded for headings, Onest for text; both with full Cyrillic
+- **3D icons & motion (inside the app):** a custom clay-style 3D icon set, staggered entrance, check-in confetti, floating hero icons — all CSS, disabled for `prefers-reduced-motion`
 - Dark mode, responsive layout, accessible controls
 
 ## Tech stack
