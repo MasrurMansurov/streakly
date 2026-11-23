@@ -5,7 +5,8 @@ import { useEffect, useMemo, useOptimistic, useRef, useState, useTransition } fr
 import { toast } from "sonner"
 
 import { reorderHabits, toggleHabitLog } from "@/app/actions/habits"
-import { Achievements, BADGES } from "@/components/achievements"
+import { AchievementBadge } from "@/components/achievement-badge"
+import { Achievements } from "@/components/achievements"
 import { ConfettiBurst } from "@/components/confetti-burst"
 import { Icon3D, type Icon3DName } from "@/components/icon-3d"
 import { Heatmap } from "@/components/heatmap"
@@ -47,7 +48,7 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
     for (const id of newlyEarned(previous.current, achievements)) {
       toast.success(t.achievements.unlocked(t.achievements.items[id].name), {
         duration: 6000,
-        icon: <Icon3D name={BADGES[id].icon} size={28} className="motion-safe:animate-wiggle" />,
+        icon: <AchievementBadge id={id} size={28} className="motion-safe:animate-pop" />,
       })
     }
     previous.current = achievements
