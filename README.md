@@ -25,6 +25,9 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 - **Activity heatmap** (26 weeks) and a 30-day bar chart (Recharts)
 - **Drag-and-drop ordering** (dnd-kit) — mouse, touch and keyboard, with screen reader announcements
 - **Habit page** with a 12-month heatmap, monthly chart and weekday breakdown; **archive** with restore and undo
+- **Notes on check-ins** — private, owner-only (kept out of the world-readable logs table)
+- **Friends** — follow public profiles; a 7-day feed of their check-ins. Follow lists are visible only to the two people involved
+- **Achievements** — badges for 7/30/100-day streaks and 1/100/500 check-ins, with progress bars and an unlock toast; all-time stats are computed in Postgres (gaps-and-islands window query)
 - **Profile photo** upload to Supabase Storage (per-user folder, size/type limits enforced by the bucket and RLS)
 - **Public profile** at `/u/<username>`, opt-in; archived habits stay private, with a generated OG image for link previews
 - **Auth:** email + password, optional GitHub / Google OAuth, via Supabase Auth with cookie sessions (`@supabase/ssr`)

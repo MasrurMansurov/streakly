@@ -274,6 +274,21 @@ export const ru: Dictionary = {
     cantFollowSelf: "Нельзя подписаться на себя",
     privateProfile: "Этот профиль закрыт",
   },
+  achievements: {
+    title: "Достижения",
+    subtitle: (earned: number, total: number) => `Открыто ${earned} из ${total}`,
+    unlocked: (name: string) => `🏆 Новое достижение: ${name}`,
+    progress: (current: number, target: number) => `${current}/${target}`,
+    earned: "Получено",
+    items: {
+      first_checkin: { name: "Первый шаг", description: "Сделайте первую отметку" },
+      streak_7: { name: "Неделя", description: "Серия 7 дней подряд" },
+      streak_30: { name: "Месяц", description: "Серия 30 дней подряд" },
+      streak_100: { name: "Сто дней", description: "Серия 100 дней подряд" },
+      checkins_100: { name: "Центурион", description: "Сделайте 100 отметок" },
+      checkins_500: { name: "Неудержимый", description: "Сделайте 500 отметок" },
+    },
+  },
   publicProfile: {
     // "июль 2026 г." is nominative, so no "с …" here
     since: (date: string) => `дата регистрации: ${date}`,

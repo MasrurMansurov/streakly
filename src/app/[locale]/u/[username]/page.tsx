@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 
+import { Achievements } from "@/components/achievements"
 import { Heatmap } from "@/components/heatmap"
 import { SiteHeader } from "@/components/site-header"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -13,6 +14,7 @@ import { getFollowInfo, getPublicProfile, getToday } from "@/lib/data"
 import { formatDay } from "@/i18n"
 import { getT } from "@/i18n/server"
 import { addDays, type ISODate } from "@/lib/dates"
+import { evaluateAchievements } from "@/lib/achievements"
 import { habitColor } from "@/lib/habit-colors"
 import { habitStreak, longestStreak } from "@/lib/streaks"
 import { cn } from "@/lib/utils"
@@ -54,6 +56,7 @@ async function PublicProfile({ params }: Props) {
   if (!data) notFound()
 
   const { profile, habits } = data
+  const earned = evaluateAchievements(data.stats).filter((a) => a.earned)
   const since = addDays(today, -(26 * 7 - 1))
   const logs = data.logs.filter((l) => l.log_date >= since && l.log_date <= today)
 
@@ -114,6 +117,17 @@ async function PublicProfile({ params }: Props) {
           <Heatmap counts={perDay} max={Math.max(1, habits.length)} today={today} locale={locale} />
         </CardContent>
       </Card>
+
+      {earned.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t.achievements.title}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Achievements achievements={earned} locale={locale} earnedOnly />
+          </CardContent>
+        </Card>
+      )}
 
       {habits.length > 0 && (
         <section className="grid gap-2">

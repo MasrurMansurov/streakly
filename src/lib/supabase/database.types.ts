@@ -256,6 +256,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      achievement_stats: {
+        Args: { p_user: string }
+        Returns: { total_checkins: number; best_streak: number }[]
+      }
       follow_counts: {
         Args: { p_profile: string }
         Returns: { followers: number; following: number }[]

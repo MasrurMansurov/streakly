@@ -271,6 +271,21 @@ export const en = {
     cantFollowSelf: "You can't follow yourself",
     privateProfile: "This profile is private",
   },
+  achievements: {
+    title: "Achievements",
+    subtitle: (earned: number, total: number) => `${earned} of ${total} unlocked`,
+    unlocked: (name: string) => `🏆 Achievement unlocked: ${name}`,
+    progress: (current: number, target: number) => `${current}/${target}`,
+    earned: "Unlocked",
+    items: {
+      first_checkin: { name: "First step", description: "Complete your first check-in" },
+      streak_7: { name: "One week", description: "Keep a 7-day streak" },
+      streak_30: { name: "One month", description: "Keep a 30-day streak" },
+      streak_100: { name: "Hundred days", description: "Keep a 100-day streak" },
+      checkins_100: { name: "Centurion", description: "Make 100 check-ins" },
+      checkins_500: { name: "Unstoppable", description: "Make 500 check-ins" },
+    } as Record<string, { name: string; description: string }>,
+  },
   publicProfile: {
     since: (date: string) => `since ${date}`,
     habits: "Habits",

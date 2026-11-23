@@ -1,10 +1,11 @@
 "use client"
 
 import { FlameIcon, PlusIcon, SparklesIcon, TargetIcon, TrendingUpIcon } from "lucide-react"
-import { useMemo, useOptimistic, useState, useTransition, type ReactNode } from "react"
+import { useEffect, useMemo, useOptimistic, useRef, useState, useTransition, type ReactNode } from "react"
 import { toast } from "sonner"
 
 import { reorderHabits, toggleHabitLog } from "@/app/actions/habits"
+import { Achievements } from "@/components/achievements"
 import { Heatmap } from "@/components/heatmap"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,6 +14,7 @@ import { Link } from "@/components/link"
 import { formatDay } from "@/i18n"
 import { useI18n } from "@/i18n/client"
 import { addDays, type ISODate } from "@/lib/dates"
+import { newlyEarned, type Achievement } from "@/lib/achievements"
 import { completionRate, habitStreak, isDueToday } from "@/lib/streaks"
 
 import { ActivityChart } from "./activity-chart"
@@ -27,13 +29,23 @@ type Props = {
   profile: { username: string; display_name: string | null; is_public: boolean } | null
   archivedCount: number
   todayNotes: Record<string, string>
+  achievements: Achievement[]
 }
 
 type Toggle = { habitId: string; date: ISODate; done: boolean }
 
-export function DashboardView({ habits: serverHabits, logs, today, profile, archivedCount, todayNotes }: Props) {
+export function DashboardView({ habits: serverHabits, logs, today, profile, archivedCount, todayNotes, achievements }: Props) {
   const { locale, t } = useI18n()
   const [createOpen, setCreateOpen] = useState(false)
+
+  // celebrate achievements unlocked by a check-in (the server re-renders with new stats)
+  const previous = useRef(achievements)
+  useEffect(() => {
+    for (const id of newlyEarned(previous.current, achievements)) {
+      toast.success(t.achievements.unlocked(t.achievements.items[id].name), { duration: 6000 })
+    }
+    previous.current = achievements
+  }, [achievements, t])
   const [, startTransition] = useTransition()
 
   // optimistic order while the new positions are saved
@@ -174,6 +186,18 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
               </CardContent>
             </Card>
           </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>{t.achievements.title}</CardTitle>
+              <CardDescription>
+                {t.achievements.subtitle(achievements.filter((a) => a.earned).length, achievements.length)}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Achievements achievements={achievements} locale={locale} />
+            </CardContent>
+          </Card>
 
           {archivedCount > 0 && (
             <p className="-mt-4 text-center text-sm">

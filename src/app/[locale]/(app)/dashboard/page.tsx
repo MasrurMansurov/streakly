@@ -4,6 +4,7 @@ import { getT } from "@/i18n/server"
 import { Suspense } from "react"
 
 import { Skeleton } from "@/components/ui/skeleton"
+import { evaluateAchievements } from "@/lib/achievements"
 import { getDashboardData } from "@/lib/data"
 
 import { DashboardView } from "./dashboard-view"
@@ -21,7 +22,7 @@ export default function DashboardPage() {
 }
 
 async function Dashboard() {
-  const { habits, logs, today, profile, archivedCount, todayNotes } = await getDashboardData()
+  const { habits, logs, today, profile, archivedCount, todayNotes, stats } = await getDashboardData()
   return (
     <DashboardView
       habits={habits}
@@ -30,6 +31,7 @@ async function Dashboard() {
       profile={profile}
       archivedCount={archivedCount}
       todayNotes={todayNotes}
+      achievements={evaluateAchievements(stats)}
     />
   )
 }

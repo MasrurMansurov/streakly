@@ -7,6 +7,7 @@ import { redirect } from "next/navigation"
 
 import { addDays, DEFAULT_TIMEZONE, isValidTimezone, TIMEZONE_COOKIE, todayIn, type ISODate } from "./dates"
 import { createClient, createPublicClient } from "./supabase/server"
+import type { AchievementStats } from "./achievements"
 import type { Tables } from "./supabase/database.types"
 
 export type Profile = Tables<"profiles">
@@ -17,6 +18,15 @@ export type HabitLog = Pick<Tables<"habit_logs">, "habit_id" | "log_date">
 export const HISTORY_DAYS = 26 * 7
 
 const PAGE = 1000 // PostgREST default max rows per request
+
+/** All-time totals for achievements (computed in Postgres, RLS applies). */
+async function achievementStats(
+  supabase: Awaited<ReturnType<typeof createClient>> | ReturnType<typeof createPublicClient>,
+  userId: string
+): Promise<AchievementStats> {
+  const { data } = await supabase.rpc("achievement_stats", { p_user: userId })
+  return { totalCheckins: Number(data?.[0]?.total_checkins ?? 0), bestStreak: Number(data?.[0]?.best_streak ?? 0) }
+}
 
 /** The viewer's "today", based on the timezone cookie set by <TimezoneSync />. */
 export async function getToday(): Promise<{ today: ISODate; timeZone: string }> {
@@ -67,7 +77,7 @@ export async function getDashboardData() {
   const [{ today, timeZone }, supabase] = await Promise.all([getToday(), createClient()])
   const since = addDays(today, -(HISTORY_DAYS - 1))
 
-  const [habitsRes, logs, profileRes, archivedCount, notesRes] = await Promise.all([
+  const [habitsRes, logs, profileRes, archivedCount, notesRes, stats] = await Promise.all([
     supabase
       .from("habits")
       .select("id, name, description, color, position, target_per_week, created_at")
@@ -87,6 +97,7 @@ export async function getDashboardData() {
     supabase.from("profiles").select("username, display_name, is_public").eq("id", user.id).single(),
     getArchivedCount(user.id),
     supabase.from("habit_notes").select("habit_id, note").eq("user_id", user.id).eq("log_date", today),
+    achievementStats(supabase, user.id),
   ])
   if (habitsRes.error) throw habitsRes.error
 
@@ -98,6 +109,7 @@ export async function getDashboardData() {
     today,
     timeZone,
     archivedCount,
+    stats,
     todayNotes: Object.fromEntries((notesRes.data ?? []).map((n) => [n.habit_id, n.note])) as Record<string, string>,
   }
 }
@@ -141,7 +153,7 @@ export async function getPublicProfile(username: string) {
     ),
   ])
 
-  return { profile, habits: habitsRes.data ?? [], logs }
+  return { profile, habits: habitsRes.data ?? [], logs, stats: await achievementStats(supabase, profile.id) }
 }
 
 export type ArchivedHabit = Habit & { archived_at: string; checkIns: number }
