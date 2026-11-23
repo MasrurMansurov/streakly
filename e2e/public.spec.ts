@@ -43,3 +43,16 @@ test("expired email link shows a helpful message", async ({ page }) => {
   await expect(page).toHaveURL(/\/login\?error=otp_expired$/)
   await expect(page.getByRole("alert").filter({ hasText: "expired or was already used" })).toBeVisible()
 })
+
+test("app is installable (manifest + icons)", async ({ page, request }) => {
+  const res = await request.get("/manifest.webmanifest")
+  expect(res.status()).toBe(200)
+  const manifest = await res.json()
+  expect(manifest.display).toBe("standalone")
+  for (const icon of manifest.icons) expect((await request.get(icon.src)).status()).toBe(200)
+
+  await page.goto("/")
+  const cdp = await page.context().newCDPSession(page)
+  const { installabilityErrors } = await cdp.send("Page.getInstallabilityErrors")
+  expect(installabilityErrors).toEqual([])
+})

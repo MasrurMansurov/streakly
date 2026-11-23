@@ -29,6 +29,7 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 - **Public profile** at `/u/<username>`, opt-in; archived habits stay private, with a generated OG image for link previews
 - **Auth:** email + password, optional GitHub / Google OAuth, via Supabase Auth with cookie sessions (`@supabase/ssr`)
 - **Timezone-aware:** "today" is computed in the user's own timezone, not the server's
+- **Installable (PWA):** add to the home screen and open full-screen, with app icons and theme colors
 - Dark mode, responsive layout, accessible controls
 
 ## Tech stack
