@@ -31,16 +31,11 @@ export default async function Home() {
               <span className="size-1.5 rounded-full bg-emerald-500" />
               {t.landing.badge}
             </span>
-            <h1
-              className="text-4xl leading-[1.08] font-semibold text-balance motion-safe:animate-rise sm:text-5xl"
-              style={{ animationDelay: "60ms" }}
-            >
+            {/* no entrance animation on the hero text: it is the LCP element and must paint immediately */}
+            <h1 className="text-4xl leading-[1.08] font-semibold text-balance sm:text-5xl">
               {t.landing.titleStart} <span className="text-emerald-500">{t.landing.titleAccent}</span>.
             </h1>
-            <p
-              className="max-w-md text-lg leading-relaxed text-muted-foreground motion-safe:animate-rise"
-              style={{ animationDelay: "120ms" }}
-            >
+            <p className="max-w-md text-lg leading-relaxed text-muted-foreground">
               {t.landing.subtitle}
             </p>
             <div className="flex flex-wrap gap-3 motion-safe:animate-rise" style={{ animationDelay: "180ms" }}>

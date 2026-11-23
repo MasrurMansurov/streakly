@@ -44,6 +44,34 @@ export async function updateSession(request: NextRequest) {
 
   let response = NextResponse.next({ request })
 
+  const finish = (res: NextResponse) => {
+    // remember the language (Server Actions read it from this cookie)
+    if (request.cookies.get(LOCALE_COOKIE)?.value !== locale) {
+      res.cookies.set(LOCALE_COOKIE, locale, { path: "/", maxAge: ONE_YEAR, sameSite: "lax" })
+    }
+    return res
+  }
+
+  // Anonymous visitors have no Supabase auth cookie: skip the session check entirely
+  // (saves a round trip on every public page view)
+  const hasSession = request.cookies.getAll().some((c) => c.name.startsWith("sb-") && c.name.includes("-auth-token"))
+  if (!hasSession) {
+    if (PROTECTED_PREFIXES.some((p) => path.startsWith(p))) {
+      const url = request.nextUrl.clone()
+      url.pathname = localizePath(locale, "/login")
+      url.search = ""
+      return finish(NextResponse.redirect(url))
+    }
+    const authError = request.nextUrl.searchParams.get("error_code") ?? request.nextUrl.searchParams.get("error")
+    if (authError && path !== "/login") {
+      const url = request.nextUrl.clone()
+      url.pathname = localizePath(locale, "/login")
+      url.search = `?error=${encodeURIComponent(authError)}`
+      return finish(NextResponse.redirect(url))
+    }
+    return finish(response)
+  }
+
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
@@ -66,14 +94,6 @@ export async function updateSession(request: NextRequest) {
   // it validates the JWT and refreshes the session if needed.
   const { data } = await supabase.auth.getClaims()
   const isSignedIn = Boolean(data?.claims?.sub)
-
-  const finish = (res: NextResponse) => {
-    // remember the language (Server Actions read it from this cookie)
-    if (request.cookies.get(LOCALE_COOKIE)?.value !== locale) {
-      res.cookies.set(LOCALE_COOKIE, locale, { path: "/", maxAge: ONE_YEAR, sameSite: "lax" })
-    }
-    return res
-  }
 
   const redirectTo = (target: string, query = "") => {
     const url = request.nextUrl.clone()
