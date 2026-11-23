@@ -1,10 +1,11 @@
 "use client"
 
 import { ArchiveIcon, ExternalLinkIcon, LayoutDashboardIcon, LogOutIcon, SettingsIcon } from "lucide-react"
-import Link from "next/link"
 
 import { signOut } from "@/app/actions/auth"
+import { Link } from "@/components/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useI18n } from "@/i18n/client"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -25,12 +26,13 @@ type Props = {
 }
 
 export function UserMenu({ email, username, displayName, isPublic, avatarUrl }: Props) {
+  const { t } = useI18n()
   const name = displayName || username
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant="ghost" size="icon" className="rounded-full" aria-label="Account menu" />
+          <Button variant="ghost" size="icon" className="rounded-full" aria-label={t.nav.accountMenu} />
         }
       >
         <Avatar className="size-8">
@@ -47,22 +49,22 @@ export function UserMenu({ email, username, displayName, isPublic, avatarUrl }: 
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem render={<Link href="/dashboard" />}>
-          <LayoutDashboardIcon /> Dashboard
+          <LayoutDashboardIcon /> {t.nav.dashboard}
         </DropdownMenuItem>
         <DropdownMenuItem render={<Link href="/archive" />}>
-          <ArchiveIcon /> Archive
+          <ArchiveIcon /> {t.nav.archive}
         </DropdownMenuItem>
         <DropdownMenuItem render={<Link href="/settings" />}>
-          <SettingsIcon /> Settings
+          <SettingsIcon /> {t.nav.settings}
         </DropdownMenuItem>
         {isPublic && (
           <DropdownMenuItem render={<Link href={`/u/${username}`} />}>
-            <ExternalLinkIcon /> Public profile
+            <ExternalLinkIcon /> {t.nav.publicProfile}
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => signOut()}>
-          <LogOutIcon /> Sign out
+          <LogOutIcon /> {t.nav.signOut}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

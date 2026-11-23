@@ -1,4 +1,5 @@
-import { addDays, formatDate, weekdayMon0, type ISODate } from "@/lib/dates"
+import { formatDay, getDictionary, type Locale } from "@/i18n"
+import { addDays, weekdayMon0, type ISODate } from "@/lib/dates"
 import { ScrollToEnd } from "@/components/scroll-to-end"
 import { cn } from "@/lib/utils"
 
@@ -20,10 +21,12 @@ type Props = {
   className?: string
   /** single-habit mode: every completed day uses this class instead of the intensity scale */
   doneClassName?: string
+  locale: Locale
 }
 
 /** GitHub-style contribution grid: one column per week, Monday on top. */
-export function Heatmap({ counts, max, today, weeks = 26, className, doneClassName }: Props) {
+export function Heatmap({ counts, max, today, weeks = 26, className, doneClassName, locale }: Props) {
+  const t = getDictionary(locale).heatmap
   const start = addDays(today, -weekdayMon0(today) - (weeks - 1) * 7)
 
   const columns: { date: ISODate; future: boolean }[][] = []
@@ -47,8 +50,8 @@ export function Heatmap({ counts, max, today, weeks = 26, className, doneClassNa
     const prev = i > 0 ? columns[i - 1][0].date : null
     const month = first.slice(5, 7)
     // skip the very first column if the next month starts right after it (avoids "NovDec")
-    if (!prev) return columns[2]?.[0].date.slice(5, 7) === month ? formatDate(first, { month: "short" }) : ""
-    return month !== prev.slice(5, 7) ? formatDate(first, { month: "short" }) : ""
+    if (!prev) return columns[2]?.[0].date.slice(5, 7) === month ? formatDay(locale, first, { month: "short" }) : ""
+    return month !== prev.slice(5, 7) ? formatDay(locale, first, { month: "short" }) : ""
   })
 
   return (
@@ -64,7 +67,7 @@ export function Heatmap({ counts, max, today, weeks = 26, className, doneClassNa
         </div>
         <div className="flex gap-[3px]">
           <div className="mr-1 flex w-6 flex-col gap-[3px] text-[10px] leading-3 text-muted-foreground">
-            {["Mon", "", "Wed", "", "Fri", "", ""].map((d, i) => (
+            {t.weekdays.map((d, i) => (
               <div key={i} className="h-3">
                 {d}
               </div>
@@ -77,7 +80,7 @@ export function Heatmap({ counts, max, today, weeks = 26, className, doneClassNa
                 return (
                   <div
                     key={date}
-                    title={future ? undefined : `${formatDate(date, { month: "short", day: "numeric", year: "numeric" })}: ${n} done`}
+                    title={future ? undefined : t.done(formatDay(locale, date, { month: "short", day: "numeric", year: "numeric" }), n)}
                     className={cn(
                       "size-3 rounded-[3px]",
                       future ? "bg-transparent" : doneClassName && n > 0 ? doneClassName : LEVELS[level(n)]
@@ -89,11 +92,11 @@ export function Heatmap({ counts, max, today, weeks = 26, className, doneClassNa
           ))}
         </div>
         <div className={cn("flex items-center justify-end gap-1 text-[10px] text-muted-foreground", doneClassName && "hidden")}>
-          Less
+          {t.less}
           {LEVELS.map((c) => (
             <div key={c} className={cn("size-3 rounded-[3px]", c)} />
           ))}
-          More
+          {t.more}
         </div>
       </div>
     </ScrollToEnd>

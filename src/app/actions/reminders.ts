@@ -7,13 +7,16 @@ import { z } from "zod"
 import { getCurrentUser } from "@/lib/data"
 import { isValidTimezone } from "@/lib/dates"
 import { createClient } from "@/lib/supabase/server"
+import { locales } from "@/i18n"
+import { getActionLocale, getActionT } from "@/i18n/server"
 import type { ActionResult } from "@/lib/validation"
 
 const settingsSchema = z.object({
   enabled: z.boolean(),
   // the scheduler runs every 15 minutes
-  remindAt: z.string().regex(/^([01]\d|2[0-3]):(00|15|30|45)$/, "Pick a time in 15-minute steps"),
-  timezone: z.string().max(64).refine(isValidTimezone, "Unknown timezone"),
+  remindAt: z.string().regex(/^([01]\d|2[0-3]):(00|15|30|45)$/, "timeStep"),
+  timezone: z.string().max(64).refine(isValidTimezone, "unknownTimezone"),
+  locale: z.enum(locales).optional(),
 })
 
 const subscriptionSchema = z.object({
@@ -25,13 +28,17 @@ const subscriptionSchema = z.object({
 
 async function authed() {
   const user = await getCurrentUser()
-  if (!user) throw new Error("Not signed in")
+  if (!user) throw new Error((await getActionT()).t.validation.notSignedIn)
   return { user, supabase: await createClient() }
 }
 
 export async function saveReminderSettings(input: z.infer<typeof settingsSchema>): Promise<ActionResult> {
   const parsed = settingsSchema.safeParse(input)
-  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid settings" }
+  if (!parsed.success) {
+    const { t } = await getActionT()
+    const key = parsed.error.issues[0]?.message ?? ""
+    return { ok: false, error: (t.reminders as Record<string, unknown>)[key] as string ?? t.validation.invalidInput }
+  }
 
   const { user, supabase } = await authed()
   const { error } = await supabase.from("reminder_settings").upsert({
@@ -39,6 +46,8 @@ export async function saveReminderSettings(input: z.infer<typeof settingsSchema>
     enabled: parsed.data.enabled,
     remind_at: parsed.data.remindAt,
     timezone: parsed.data.timezone,
+    // notifications are sent in the language the user last used
+    locale: parsed.data.locale ?? (await getActionLocale()),
     updated_at: new Date().toISOString(),
   })
   if (error) return { ok: false, error: error.message }
@@ -50,7 +59,7 @@ export async function saveReminderSettings(input: z.infer<typeof settingsSchema>
 /** Store this browser's push subscription (re-subscribing the same endpoint is a no-op). */
 export async function savePushSubscription(input: z.infer<typeof subscriptionSchema>): Promise<ActionResult> {
   const parsed = subscriptionSchema.safeParse(input)
-  if (!parsed.success) return { ok: false, error: "Invalid push subscription" }
+  if (!parsed.success) return { ok: false, error: (await getActionT()).t.reminders.invalidSubscription }
 
   const { supabase } = await authed()
   const { error } = await supabase.from("push_subscriptions").insert({
@@ -74,19 +83,20 @@ export async function removePushSubscription(endpoint: string): Promise<ActionRe
 /** Ask the Edge Function to send a test notification to all of the user's devices. */
 export async function sendTestNotification(): Promise<ActionResult> {
   const { supabase } = await authed()
+  const { t } = await getActionT()
 
   // getCurrentUser() checks the JWT signature locally, which stays valid until the
   // token expires even if the session was ended elsewhere. The Edge Function asks
   // the auth server, so confirm the session there first and use a fresh token.
   const { error: userError } = await supabase.auth.getUser()
-  if (userError) return { ok: false, error: "Your session has ended. Please sign out and sign in again." }
+  if (userError) return { ok: false, error: t.reminders.sessionEnded }
   let {
     data: { session },
   } = await supabase.auth.getSession()
   if (session && (session.expires_at ?? 0) * 1000 < Date.now() + 60_000) {
     session = (await supabase.auth.refreshSession()).data.session
   }
-  if (!session) return { ok: false, error: "Your session has ended. Please sign in again." }
+  if (!session) return { ok: false, error: t.reminders.sessionEnded }
 
   const { data, error } = await supabase.functions.invoke<{ sent: number; removed: number; errors: string[] }>(
     "send-reminders",
@@ -95,12 +105,12 @@ export async function sendTestNotification(): Promise<ActionResult> {
   if (error) {
     const detail = error instanceof FunctionsHttpError ? await error.context.json().catch(() => null) : null
     if (detail?.error === "no subscriptions")
-      return { ok: false, error: "No device is subscribed yet. Turn reminders on in this browser first." }
-    return { ok: false, error: `Couldn't send a test notification (${detail?.error ?? error.message})` }
+      return { ok: false, error: t.reminders.noDevices }
+    return { ok: false, error: t.reminders.testFailed(detail?.error ?? error.message) }
   }
   if (!data?.sent) {
-    if (data?.removed) return { ok: false, error: "This device's subscription expired. Turn reminders off and on again." }
-    return { ok: false, error: data?.errors?.[0] ?? "No device received the notification" }
+    if (data?.removed) return { ok: false, error: t.reminders.expired }
+    return { ok: false, error: data?.errors?.[0] ?? t.reminders.noneReceived }
   }
-  return { ok: true, message: `Sent to ${data.sent} device${data.sent === 1 ? "" : "s"} — check your notifications` }
+  return { ok: true, message: t.reminders.sent(data.sent) }
 }

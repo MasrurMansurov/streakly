@@ -108,18 +108,45 @@ async function dueHabits(userId: string, localDate: string) {
     order by h.position, h.created_at`
 }
 
-function message(names: string[]): Payload {
-  const body =
-    names.length === 1
-      ? `“${names[0]}” is still waiting for you today.`
-      : `${names.length} habits left today: ${names.slice(0, 3).join(", ")}${names.length > 3 ? "…" : ""}`
-  return { title: "Keep your streak alive 🔥", body, url: "/dashboard", tag: "daily-reminder" }
+type Locale = "en" | "ru"
+
+const ruPlural = (n: number, one: string, few: string, many: string) => {
+  const rule = new Intl.PluralRules("ru-RU").select(n)
+  return rule === "one" ? one : rule === "few" ? few : many
+}
+
+/** Notification texts (kept in sync with src/i18n/dictionaries → push). */
+const TEXT = {
+  en: {
+    title: "Keep your streak alive 🔥",
+    one: (name: string) => `“${name}” is still waiting for you today.`,
+    many: (n: number, names: string) => `${n} habits left today: ${names}`,
+    testTitle: "Streakly",
+    testBody: "Reminders are on. See you tonight! 🔥",
+  },
+  ru: {
+    title: "Не прерывайте серию 🔥",
+    one: (name: string) => `«${name}» ещё ждёт вас сегодня.`,
+    many: (n: number, names: string) =>
+      `На сегодня ${ruPlural(n, "осталась", "осталось", "осталось")} ${n} ${ruPlural(n, "привычка", "привычки", "привычек")}: ${names}`,
+    testTitle: "Streakly",
+    testBody: "Напоминания включены. До вечера! 🔥",
+  },
+} satisfies Record<Locale, unknown>
+
+const asLocale = (value: unknown): Locale => (value === "ru" ? "ru" : "en")
+
+function message(names: string[], locale: Locale): Payload {
+  const t = TEXT[locale]
+  const list = `${names.slice(0, 3).join(", ")}${names.length > 3 ? "…" : ""}`
+  const body = names.length === 1 ? t.one(names[0]) : t.many(names.length, list)
+  return { title: t.title, body, url: `/${locale}/dashboard`, tag: "daily-reminder" }
 }
 
 /** Users whose local reminder time passed in the last 2 hours and who weren't reminded today. */
 async function runReminders(dryRun: boolean) {
-  const candidates = await sql<{ user_id: string; local_date: string }[]>`
-    select rs.user_id, ((now() at time zone rs.timezone)::date)::text as local_date
+  const candidates = await sql<{ user_id: string; local_date: string; locale: string }[]>`
+    select rs.user_id, rs.locale, ((now() at time zone rs.timezone)::date)::text as local_date
     from public.reminder_settings rs
     join pg_timezone_names tz on tz.name = rs.timezone
     where rs.enabled
@@ -143,7 +170,7 @@ async function runReminders(dryRun: boolean) {
       returning user_id`
     if (claimed.length === 0 || names.length === 0) continue
     const subs = await sql<Sub[]>`select id, endpoint, p256dh, auth from public.push_subscriptions where user_id = ${c.user_id}`
-    results.push({ user: c.user_id.slice(0, 8), due: names.length, ...(await push(subs, message(names))) })
+    results.push({ user: c.user_id.slice(0, 8), due: names.length, ...(await push(subs, message(names, asLocale(c.locale)))) })
   }
   return { candidates: candidates.length, results }
 }
@@ -158,7 +185,7 @@ async function selfTest() {
   const auth = crypto.getRandomValues(new Uint8Array(16))
   const details = webpush.generateRequestDetails(
     { endpoint: "https://fcm.googleapis.com/fcm/send/selftest", keys: { p256dh, auth: btoa(String.fromCharCode(...auth)).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_") } },
-    JSON.stringify(message(["Self-test"])),
+    JSON.stringify(message(["Self-test"], "en")),
     { vapidDetails: { subject: SITE_URL, publicKey: keys.publicKey, privateKey: keys.privateKey } }
   )
   return {
@@ -178,7 +205,10 @@ Deno.serve(async (req) => {
       if (!userId) return json({ error: "unauthorized" }, 401)
       const subs = await sql<Sub[]>`select id, endpoint, p256dh, auth from public.push_subscriptions where user_id = ${userId}`
       if (subs.length === 0) return json({ error: "no subscriptions" }, 400)
-      return json(await push(subs, { title: "Streakly", body: "Reminders are on. See you tonight! 🔥", url: "/dashboard", tag: "test" }))
+      const [settings] = await sql`select locale from public.reminder_settings where user_id = ${userId}`
+      const locale = asLocale(settings?.locale)
+      const t = TEXT[locale]
+      return json(await push(subs, { title: t.testTitle, body: t.testBody, url: `/${locale}/dashboard`, tag: "test" }))
     }
 
     if (!(await isCron(req))) return json({ error: "unauthorized" }, 401)

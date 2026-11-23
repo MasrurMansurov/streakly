@@ -1,5 +1,5 @@
 import { FlameIcon } from "lucide-react"
-import Link from "next/link"
+import { Link } from "@/components/link"
 
 export function Logo({ href = "/" }: { href?: string }) {
   return (

@@ -4,14 +4,17 @@ import { refresh, updateTag } from "next/cache"
 
 import { getCurrentUser } from "@/lib/data"
 import { createClient } from "@/lib/supabase/server"
+import { validationMessage } from "@/i18n"
+import { getActionT } from "@/i18n/server"
 import { profileSchema, type ActionResult, type ProfileInput } from "@/lib/validation"
 
 export async function updateProfile(input: ProfileInput): Promise<ActionResult> {
+  const { t } = await getActionT()
   const parsed = profileSchema.safeParse(input)
-  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" }
+  if (!parsed.success) return { ok: false, error: validationMessage(t, parsed.error.issues[0]?.message) }
 
   const user = await getCurrentUser()
-  if (!user) return { ok: false, error: "Not signed in" }
+  if (!user) return { ok: false, error: t.validation.notSignedIn }
 
   const supabase = await createClient()
   const { data: before } = await supabase.from("profiles").select("username").eq("id", user.id).single()
@@ -27,14 +30,14 @@ export async function updateProfile(input: ProfileInput): Promise<ActionResult> 
     .eq("id", user.id)
 
   if (error) {
-    if (error.code === "23505") return { ok: false, error: "This username is already taken" }
+    if (error.code === "23505") return { ok: false, error: t.settings.usernameTaken }
     return { ok: false, error: error.message }
   }
 
   if (before) updateTag(`profile:${before.username}`)
   updateTag(`profile:${parsed.data.username}`)
   refresh()
-  return { ok: true, message: "Profile saved" }
+  return { ok: true, message: t.settings.saved }
 }
 
 /**
@@ -42,13 +45,14 @@ export async function updateProfile(input: ProfileInput): Promise<ActionResult> 
  * Only URLs inside the user's own folder of the public "avatars" bucket are accepted.
  */
 export async function updateAvatar(url: string | null): Promise<ActionResult> {
+  const { t } = await getActionT()
   const user = await getCurrentUser()
-  if (!user) return { ok: false, error: "Not signed in" }
+  if (!user) return { ok: false, error: t.validation.notSignedIn }
 
   const prefix = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${user.id}/`
   // only a plain file name inside the user's folder (no "../", no query string)
   if (url !== null && (!url.startsWith(prefix) || !/^avatar-\d+\.(png|jpg|webp|gif)$/.test(url.slice(prefix.length)))) {
-    return { ok: false, error: "Invalid avatar URL" }
+    return { ok: false, error: t.validation.invalidAvatar }
   }
 
   const supabase = await createClient()
@@ -68,5 +72,5 @@ export async function updateAvatar(url: string | null): Promise<ActionResult> {
 
   updateTag(`profile:${profile.username}`)
   refresh()
-  return { ok: true, message: url ? "Avatar updated" : "Avatar removed" }
+  return { ok: true, message: url ? t.settings.avatarUpdated : t.settings.avatarRemoved }
 }

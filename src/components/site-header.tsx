@@ -1,11 +1,13 @@
-import Link from "next/link"
 import { Suspense } from "react"
 
+import { LanguageSwitcher } from "@/components/language-switcher"
+import { Link } from "@/components/link"
 import { Logo } from "@/components/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { UserMenu } from "@/components/user-menu"
+import { getT } from "@/i18n/server"
 import { getCurrentUser } from "@/lib/data"
 import { createClient } from "@/lib/supabase/server"
 
@@ -15,6 +17,7 @@ export function SiteHeader() {
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4">
         <Logo />
         <div className="flex items-center gap-1">
+          <LanguageSwitcher />
           <ThemeToggle />
           {/* reads the session → streams in behind its own boundary */}
           <Suspense fallback={<Skeleton className="size-8 rounded-full" />}>
@@ -27,11 +30,11 @@ export function SiteHeader() {
 }
 
 async function UserArea() {
-  const user = await getCurrentUser()
+  const [user, { t }] = await Promise.all([getCurrentUser(), getT()])
   if (!user) {
     return (
       <Button size="sm" render={<Link href="/login" />}>
-        Sign in
+        {t.common.signIn}
       </Button>
     )
   }

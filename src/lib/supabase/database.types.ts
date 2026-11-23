@@ -175,6 +175,7 @@ export type Database = {
         Row: {
           enabled: boolean
           last_reminded_on: string | null
+          locale: string
           remind_at: string
           timezone: string
           updated_at: string
@@ -183,6 +184,7 @@ export type Database = {
         Insert: {
           enabled?: boolean
           last_reminded_on?: string | null
+          locale?: string
           remind_at?: string
           timezone?: string
           updated_at?: string
@@ -191,6 +193,7 @@ export type Database = {
         Update: {
           enabled?: boolean
           last_reminded_on?: string | null
+          locale?: string
           remind_at?: string
           timezone?: string
           updated_at?: string

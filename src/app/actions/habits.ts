@@ -5,13 +5,15 @@ import { z } from "zod"
 
 import { getCurrentUser } from "@/lib/data"
 import { addDays, isISODate, todayIn } from "@/lib/dates"
+import { validationMessage } from "@/i18n"
+import { getActionT } from "@/i18n/server"
 import { createClient } from "@/lib/supabase/server"
 import { habitSchema, type ActionResult, type HabitInput } from "@/lib/validation"
 
 /** Every action re-checks the session itself — never trust the client. */
 async function authed() {
   const user = await getCurrentUser()
-  if (!user) throw new Error("Not signed in")
+  if (!user) throw new Error((await getActionT()).t.validation.notSignedIn)
   const supabase = await createClient()
   return { user, supabase }
 }
@@ -24,7 +26,7 @@ async function invalidatePublicProfile(supabase: Awaited<ReturnType<typeof creat
 
 export async function createHabit(input: HabitInput): Promise<ActionResult> {
   const parsed = habitSchema.safeParse(input)
-  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" }
+  if (!parsed.success) return { ok: false, error: validationMessage((await getActionT()).t, parsed.error.issues[0]?.message) }
 
   const { user, supabase } = await authed()
   const { count } = await supabase
@@ -49,7 +51,7 @@ export async function createHabit(input: HabitInput): Promise<ActionResult> {
 
 export async function updateHabit(id: string, input: HabitInput): Promise<ActionResult> {
   const parsed = habitSchema.safeParse(input)
-  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" }
+  if (!parsed.success) return { ok: false, error: validationMessage((await getActionT()).t, parsed.error.issues[0]?.message) }
 
   const { user, supabase } = await authed()
   const { error } = await supabase
@@ -93,12 +95,13 @@ export async function deleteHabit(id: string): Promise<ActionResult> {
 
 /** Mark / unmark a habit as done on a given day (the client's local date). */
 export async function toggleHabitLog(habitId: string, date: string, done: boolean): Promise<ActionResult> {
-  if (!isISODate(date)) return { ok: false, error: "Invalid date" }
+  const { t } = await getActionT()
+  if (!isISODate(date)) return { ok: false, error: t.validation.invalidDate }
 
   // The client sends its local date. Allow any timezone (UTC−12…UTC+14),
   // but no days in the future.
   const latestAllowed = addDays(todayIn("UTC"), 1)
-  if (date > latestAllowed) return { ok: false, error: "Can't log future days" }
+  if (date > latestAllowed) return { ok: false, error: t.validation.futureDate }
 
   const { user, supabase } = await authed()
 
@@ -117,7 +120,7 @@ export async function toggleHabitLog(habitId: string, date: string, done: boolea
 /** Persist a new order of the user's active habits (ids in display order). */
 export async function reorderHabits(ids: string[]): Promise<ActionResult> {
   const parsed = z.array(z.uuid()).max(100).safeParse(ids)
-  if (!parsed.success) return { ok: false, error: "Invalid order" }
+  if (!parsed.success) return { ok: false, error: (await getActionT()).t.validation.invalidOrder }
 
   const { user, supabase } = await authed()
   // RLS limits each update to the user's own rows
