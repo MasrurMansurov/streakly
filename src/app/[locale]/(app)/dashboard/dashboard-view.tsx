@@ -254,12 +254,14 @@ function Stat({ icon, label, value, index }: { icon: Icon3DName; label: string; 
       className="group flex-row items-center gap-3 p-4 transition-shadow hover:shadow-md motion-safe:animate-rise"
       style={{ animationDelay: `${index * 70}ms` }}
     >
-      <Icon3D
-        name={icon}
-        size={36}
-        eager
-        className="transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"
-      />
+      <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-muted to-muted/30">
+        <Icon3D
+          name={icon}
+          size={46}
+          eager
+          className="transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"
+        />
+      </span>
       <div className="min-w-0">
         <div className="truncate text-xs text-muted-foreground">{label}</div>
         <div className="text-2xl font-semibold tabular-nums">{value}</div>

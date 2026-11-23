@@ -3,7 +3,7 @@ import type { CSSProperties } from "react"
 
 import { cn } from "@/lib/utils"
 
-/** Microsoft Fluent Emoji 3D (MIT), see public/3d/LICENSE.txt */
+/** Custom clay-style 3D icons made for Streakly (generated with Canva AI, cut out locally). */
 export type Icon3DName =
   | "archive"
   | "bell"
@@ -13,14 +13,17 @@ export type Icon3DName =
   | "crown"
   | "envelope"
   | "fire"
-  | "globe"
+  | "gift"
+  | "heart"
   | "lightning"
   | "locked"
   | "medal"
+  | "megaphone"
   | "memo"
   | "moon"
   | "party"
   | "people"
+  | "rocket"
   | "seedling"
   | "shield"
   | "sparkles"
@@ -44,14 +47,15 @@ type Props = {
 export function Icon3D({ name, size = 24, className, alt = "", eager, style }: Props) {
   return (
     <Image
-      src={`/3d/${name}.png`}
+      src={`/clay/${name}.png`}
       width={size}
       height={size}
       alt={alt}
       aria-hidden={alt ? undefined : true}
       draggable={false}
       loading={eager ? "eager" : "lazy"}
-      className={cn("shrink-0 select-none", className)}
+      // the renders were cut out without their floor shadow; a soft CSS shadow gives depth back
+      className={cn("shrink-0 select-none drop-shadow-[0_4px_6px_rgb(0_0_0/0.15)]", className)}
       style={style}
     />
   )

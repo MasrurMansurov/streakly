@@ -42,11 +42,11 @@ export function Achievements({ achievements, locale, earnedOnly, className }: Pr
             )}
             aria-label={`${item.name}: ${a.earned ? t.earned : t.progress(a.current, a.target)}`}
           >
-            <span className="relative flex size-12 shrink-0 items-center justify-center">
+            <span className="relative flex size-16 shrink-0 items-center justify-center">
               {a.earned && <span aria-hidden className={cn("absolute inset-1 rounded-full blur-md", badge.glow)} />}
               <Icon3D
                 name={badge.icon}
-                size={44}
+                size={60}
                 className={cn(
                   "relative transition-transform duration-300",
                   a.earned

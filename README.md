@@ -38,7 +38,7 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 - **Daily reminders (Web Push):** pick a time; a notification arrives only if habits are still due today. Supabase `pg_cron` calls an Edge Function every 15 min; VAPID keys and the cron token live in Supabase Vault
 - **English & Russian:** `/en/…` and `/ru/…` URLs (language picked from the browser, switcher in the header), proper Russian plurals via `Intl.PluralRules`, localized dates, validation messages and push notifications
 - **Installable (PWA):** add to the home screen and open full-screen, with app icons and theme colors
-- **3D icons & motion:** Fluent Emoji 3D icons, staggered entrance, check-in confetti, floating hero icons — all CSS, disabled for `prefers-reduced-motion`
+- **3D icons & motion:** a custom clay-style 3D icon set, staggered entrance, check-in confetti, floating hero icons — all CSS, disabled for `prefers-reduced-motion`
 - Dark mode, responsive layout, accessible controls
 
 ## Tech stack
@@ -130,4 +130,4 @@ npm run build
 
 ## Credits
 
-3D icons: [Microsoft Fluent Emoji](https://github.com/microsoft/fluentui-emoji) (MIT, see `public/3d/LICENSE.txt`).
+3D icons: a custom clay-style set made for Streakly — generated with Canva AI and cut out from the background with a small numpy/scipy script.

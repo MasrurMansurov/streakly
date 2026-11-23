@@ -6,7 +6,14 @@ import { Card } from "@/components/ui/card"
 import { getT } from "@/i18n/server"
 import { cn } from "@/lib/utils"
 
-const FEATURE_ICONS: Icon3DName[] = ["calendar", "fire", "globe", "shield"]
+const FEATURE_ICONS: Icon3DName[] = ["calendar", "fire", "megaphone", "shield"]
+/** soft tinted tiles behind the big 3D icons */
+const TILE_BG = [
+  "bg-gradient-to-br from-rose-100 to-orange-50 dark:from-rose-500/15 dark:to-orange-500/5",
+  "bg-gradient-to-br from-amber-100 to-yellow-50 dark:from-amber-500/15 dark:to-yellow-500/5",
+  "bg-gradient-to-br from-orange-100 to-amber-50 dark:from-orange-500/15 dark:to-amber-500/5",
+  "bg-gradient-to-br from-emerald-100 to-teal-50 dark:from-emerald-500/15 dark:to-teal-500/5",
+]
 
 // decorative heatmap preview, deterministic so the page is fully static
 const PREVIEW = Array.from({ length: 7 * 20 }, (_, i) => ((i * 37 + (i % 7) * 11) % 9) % 5)
@@ -14,10 +21,10 @@ const SHADES = ["bg-muted", "bg-emerald-200 dark:bg-emerald-900", "bg-emerald-40
 
 /** 3D icons floating around the preview card */
 const FLOATERS: { name: Icon3DName; size: number; className: string; delay: string }[] = [
-  { name: "fire", size: 72, className: "-top-9 -left-7", delay: "0s" },
-  { name: "trophy", size: 64, className: "-right-6 -bottom-8", delay: "-1.5s" },
-  { name: "sparkles", size: 44, className: "-top-6 right-10", delay: "-3s" },
-  { name: "calendar", size: 52, className: "-bottom-7 left-12", delay: "-2.2s" },
+  { name: "fire", size: 104, className: "-top-14 -left-10", delay: "0s" },
+  { name: "trophy", size: 96, className: "-right-10 -bottom-14", delay: "-1.5s" },
+  { name: "rocket", size: 80, className: "-top-14 right-6", delay: "-3s" },
+  { name: "calendar", size: 76, className: "-bottom-12 left-10", delay: "-2.2s" },
 ]
 
 export default async function Home() {
@@ -98,16 +105,20 @@ export default async function Home() {
             {t.landing.features.map(({ title, text }, i) => (
               <Card
                 key={title}
-                className="group gap-3 p-5 transition-all hover:-translate-y-1 hover:shadow-lg motion-safe:animate-rise"
+                className="group flex-row items-start gap-4 p-5 transition-all hover:-translate-y-1 hover:shadow-lg motion-safe:animate-rise"
                 style={{ animationDelay: `${i * 90}ms` }}
               >
-                <Icon3D
-                  name={FEATURE_ICONS[i]}
-                  size={48}
-                  className="transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"
-                />
+                <span className={cn("flex size-20 shrink-0 items-center justify-center rounded-2xl", TILE_BG[i])}>
+                  <Icon3D
+                    name={FEATURE_ICONS[i]}
+                    size={64}
+                    className="transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"
+                  />
+                </span>
+                <div className="grid gap-1.5">
                 <h2 className="font-medium">{title}</h2>
                 <p className="text-sm text-muted-foreground">{text}</p>
+                </div>
               </Card>
             ))}
           </div>

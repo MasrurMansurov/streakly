@@ -111,7 +111,7 @@ export function HabitCard({ habit, done, today, onToggle, dragHandle, todayNote 
             <span className={cn("inline-flex items-center gap-1 font-medium", streak.current > 0 && color.text)}>
               <Icon3D
                 name="fire"
-                size={16}
+                size={18}
                 className={cn("transition", streak.current === 0 && "opacity-40 grayscale")}
               />{" "}
               {t.habit.streak(streak.current, streak.unit)}
