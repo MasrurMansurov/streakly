@@ -29,7 +29,7 @@ test("public profile is visible without an account", async ({ page }) => {
 
 test("unknown profile shows not found", async ({ page }) => {
   await page.goto("/u/this-user-does-not-exist")
-  await expect(page.getByText("Page not found")).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible()
 })
 
 test("profile OG image renders", async ({ request }) => {

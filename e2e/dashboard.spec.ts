@@ -15,6 +15,15 @@ async function signIn(page: Page) {
 
 const habitTitles = (page: Page) => page.locator("section h3").allTextContents()
 
+/** Runs `fn` and waits until the server action it triggers has responded. */
+async function withServerAction(page: Page, fn: () => Promise<unknown>) {
+  const done = page.waitForResponse(
+    (r) => r.request().method() === "POST" && "next-action" in r.request().headers()
+  )
+  await fn()
+  await done
+}
+
 /** dnd-kit measures layout between key presses, so give it a frame or two */
 async function keyboardMove(page: Page, habit: string, key: "ArrowLeft" | "ArrowRight") {
   await page.getByRole("button", { name: `Reorder “${habit}”` }).focus()
@@ -39,15 +48,17 @@ test("check-in for today toggles and persists", async ({ page }) => {
   const before = await button.getAttribute("aria-pressed")
   const after = before === "true" ? "false" : "true"
 
-  await button.click()
-  await expect(button).toHaveAttribute("aria-pressed", after) // optimistic
-  await page.waitForLoadState("networkidle")
+  await withServerAction(page, async () => {
+    await button.click()
+    await expect(button).toHaveAttribute("aria-pressed", after) // optimistic
+  })
   await page.reload()
   await expect(button).toHaveAttribute("aria-pressed", after) // saved
 
-  await button.click() // restore
-  await expect(button).toHaveAttribute("aria-pressed", before!)
-  await page.waitForLoadState("networkidle")
+  await withServerAction(page, async () => {
+    await button.click() // restore
+    await expect(button).toHaveAttribute("aria-pressed", before!)
+  })
   await page.reload()
   await expect(button).toHaveAttribute("aria-pressed", before!)
 })
@@ -55,18 +66,16 @@ test("check-in for today toggles and persists", async ({ page }) => {
 test("habits can be reordered with the keyboard", async ({ page }) => {
   const original = await habitTitles(page)
 
-  await keyboardMove(page, original[0], "ArrowRight")
+  await withServerAction(page, () => keyboardMove(page, original[0], "ArrowRight"))
   await expect(page.getByText(`${original[0]} dropped at position 2`)).toBeAttached()
   await expect.poll(() => habitTitles(page)).toEqual([original[1], original[0], ...original.slice(2)])
 
-  await page.waitForLoadState("networkidle")
   await page.reload()
   await expect.poll(() => habitTitles(page)).toEqual([original[1], original[0], ...original.slice(2)])
 
   // restore
-  await keyboardMove(page, original[0], "ArrowLeft")
+  await withServerAction(page, () => keyboardMove(page, original[0], "ArrowLeft"))
   await expect.poll(() => habitTitles(page)).toEqual(original)
-  await page.waitForLoadState("networkidle")
   await page.reload()
   await expect.poll(() => habitTitles(page)).toEqual(original)
 })
