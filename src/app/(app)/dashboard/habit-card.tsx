@@ -1,7 +1,7 @@
 "use client"
 
 import { ArchiveIcon, CheckIcon, FlameIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
-import { useState, useTransition } from "react"
+import { useState, useTransition, type ReactNode } from "react"
 import { toast } from "sonner"
 
 import { archiveHabit, deleteHabit } from "@/app/actions/habits"
@@ -35,9 +35,11 @@ type Props = {
   done: ReadonlySet<ISODate>
   today: ISODate
   onToggle: (habitId: string, date: ISODate, done: boolean) => void
+  /** drag handle rendered next to the menu (from the sortable wrapper) */
+  dragHandle?: ReactNode
 }
 
-export function HabitCard({ habit, done, today, onToggle }: Props) {
+export function HabitCard({ habit, done, today, onToggle, dragHandle }: Props) {
   const color = habitColor(habit.color)
   const streak = currentStreak(done, today)
   const best = longestStreak(done)
@@ -86,6 +88,7 @@ export function HabitCard({ habit, done, today, onToggle }: Props) {
           </div>
         </div>
 
+        {dragHandle}
         <DropdownMenu>
           <DropdownMenuTrigger
             render={<Button variant="ghost" size="icon-sm" aria-label="Habit actions" disabled={pending} />}

@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useMemo, useOptimistic, useState, useTransition, type ReactNode } from "react"
 import { toast } from "sonner"
 
-import { toggleHabitLog } from "@/app/actions/habits"
+import { reorderHabits, toggleHabitLog } from "@/app/actions/habits"
 import { Heatmap } from "@/components/heatmap"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,6 +16,7 @@ import { completionRate, currentStreak } from "@/lib/streaks"
 import { ActivityChart } from "./activity-chart"
 import { HabitCard } from "./habit-card"
 import { HabitFormDialog } from "./habit-form-dialog"
+import { SortableHabits } from "./sortable-habits"
 
 type Props = {
   habits: Habit[]
@@ -26,9 +27,22 @@ type Props = {
 
 type Toggle = { habitId: string; date: ISODate; done: boolean }
 
-export function DashboardView({ habits, logs, today, profile }: Props) {
+export function DashboardView({ habits: serverHabits, logs, today, profile }: Props) {
   const [createOpen, setCreateOpen] = useState(false)
   const [, startTransition] = useTransition()
+
+  // optimistic order while the new positions are saved
+  const [habits, applyOrder] = useOptimistic(serverHabits, (state: Habit[], ids: string[]) =>
+    ids.map((id) => state.find((h) => h.id === id)).filter((h): h is Habit => Boolean(h))
+  )
+
+  const onReorder = (ids: string[]) => {
+    startTransition(async () => {
+      applyOrder(ids)
+      const res = await reorderHabits(ids)
+      if (!res.ok) toast.error(res.error)
+    })
+  }
 
   // optimistic check-ins: UI updates instantly, server confirms in the background
   const [optimisticLogs, applyToggle] = useOptimistic(logs, (state: HabitLog[], t: Toggle) =>
@@ -115,11 +129,19 @@ export function DashboardView({ habits, logs, today, profile }: Props) {
             <Stat icon={<SparklesIcon />} label="Check-ins (26 wk)" value={String(totalCheckIns)} />
           </div>
 
-          <section className="grid gap-3 md:grid-cols-2">
-            {habits.map((h) => (
-              <HabitCard key={h.id} habit={h} done={byHabit.get(h.id)!} today={today} onToggle={onToggle} />
-            ))}
-          </section>
+          <SortableHabits
+            habits={habits}
+            onReorder={onReorder}
+            renderHabit={(h, dragHandle) => (
+              <HabitCard
+                habit={h}
+                done={byHabit.get(h.id)!}
+                today={today}
+                onToggle={onToggle}
+                dragHandle={habits.length > 1 ? dragHandle : undefined}
+              />
+            )}
+          />
 
           <div className="grid gap-4 lg:grid-cols-5">
             <Card className="lg:col-span-3">

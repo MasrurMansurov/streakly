@@ -1,6 +1,7 @@
 "use server"
 
 import { refresh, updateTag } from "next/cache"
+import { z } from "zod"
 
 import { getCurrentUser } from "@/lib/data"
 import { addDays, isISODate, todayIn } from "@/lib/dates"
@@ -104,6 +105,24 @@ export async function toggleHabitLog(habitId: string, date: string, done: boolea
         .upsert({ habit_id: habitId, log_date: date }, { onConflict: "habit_id,log_date", ignoreDuplicates: true })
     : await supabase.from("habit_logs").delete().eq("habit_id", habitId).eq("log_date", date)
   if (error) return { ok: false, error: error.message }
+
+  await invalidatePublicProfile(supabase, user.id)
+  refresh()
+  return { ok: true }
+}
+
+/** Persist a new order of the user's active habits (ids in display order). */
+export async function reorderHabits(ids: string[]): Promise<ActionResult> {
+  const parsed = z.array(z.uuid()).max(100).safeParse(ids)
+  if (!parsed.success) return { ok: false, error: "Invalid order" }
+
+  const { user, supabase } = await authed()
+  // RLS limits each update to the user's own rows
+  const results = await Promise.all(
+    parsed.data.map((id, position) => supabase.from("habits").update({ position }).eq("id", id))
+  )
+  const failed = results.find((r) => r.error)
+  if (failed?.error) return { ok: false, error: failed.error.message }
 
   await invalidatePublicProfile(supabase, user.id)
   refresh()

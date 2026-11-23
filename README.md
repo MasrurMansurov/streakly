@@ -1,5 +1,7 @@
 # 🔥 Streakly
 
+[![CI](https://github.com/MasrurMansurov/streakly/actions/workflows/ci.yml/badge.svg)](https://github.com/MasrurMansurov/streakly/actions/workflows/ci.yml)
+
 A daily habit tracker with streaks, a GitHub-style activity heatmap and shareable public profiles.
 
 **🌐 Live:** https://streakly-pied-six.vercel.app
@@ -11,7 +13,8 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 - **One-tap check-ins** with optimistic UI (`useOptimistic`), plus a 7-day strip to fix missed days
 - **Streaks:** current and best streak per habit, 30-day completion rate
 - **Activity heatmap** (26 weeks) and a 30-day bar chart (Recharts)
-- **Public profile** at `/u/<username>`, opt-in; archived habits stay private
+- **Drag-and-drop ordering** (dnd-kit) — mouse, touch and keyboard, with screen reader announcements
+- **Public profile** at `/u/<username>`, opt-in; archived habits stay private, with a generated OG image for link previews
 - **Auth:** email + password via Supabase Auth with cookie sessions (`@supabase/ssr`)
 - **Timezone-aware:** "today" is computed in the user's own timezone, not the server's
 - Dark mode, responsive layout, accessible controls
@@ -26,7 +29,8 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 | Forms | react-hook-form + zod (same schemas validate on client and server) |
 | Backend | Supabase: Postgres, Auth, Row Level Security |
 | Charts | Recharts + a hand-made heatmap |
-| Tests | Vitest |
+| Tests | Vitest (unit) + Playwright (e2e, desktop & mobile) |
+| CI | GitHub Actions: lint, typecheck, unit tests, build |
 | Hosting | Vercel (auto-deploy from `main`) |
 
 ## Architecture
@@ -77,6 +81,8 @@ Apply the migrations from `supabase/migrations` to your Supabase project (SQL ed
 
 ```bash
 npm test          # unit tests
+npm run e2e       # Playwright e2e (builds and starts the app on :3100)
+E2E_BASE_URL=https://streakly-pied-six.vercel.app npm run e2e   # against production
 npm run typecheck
 npm run lint
 npm run build
@@ -85,8 +91,8 @@ npm run build
 ## Roadmap
 
 - [ ] Google / GitHub OAuth
-- [ ] Drag-and-drop habit ordering (dnd-kit)
+- [x] Drag-and-drop habit ordering (dnd-kit)
 - [ ] Weekly targets ("3× per week")
 - [ ] Reminders (Edge Function + cron)
-- [ ] OG image for public profiles
-- [ ] Playwright e2e tests
+- [x] OG image for public profiles
+- [x] Playwright e2e tests
