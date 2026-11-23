@@ -30,6 +30,7 @@ export async function createHabit(input: HabitInput): Promise<ActionResult> {
   const { count } = await supabase
     .from("habits")
     .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
     .is("archived_at", null)
 
   const { error } = await supabase.from("habits").insert({
@@ -137,6 +138,7 @@ export async function restoreHabit(id: string): Promise<ActionResult> {
   const { count } = await supabase
     .from("habits")
     .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
     .is("archived_at", null)
 
   const { error } = await supabase
