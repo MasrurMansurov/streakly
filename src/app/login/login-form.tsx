@@ -19,6 +19,17 @@ import { OAuthButtons } from "./oauth-buttons"
 
 type Mode = "signin" | "signup"
 
+function authErrorMessage(code: string) {
+  switch (code) {
+    case "otp_expired":
+      return "This link has expired or was already used. If you already confirmed your email, just sign in below."
+    case "access_denied":
+      return "Sign-in was cancelled or denied. Please try again."
+    default:
+      return "That link is invalid or expired. Please sign in again."
+  }
+}
+
 export function LoginForm() {
   const params = useSearchParams()
   const [mode, setMode] = useState<Mode>("signin")
@@ -68,9 +79,9 @@ export function LoginForm() {
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
-        {params.get("error") === "auth" && (
-          <p className="rounded-md bg-destructive/10 p-2 text-sm text-destructive">
-            That link is invalid or expired. Please sign in again.
+        {params.get("error") && (
+          <p role="alert" className="rounded-md bg-destructive/10 p-2 text-sm text-destructive">
+            {authErrorMessage(params.get("error")!)}
           </p>
         )}
 

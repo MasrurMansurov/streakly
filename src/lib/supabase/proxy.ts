@@ -49,6 +49,19 @@ export async function updateSession(request: NextRequest) {
     return redirect
   }
 
+  // Supabase sends auth errors (e.g. an expired email link) as query params
+  // to the Site URL. Show them on the login page instead of ignoring them.
+  const authError = request.nextUrl.searchParams.get("error_code") ?? request.nextUrl.searchParams.get("error")
+  if (authError && pathname !== "/login") {
+    const target = isSignedIn ? "/dashboard" : "/login"
+    const url = request.nextUrl.clone()
+    url.pathname = target
+    url.search = isSignedIn ? "" : `?error=${encodeURIComponent(authError)}`
+    const redirect = NextResponse.redirect(url)
+    response.cookies.getAll().forEach((c) => redirect.cookies.set(c))
+    return redirect
+  }
+
   if (!isSignedIn && PROTECTED_PREFIXES.some((p) => pathname.startsWith(p))) {
     return redirectTo("/login")
   }

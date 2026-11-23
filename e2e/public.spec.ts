@@ -37,3 +37,9 @@ test("profile OG image renders", async ({ request }) => {
   expect(res.status()).toBe(200)
   expect(res.headers()["content-type"]).toContain("image/png")
 })
+
+test("expired email link shows a helpful message", async ({ page }) => {
+  await page.goto("/?error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired")
+  await expect(page).toHaveURL(/\/login\?error=otp_expired$/)
+  await expect(page.getByRole("alert").filter({ hasText: "expired or was already used" })).toBeVisible()
+})
