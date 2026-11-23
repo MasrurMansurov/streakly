@@ -21,7 +21,6 @@ export type Icon3DName =
   | "megaphone"
   | "memo"
   | "moon"
-  | "party"
   | "people"
   | "rocket"
   | "seedling"

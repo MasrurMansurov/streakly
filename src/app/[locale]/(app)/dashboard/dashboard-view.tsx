@@ -1,6 +1,6 @@
 "use client"
 
-import { PlusIcon } from "lucide-react"
+import { CircleCheckIcon, PlusIcon } from "lucide-react"
 import { useEffect, useMemo, useOptimistic, useRef, useState, useTransition } from "react"
 import { toast } from "sonner"
 
@@ -10,6 +10,7 @@ import { ConfettiBurst } from "@/components/confetti-burst"
 import { Icon3D, type Icon3DName } from "@/components/icon-3d"
 import { Heatmap } from "@/components/heatmap"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import type { Habit, HabitLog } from "@/lib/data"
 import { Link } from "@/components/link"
@@ -135,13 +136,15 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
               <>
                 {t.dashboard.allDone}
                 <span className="relative inline-flex">
-                  <Icon3D
+                  <CircleCheckIcon
                     key={celebration}
-                    name="party"
-                    size={32}
-                    className={celebration > 0 ? "motion-safe:animate-wiggle" : undefined}
+                    aria-hidden
+                    className={cn(
+                      "size-7 text-emerald-500",
+                      celebration > 0 && "motion-safe:animate-pop"
+                    )}
                   />
-                  {celebration > 0 && <ConfettiBurst key={celebration} count={16} distance={46} />}
+                  {celebration > 0 && <ConfettiBurst key={celebration} count={14} distance={36} />}
                 </span>
               </>
             ) : (
