@@ -56,3 +56,14 @@ test("app is installable (manifest + icons)", async ({ page, request }) => {
   const { installabilityErrors } = await cdp.send("Page.getInstallabilityErrors")
   expect(installabilityErrors).toEqual([])
 })
+
+test("service worker and reminder function are reachable", async ({ request }) => {
+  const sw = await request.get("/sw.js")
+  expect(sw.status()).toBe(200)
+  expect(await sw.text()).toContain('addEventListener("push"')
+  // the function must refuse calls without the cron token / a user JWT
+  const res = await request.post("https://oypfnyzhyyyrinxwtagz.supabase.co/functions/v1/send-reminders", {
+    data: { action: "send" },
+  })
+  expect(res.status()).toBe(401)
+})

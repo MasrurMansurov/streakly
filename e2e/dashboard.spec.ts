@@ -188,3 +188,10 @@ test("rejects non-image files before uploading", async ({ page }) => {
   await page.getByLabel("Upload profile photo").setInputFiles({ name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("hi") })
   await expect(page.getByText("Use a PNG, JPG, WebP or GIF image")).toBeVisible()
 })
+
+test("settings show the reminders card", async ({ page }) => {
+  await page.goto("/settings", { waitUntil: "networkidle" })
+  await expect(page.getByText("Reminders", { exact: true })).toBeVisible()
+  await expect(page.getByRole("switch", { name: "Daily reminder" })).toBeVisible()
+  await expect(page.getByLabel("Remind me at")).toHaveValue("20:00")
+})

@@ -29,6 +29,7 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 - **Public profile** at `/u/<username>`, opt-in; archived habits stay private, with a generated OG image for link previews
 - **Auth:** email + password, optional GitHub / Google OAuth, via Supabase Auth with cookie sessions (`@supabase/ssr`)
 - **Timezone-aware:** "today" is computed in the user's own timezone, not the server's
+- **Daily reminders (Web Push):** pick a time; a notification arrives only if habits are still due today. Supabase `pg_cron` calls an Edge Function every 15 min; VAPID keys and the cron token live in Supabase Vault
 - **Installable (PWA):** add to the home screen and open full-screen, with app icons and theme colors
 - Dark mode, responsive layout, accessible controls
 
@@ -40,7 +41,7 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 | Language | TypeScript (strict) |
 | UI | Tailwind CSS v4, shadcn/ui (Base UI), lucide-react, sonner, next-themes |
 | Forms | react-hook-form + zod (same schemas validate on client and server) |
-| Backend | Supabase: Postgres, Auth, Storage, Row Level Security |
+| Backend | Supabase: Postgres, Auth, Storage, Row Level Security, Edge Functions (Deno), pg_cron, Vault |
 | Charts | Recharts + a hand-made heatmap |
 | Tests | Vitest (unit) + Playwright (e2e, desktop & mobile) |
 | CI | GitHub Actions: lint, typecheck, unit tests, build |
@@ -64,7 +65,8 @@ src/
     ├── streaks.ts, dates.ts  # pure logic, unit-tested
     ├── validation.ts         # zod schemas
     └── supabase/             # server, proxy and public clients + generated types
-supabase/migrations/          # schema, RLS policies, triggers
+supabase/migrations/          # schema, RLS policies, triggers, cron job
+supabase/functions/           # send-reminders Edge Function (Web Push)
 ```
 
 ### Database
@@ -113,6 +115,6 @@ npm run build
 - [x] Google / GitHub OAuth (behind `NEXT_PUBLIC_AUTH_PROVIDERS`)
 - [x] Drag-and-drop habit ordering (dnd-kit)
 - [x] Weekly targets ("3× per week")
-- [ ] Reminders (Edge Function + cron)
+- [x] Reminders (Edge Function + cron)
 - [x] OG image for public profiles
 - [x] Playwright e2e tests

@@ -198,3 +198,21 @@ export async function getHabitDetail(id: string) {
   )
   return { habit, logs, today }
 }
+
+export type ReminderSettings = { enabled: boolean; remindAt: string; timezone: string; devices: number }
+
+/** The user's reminder settings (defaults if never saved) and how many devices are subscribed. */
+export async function getReminderSettings(): Promise<ReminderSettings> {
+  const user = await requireUser()
+  const supabase = await createClient()
+  const [{ data }, { count }] = await Promise.all([
+    supabase.from("reminder_settings").select("enabled, remind_at, timezone").eq("user_id", user.id).maybeSingle(),
+    supabase.from("push_subscriptions").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+  ])
+  return {
+    enabled: data?.enabled ?? false,
+    remindAt: (data?.remind_at ?? "20:00").slice(0, 5),
+    timezone: data?.timezone ?? "UTC",
+    devices: count ?? 0,
+  }
+}
