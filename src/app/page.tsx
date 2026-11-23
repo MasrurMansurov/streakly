@@ -1,69 +1,78 @@
-import Image from "next/image";
+import { CalendarCheckIcon, FlameIcon, Share2Icon, ShieldCheckIcon } from "lucide-react"
+import Link from "next/link"
+
+import { SiteHeader } from "@/components/site-header"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
+
+const FEATURES = [
+  { icon: CalendarCheckIcon, title: "One-tap check-ins", text: "Mark habits done in a single tap. Missed yesterday? Fix it from the 7-day strip." },
+  { icon: FlameIcon, title: "Streaks that motivate", text: "Current and best streaks for every habit, plus a 26-week activity heatmap." },
+  { icon: Share2Icon, title: "Public profile", text: "Share your progress at /u/username — or keep everything private. Your call." },
+  { icon: ShieldCheckIcon, title: "Private by default", text: "Postgres Row Level Security makes sure only you can see and edit your data." },
+]
+
+// decorative heatmap preview, deterministic so the page is fully static
+const PREVIEW = Array.from({ length: 7 * 20 }, (_, i) => ((i * 37 + (i % 7) * 11) % 9) % 5)
+const SHADES = ["bg-muted", "bg-emerald-200 dark:bg-emerald-900", "bg-emerald-400 dark:bg-emerald-700", "bg-emerald-500", "bg-emerald-700 dark:bg-emerald-300"]
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <>
+      <SiteHeader />
+      <main className="flex-1">
+        <section className="mx-auto grid max-w-5xl gap-10 px-4 py-16 md:grid-cols-2 md:items-center md:py-24">
+          <div className="grid gap-6">
+            <span className="w-fit rounded-full border px-3 py-1 text-xs text-muted-foreground">
+              Free · Open source · No ads
+            </span>
+            <h1 className="text-4xl font-semibold tracking-tight text-balance md:text-5xl">
+              Build habits that <span className="text-emerald-500">stick</span>.
+            </h1>
+            <p className="max-w-md text-lg text-muted-foreground">
+              Streakly is a simple daily habit tracker. Check in, watch your streaks grow, and share your progress.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Button size="lg" render={<Link href="/login" />}>
+                Get started — it&apos;s free
+              </Button>
+              <Button size="lg" variant="outline" render={<Link href="#features" />}>
+                See features
+              </Button>
+            </div>
+          </div>
+
+          <Card className="gap-4 p-5" aria-hidden>
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium">Activity</span>
+              <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                <FlameIcon className="size-4" /> 24 day streak
+              </span>
+            </div>
+            <div className="grid grid-flow-col grid-rows-7 gap-[3px] overflow-hidden">
+              {PREVIEW.map((lvl, i) => (
+                <div key={i} className={cn("aspect-square rounded-[3px]", SHADES[lvl])} />
+              ))}
+            </div>
+          </Card>
+        </section>
+
+        <section id="features" className="border-t bg-muted/30">
+          <div className="mx-auto grid max-w-5xl gap-4 px-4 py-16 sm:grid-cols-2">
+            {FEATURES.map(({ icon: Icon, title, text }) => (
+              <Card key={title} className="gap-2 p-5">
+                <Icon className="size-5 text-emerald-500" />
+                <h2 className="font-medium">{title}</h2>
+                <p className="text-sm text-muted-foreground">{text}</p>
+              </Card>
+            ))}
+          </div>
+        </section>
       </main>
-    </div>
-  );
+      <footer className="border-t py-6 text-center text-xs text-muted-foreground">
+        Built with Next.js, Supabase &amp; Tailwind CSS
+      </footer>
+    </>
+  )
 }
