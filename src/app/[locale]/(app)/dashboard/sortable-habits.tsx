@@ -77,8 +77,8 @@ export function SortableHabits({ habits, onReorder, renderHabit }: Props) {
     >
       <SortableContext items={habits.map((h) => h.id)} strategy={rectSortingStrategy}>
         <section className="grid gap-3 md:grid-cols-2">
-          {habits.map((h) => (
-            <SortableItem key={h.id} habit={h} renderHabit={renderHabit} />
+          {habits.map((h, i) => (
+            <SortableItem key={h.id} habit={h} index={i} renderHabit={renderHabit} />
           ))}
         </section>
       </SortableContext>
@@ -86,7 +86,7 @@ export function SortableHabits({ habits, onReorder, renderHabit }: Props) {
   )
 }
 
-function SortableItem({ habit, renderHabit }: { habit: Habit; renderHabit: Props["renderHabit"] }) {
+function SortableItem({ habit, index, renderHabit }: { habit: Habit; index: number; renderHabit: Props["renderHabit"] }) {
   const { t } = useI18n()
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
     useSortable({ id: habit.id })
@@ -111,7 +111,10 @@ function SortableItem({ habit, renderHabit }: { habit: Habit; renderHabit: Props
       style={{ transform: CSS.Translate.toString(transform), transition }}
       className={cn("relative", isDragging && "z-10 opacity-80 shadow-lg")}
     >
-      {renderHabit(habit, handle)}
+      {/* entrance animation lives on an inner element: the outer one is moved by dnd-kit's transform */}
+      <div className="motion-safe:animate-rise" style={{ animationDelay: `${150 + index * 60}ms` }}>
+        {renderHabit(habit, handle)}
+      </div>
     </div>
   )
 }

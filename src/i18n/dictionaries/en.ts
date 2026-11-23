@@ -82,7 +82,7 @@ export const en = {
   },
   dashboard: {
     welcome: (name?: string | null) => `Welcome${name ? `, ${name}` : ""} 👋`,
-    allDone: "All done for today 🎉",
+    allDone: "All done for today",
     leftToday: (n: number) => `${n} ${p(n, "habit", "habits")} left today`,
     newHabit: "New habit",
     emptyTitle: "Start with one small habit",
@@ -274,7 +274,7 @@ export const en = {
   achievements: {
     title: "Achievements",
     subtitle: (earned: number, total: number) => `${earned} of ${total} unlocked`,
-    unlocked: (name: string) => `🏆 Achievement unlocked: ${name}`,
+    unlocked: (name: string) => `Achievement unlocked: ${name}`,
     progress: (current: number, target: number) => `${current}/${target}`,
     earned: "Unlocked",
     items: {

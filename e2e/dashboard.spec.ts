@@ -176,11 +176,11 @@ test("upload and remove a profile photo", async ({ page }) => {
     page.getByLabel("Upload profile photo").setInputFiles({ name: "me.png", mimeType: "image/png", buffer: PNG })
   )
   await expect(page.getByText("Avatar updated")).toBeVisible()
-  await expect(page.locator("header img")).toHaveAttribute("src", /\/storage\/v1\/object\/public\/avatars\//)
+  await expect(page.locator("header [data-slot=avatar] img")).toHaveAttribute("src", /\/storage\/v1\/object\/public\/avatars\//)
 
   await withServerAction(page, () => page.getByRole("button", { name: "Remove" }).click())
   await expect(page.getByText("Avatar removed")).toBeVisible()
-  await expect(page.locator("header img")).toHaveCount(0)
+  await expect(page.locator("header [data-slot=avatar] img")).toHaveCount(0)
 })
 
 test("rejects non-image files before uploading", async ({ page }) => {

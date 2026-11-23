@@ -1,8 +1,9 @@
-import { CheckCircle2Icon, UsersIcon } from "lucide-react"
+import { CheckCircle2Icon } from "lucide-react"
 import type { Metadata } from "next"
 import { Suspense } from "react"
 
 import { FollowButton } from "@/components/follow-button"
+import { Icon3D } from "@/components/icon-3d"
 import { Link } from "@/components/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -40,7 +41,7 @@ async function Friends() {
   if (people.length === 0) {
     return (
       <Card className="items-center border-dashed py-12 text-center">
-        <UsersIcon className="size-8 text-muted-foreground" />
+        <Icon3D name="people" size={72} className="motion-safe:animate-float" />
         <div className="grid gap-1">
           <h2 className="font-medium">{t.friends.emptyTitle}</h2>
           <p className="max-w-sm text-sm text-muted-foreground">{t.friends.emptyText}</p>

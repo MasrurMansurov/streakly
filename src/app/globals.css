@@ -128,3 +128,49 @@
     @apply font-sans;
   }
 }
+/* ───────────── Motion ─────────────
+   Used through `motion-safe:` variants, so people who prefer reduced motion
+   get a static UI. */
+@theme {
+  --animate-float: float 5s ease-in-out infinite;
+  --animate-rise: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-pop: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-wiggle: wiggle 0.6s ease-in-out;
+  --animate-confetti: confetti 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  --animate-cell-in: cell-in 0.4s ease-out both;
+  --animate-shine: shine 2.5s ease-in-out infinite;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(-4deg); }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes pop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.22); }
+    100% { transform: scale(1); }
+  }
+  @keyframes wiggle {
+    0%, 100% { rotate: 0deg; }
+    20% { rotate: -14deg; }
+    40% { rotate: 12deg; }
+    60% { rotate: -8deg; }
+    80% { rotate: 5deg; }
+  }
+  @keyframes confetti {
+    0% { transform: translate(-50%, -50%) scale(0.4); opacity: 1; }
+    60% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1) rotate(var(--rot)); opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy) + 6px)) scale(0.6) rotate(var(--rot)); opacity: 0; }
+  }
+  @keyframes cell-in {
+    from { opacity: 0; transform: scale(0.3); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes shine {
+    0%, 100% { filter: drop-shadow(0 4px 6px rgb(0 0 0 / 0.15)) brightness(1); }
+    50% { filter: drop-shadow(0 6px 10px rgb(0 0 0 / 0.2)) brightness(1.08); }
+  }
+}

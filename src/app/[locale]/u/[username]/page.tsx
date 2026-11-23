@@ -1,10 +1,11 @@
-import { FlameIcon, TrophyIcon } from "lucide-react"
+import { FlameIcon } from "lucide-react"
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 
 import { Achievements } from "@/components/achievements"
 import { Heatmap } from "@/components/heatmap"
+import { Icon3D } from "@/components/icon-3d"
 import { SiteHeader } from "@/components/site-header"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -103,7 +104,7 @@ async function PublicProfile({ params }: Props) {
         </Card>
         <Card className="gap-1 p-4">
           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-            <TrophyIcon className="size-3.5" /> {t.publicProfile.bestStreak}
+            <Icon3D name="trophy" size={16} /> {t.publicProfile.bestStreak}
           </span>
           <span className="text-2xl font-semibold tabular-nums">{t.dashboard.streakShort(best, "day")}</span>
         </Card>

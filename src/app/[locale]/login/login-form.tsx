@@ -1,13 +1,13 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { MailCheckIcon } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import { useState, useTransition } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 
 import { signIn, signUp } from "@/app/actions/auth"
+import { Icon3D } from "@/components/icon-3d"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -49,7 +49,7 @@ export function LoginForm() {
     return (
       <Card className="w-full max-w-sm items-center text-center">
         <CardHeader className="w-full">
-          <MailCheckIcon className="mx-auto size-8 text-emerald-500" />
+          <Icon3D name="envelope" size={72} className="mx-auto motion-safe:animate-float" />
           <CardTitle>{t.auth.checkInbox}</CardTitle>
           <CardDescription>
             {t.auth.sentLink} <span className="font-medium text-foreground">{sentTo}</span>.

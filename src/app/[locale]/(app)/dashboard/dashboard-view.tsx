@@ -1,11 +1,13 @@
 "use client"
 
-import { FlameIcon, PlusIcon, SparklesIcon, TargetIcon, TrendingUpIcon } from "lucide-react"
-import { useEffect, useMemo, useOptimistic, useRef, useState, useTransition, type ReactNode } from "react"
+import { PlusIcon } from "lucide-react"
+import { useEffect, useMemo, useOptimistic, useRef, useState, useTransition } from "react"
 import { toast } from "sonner"
 
 import { reorderHabits, toggleHabitLog } from "@/app/actions/habits"
-import { Achievements } from "@/components/achievements"
+import { Achievements, BADGES } from "@/components/achievements"
+import { ConfettiBurst } from "@/components/confetti-burst"
+import { Icon3D, type Icon3DName } from "@/components/icon-3d"
 import { Heatmap } from "@/components/heatmap"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -42,7 +44,10 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
   const previous = useRef(achievements)
   useEffect(() => {
     for (const id of newlyEarned(previous.current, achievements)) {
-      toast.success(t.achievements.unlocked(t.achievements.items[id].name), { duration: 6000 })
+      toast.success(t.achievements.unlocked(t.achievements.items[id].name), {
+        duration: 6000,
+        icon: <Icon3D name={BADGES[id].icon} size={28} className="motion-safe:animate-wiggle" />,
+      })
     }
     previous.current = achievements
   }, [achievements, t])
@@ -68,14 +73,6 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
       : state.filter((l) => !(l.habit_id === t.habitId && l.log_date === t.date))
   )
 
-  const onToggle = (habitId: string, date: ISODate, done: boolean) => {
-    startTransition(async () => {
-      applyToggle({ habitId, date, done })
-      const res = await toggleHabitLog(habitId, date, done)
-      if (!res.ok) toast.error(res.error)
-    })
-  }
-
   const byHabit = useMemo(() => {
     const map = new Map<string, Set<ISODate>>()
     for (const h of habits) map.set(h.id, new Set())
@@ -88,6 +85,21 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
     for (const [, days] of byHabit) for (const d of days) map.set(d, (map.get(d) ?? 0) + 1)
     return map
   }, [byHabit])
+
+  // bumped when a check-in completes the day → plays the celebration once
+  const [celebration, setCelebration] = useState(0)
+
+  const onToggle = (habitId: string, date: ISODate, done: boolean) => {
+    if (done && date === today) {
+      const stillDue = habits.filter((h) => h.id !== habitId && isDueToday(byHabit.get(h.id)!, today, h.target_per_week))
+      if (stillDue.length === 0) setCelebration((n) => n + 1)
+    }
+    startTransition(async () => {
+      applyToggle({ habitId, date, done })
+      const res = await toggleHabitLog(habitId, date, done)
+      if (!res.ok) toast.error(res.error)
+    })
+  }
 
   const doneToday = habits.filter((h) => byHabit.get(h.id)?.has(today)).length
   // weekly habits whose target is already met aren't "left" for today
@@ -116,12 +128,25 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
           <p className="text-sm text-muted-foreground">
             {formatDay(locale, today, { weekday: "long", month: "long", day: "numeric" })}
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {habits.length === 0
-              ? t.dashboard.welcome(name)
-              : leftToday === 0
-                ? t.dashboard.allDone
-                : t.dashboard.leftToday(leftToday)}
+          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+            {habits.length === 0 ? (
+              t.dashboard.welcome(name)
+            ) : leftToday === 0 ? (
+              <>
+                {t.dashboard.allDone}
+                <span className="relative inline-flex">
+                  <Icon3D
+                    key={celebration}
+                    name="party"
+                    size={32}
+                    className={celebration > 0 ? "motion-safe:animate-wiggle" : undefined}
+                  />
+                  {celebration > 0 && <ConfettiBurst key={celebration} count={16} distance={46} />}
+                </span>
+              </>
+            ) : (
+              t.dashboard.leftToday(leftToday)
+            )}
           </h1>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
@@ -131,7 +156,7 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
 
       {habits.length === 0 ? (
         <Card className="items-center border-dashed py-12 text-center">
-          <SparklesIcon className="size-8 text-emerald-500" />
+          <Icon3D name="seedling" size={72} className="motion-safe:animate-float" />
           <div className="grid gap-1">
             <h2 className="font-medium">{t.dashboard.emptyTitle}</h2>
             <p className="max-w-sm text-sm text-muted-foreground">
@@ -145,10 +170,10 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <Stat icon={<TargetIcon />} label={t.dashboard.statToday} value={`${doneToday}/${habits.length}`} />
-            <Stat icon={<FlameIcon />} label={t.dashboard.statBestStreak} value={bestStreak} />
-            <Stat icon={<TrendingUpIcon />} label={t.dashboard.statCompletion} value={`${Math.round(rate30 * 100)}%`} />
-            <Stat icon={<SparklesIcon />} label={t.dashboard.statCheckIns} value={String(totalCheckIns)} />
+            <Stat index={0} icon="target" label={t.dashboard.statToday} value={`${doneToday}/${habits.length}`} />
+            <Stat index={1} icon="fire" label={t.dashboard.statBestStreak} value={bestStreak} />
+            <Stat index={2} icon="chart" label={t.dashboard.statCompletion} value={`${Math.round(rate30 * 100)}%`} />
+            <Stat index={3} icon="check" label={t.dashboard.statCheckIns} value={String(totalCheckIns)} />
           </div>
 
           <SortableHabits
@@ -223,14 +248,22 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
   )
 }
 
-function Stat({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+function Stat({ icon, label, value, index }: { icon: Icon3DName; label: string; value: string; index: number }) {
   return (
-    <Card className="gap-1 p-4">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground [&_svg]:size-3.5">
-        {icon}
-        {label}
+    <Card
+      className="group flex-row items-center gap-3 p-4 transition-shadow hover:shadow-md motion-safe:animate-rise"
+      style={{ animationDelay: `${index * 70}ms` }}
+    >
+      <Icon3D
+        name={icon}
+        size={36}
+        eager
+        className="transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"
+      />
+      <div className="min-w-0">
+        <div className="truncate text-xs text-muted-foreground">{label}</div>
+        <div className="text-2xl font-semibold tabular-nums">{value}</div>
       </div>
-      <div className="text-2xl font-semibold tabular-nums">{value}</div>
     </Card>
   )
 }

@@ -84,7 +84,7 @@ export const ru: Dictionary = {
   },
   dashboard: {
     welcome: (name?: string | null) => `Добро пожаловать${name ? `, ${name}` : ""} 👋`,
-    allDone: "На сегодня всё сделано 🎉",
+    allDone: "На сегодня всё сделано",
     leftToday: (n: number) => `На сегодня ${p(n, "осталась", "осталось", "осталось")} ${n} ${p(n, "привычка", "привычки", "привычек")}`,
     newHabit: "Новая привычка",
     emptyTitle: "Начните с одной маленькой привычки",
@@ -277,7 +277,7 @@ export const ru: Dictionary = {
   achievements: {
     title: "Достижения",
     subtitle: (earned: number, total: number) => `Открыто ${earned} из ${total}`,
-    unlocked: (name: string) => `🏆 Новое достижение: ${name}`,
+    unlocked: (name: string) => `Новое достижение: ${name}`,
     progress: (current: number, target: number) => `${current}/${target}`,
     earned: "Получено",
     items: {

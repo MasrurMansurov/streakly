@@ -1,6 +1,6 @@
 "use client"
 
-import { ArchiveIcon, CheckIcon, MessageSquarePlusIcon, StickyNoteIcon, FlameIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import { ArchiveIcon, CheckIcon, MessageSquarePlusIcon, StickyNoteIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import { useState, useTransition, type ReactNode } from "react"
 import { toast } from "sonner"
 
@@ -23,6 +23,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { Habit } from "@/lib/data"
+import { ConfettiBurst } from "@/components/confetti-burst"
+import { Icon3D } from "@/components/icon-3d"
 import { Link } from "@/components/link"
 import { NoteDialog } from "@/components/note-dialog"
 import { formatDay } from "@/i18n"
@@ -56,6 +58,8 @@ export function HabitCard({ habit, done, today, onToggle, dragHandle, todayNote 
 
   const [editOpen, setEditOpen] = useState(false)
   const [noteOpen, setNoteOpen] = useState(false)
+  // bumped on every check-in → replays the pop + confetti
+  const [bursts, setBursts] = useState(0)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [pending, startTransition] = useTransition()
 
@@ -67,19 +71,30 @@ export function HabitCard({ habit, done, today, onToggle, dragHandle, todayNote 
     })
 
   return (
-    <Card className={cn("gap-0 p-4 transition", doneToday && color.soft)}>
+    <Card className={cn("gap-0 p-4 transition-all duration-300 hover:shadow-md", doneToday && color.soft)}>
       <div className="flex items-start gap-3">
         <button
           type="button"
-          onClick={() => onToggle(habit.id, today, !doneToday)}
+          onClick={() => {
+            if (!doneToday) setBursts((n) => n + 1)
+            onToggle(habit.id, today, !doneToday)
+          }}
           aria-pressed={doneToday}
           aria-label={doneToday ? t.habit.markUndone(habit.name) : t.habit.markDone(habit.name)}
           className={cn(
-            "flex size-11 shrink-0 items-center justify-center rounded-full border-2 transition active:scale-95",
+            "relative flex size-11 shrink-0 items-center justify-center rounded-full border-2 transition active:scale-90",
             doneToday ? cn(color.dot, "border-transparent text-white") : "border-muted-foreground/30 hover:border-muted-foreground/60"
           )}
         >
-          <CheckIcon className={cn("size-5 transition", doneToday ? "opacity-100" : "opacity-0")} />
+          <CheckIcon
+            key={bursts}
+            className={cn(
+              "size-5 transition",
+              doneToday ? "opacity-100" : "opacity-0",
+              bursts > 0 && doneToday && "motion-safe:animate-pop"
+            )}
+          />
+          {bursts > 0 && doneToday && <ConfettiBurst key={bursts} />}
         </button>
 
         <div className="min-w-0 flex-1">
@@ -94,7 +109,12 @@ export function HabitCard({ habit, done, today, onToggle, dragHandle, todayNote 
           {habit.description && <p className="mt-0.5 truncate text-sm text-muted-foreground">{habit.description}</p>}
           <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
             <span className={cn("inline-flex items-center gap-1 font-medium", streak.current > 0 && color.text)}>
-              <FlameIcon className="size-3.5" /> {t.habit.streak(streak.current, streak.unit)}
+              <Icon3D
+                name="fire"
+                size={16}
+                className={cn("transition", streak.current === 0 && "opacity-40 grayscale")}
+              />{" "}
+              {t.habit.streak(streak.current, streak.unit)}
             </span>
             {target < 7 && (
               <span className={cn(thisWeek >= target && "font-medium text-foreground")}>

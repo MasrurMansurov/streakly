@@ -1,11 +1,12 @@
-import { ArrowLeftIcon, CalendarDaysIcon, FlameIcon, TrendingUpIcon, TrophyIcon } from "lucide-react"
+import { ArrowLeftIcon } from "lucide-react"
 import type { Metadata } from "next"
 
 import { getT } from "@/i18n/server"
 import { notFound } from "next/navigation"
-import { Suspense, type ReactNode } from "react"
+import { Suspense } from "react"
 
 import { Heatmap } from "@/components/heatmap"
+import { Icon3D, type Icon3DName } from "@/components/icon-3d"
 import { Link } from "@/components/link"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -95,14 +96,14 @@ async function HabitDetail({ params }: Props) {
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat icon={<FlameIcon />} label={t.habitPage.currentStreak} value={t.habit.streak(streak.current, streak.unit)} />
-        <Stat icon={<TrophyIcon />} label={t.habitPage.bestStreak} value={t.habit.streak(streak.best, streak.unit)} />
+        <Stat icon="fire" label={t.habitPage.currentStreak} value={t.habit.streak(streak.current, streak.unit)} />
+        <Stat icon="trophy" label={t.habitPage.bestStreak} value={t.habit.streak(streak.best, streak.unit)} />
         <Stat
-          icon={<TrendingUpIcon />}
+          icon="chart"
           label={t.habitPage.completion}
           value={`${Math.round(completionRate(done, today, 30, createdOn, target) * 100)}%`}
         />
-        <Stat icon={<CalendarDaysIcon />} label={t.habitPage.checkInsYear} value={String(yearCount)} />
+        <Stat icon="calendar" label={t.habitPage.checkInsYear} value={String(yearCount)} />
       </div>
 
       <Card>
@@ -148,7 +149,9 @@ async function HabitDetail({ params }: Props) {
 
       <Card>
         <CardHeader>
-          <CardTitle>{t.notes.title}</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Icon3D name="memo" size={24} /> {t.notes.title}
+          </CardTitle>
           <CardDescription>{t.notes.subtitle}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -164,14 +167,19 @@ async function HabitDetail({ params }: Props) {
   )
 }
 
-function Stat({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+function Stat({ icon, label, value }: { icon: Icon3DName; label: string; value: string }) {
   return (
-    <Card className="gap-1 p-4">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground [&_svg]:size-3.5">
-        {icon}
-        {label}
+    <Card className="group flex-row items-center gap-3 p-4 transition-shadow hover:shadow-md motion-safe:animate-rise">
+      <Icon3D
+        name={icon}
+        size={36}
+        eager
+        className="transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"
+      />
+      <div className="min-w-0">
+        <div className="truncate text-xs text-muted-foreground">{label}</div>
+        <div className="text-2xl font-semibold tabular-nums">{value}</div>
       </div>
-      <div className="text-2xl font-semibold tabular-nums">{value}</div>
     </Card>
   )
 }

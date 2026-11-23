@@ -36,7 +36,7 @@ test("first check-in unlocks 'First step'", async ({ page }) => {
   const done = serverAction(page)
   await page.getByRole("button", { name: `Mark "${name}" as done today` }).click()
   await done
-  await expect(page.getByText("🏆 Achievement unlocked: First step")).toBeVisible()
+  await expect(page.getByText("Achievement unlocked: First step")).toBeVisible()
 
   // clean up: deleting the habit removes its check-ins too
   const card = page.locator("[data-slot=card]", { has: page.locator("h3", { hasText: name }) })

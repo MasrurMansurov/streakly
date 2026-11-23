@@ -9,6 +9,9 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 **Demo account:** `demo@streakly.dev` / `streakly-demo` · public profile: [/u/demo](https://streakly-pied-six.vercel.app/u/demo)
 
 <p align="center">
+  <img src="docs/screenshots/landing.png" alt="Landing page" width="98%" />
+</p>
+<p align="center">
   <img src="docs/screenshots/dashboard-light.png" alt="Dashboard (light)" width="49%" />
   <img src="docs/screenshots/dashboard-dark.png" alt="Dashboard (dark)" width="49%" />
 </p>
@@ -35,6 +38,7 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 - **Daily reminders (Web Push):** pick a time; a notification arrives only if habits are still due today. Supabase `pg_cron` calls an Edge Function every 15 min; VAPID keys and the cron token live in Supabase Vault
 - **English & Russian:** `/en/…` and `/ru/…` URLs (language picked from the browser, switcher in the header), proper Russian plurals via `Intl.PluralRules`, localized dates, validation messages and push notifications
 - **Installable (PWA):** add to the home screen and open full-screen, with app icons and theme colors
+- **3D icons & motion:** Fluent Emoji 3D icons, staggered entrance, check-in confetti, floating hero icons — all CSS, disabled for `prefers-reduced-motion`
 - Dark mode, responsive layout, accessible controls
 
 ## Tech stack
@@ -123,3 +127,7 @@ npm run build
 - [x] Reminders (Edge Function + cron)
 - [x] OG image for public profiles
 - [x] Playwright e2e tests
+
+## Credits
+
+3D icons: [Microsoft Fluent Emoji](https://github.com/microsoft/fluentui-emoji) (MIT, see `public/3d/LICENSE.txt`).
