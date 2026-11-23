@@ -23,7 +23,9 @@ test("login form validates input", async ({ page }) => {
 test("public profile is visible without an account", async ({ page }) => {
   await page.goto("/u/demo")
   await expect(page.getByRole("heading", { name: "Demo User" })).toBeVisible()
-  await expect(page.getByText("Read 10 pages")).toBeVisible()
+  // first visit refreshes once to apply the visitor's timezone; during the swap the
+  // list can briefly exist twice, so don't require a single match
+  await expect(page.getByText("Read 10 pages").first()).toBeVisible()
   await expect(page).toHaveTitle(/Demo User's habits/)
 })
 
