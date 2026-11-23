@@ -21,8 +21,17 @@ export default function DashboardPage() {
 }
 
 async function Dashboard() {
-  const { habits, logs, today, profile, archivedCount } = await getDashboardData()
-  return <DashboardView habits={habits} logs={logs} today={today} profile={profile} archivedCount={archivedCount} />
+  const { habits, logs, today, profile, archivedCount, todayNotes } = await getDashboardData()
+  return (
+    <DashboardView
+      habits={habits}
+      logs={logs}
+      today={today}
+      profile={profile}
+      archivedCount={archivedCount}
+      todayNotes={todayNotes}
+    />
+  )
 }
 
 function DashboardSkeleton() {

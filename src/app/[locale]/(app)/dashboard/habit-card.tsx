@@ -1,6 +1,6 @@
 "use client"
 
-import { ArchiveIcon, CheckIcon, FlameIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import { ArchiveIcon, CheckIcon, MessageSquarePlusIcon, StickyNoteIcon, FlameIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import { useState, useTransition, type ReactNode } from "react"
 import { toast } from "sonner"
 
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import type { Habit } from "@/lib/data"
 import { Link } from "@/components/link"
+import { NoteDialog } from "@/components/note-dialog"
 import { formatDay } from "@/i18n"
 import { useI18n } from "@/i18n/client"
 import { addDays, type ISODate } from "@/lib/dates"
@@ -40,9 +41,10 @@ type Props = {
   onToggle: (habitId: string, date: ISODate, done: boolean) => void
   /** drag handle rendered next to the menu (from the sortable wrapper) */
   dragHandle?: ReactNode
+  todayNote?: string
 }
 
-export function HabitCard({ habit, done, today, onToggle, dragHandle }: Props) {
+export function HabitCard({ habit, done, today, onToggle, dragHandle, todayNote }: Props) {
   const { locale, t } = useI18n()
   const color = habitColor(habit.color)
   const target = habit.target_per_week
@@ -53,6 +55,7 @@ export function HabitCard({ habit, done, today, onToggle, dragHandle }: Props) {
   const week = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6))
 
   const [editOpen, setEditOpen] = useState(false)
+  const [noteOpen, setNoteOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [pending, startTransition] = useTransition()
 
@@ -104,6 +107,18 @@ export function HabitCard({ habit, done, today, onToggle, dragHandle }: Props) {
           </div>
         </div>
 
+        {doneToday && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={todayNote ? t.notes.edit : t.notes.add}
+            title={todayNote ?? t.notes.add}
+            className={cn(todayNote ? color.text : "text-muted-foreground")}
+            onClick={() => setNoteOpen(true)}
+          >
+            {todayNote ? <StickyNoteIcon /> : <MessageSquarePlusIcon />}
+          </Button>
+        )}
         {dragHandle}
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -167,6 +182,14 @@ export function HabitCard({ habit, done, today, onToggle, dragHandle }: Props) {
       </div>
 
       <HabitFormDialog open={editOpen} onOpenChange={setEditOpen} habit={habit} />
+      <NoteDialog
+        open={noteOpen}
+        onOpenChange={setNoteOpen}
+        habitId={habit.id}
+        habitName={habit.name}
+        date={today}
+        initialNote={todayNote ?? ""}
+      />
 
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent>

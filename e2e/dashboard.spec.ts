@@ -196,3 +196,32 @@ test("settings show the reminders card", async ({ page }) => {
   await expect(page.getByRole("radio", { name: /Evening/ })).toHaveAttribute("aria-checked", "true")
   await expect(page.getByLabel("Or pick a time")).toHaveValue("20:00")
 })
+
+test("add a note to today's check-in and see it on the habit page", async ({ page }) => {
+  const doneButton = page.getByRole("button", { name: /"No sugar" as (not )?done today/ })
+  const wasDone = (await doneButton.getAttribute("aria-pressed")) === "true"
+  if (!wasDone) await withServerAction(page, () => doneButton.click())
+
+  const card = page.locator("[data-slot=card]", { has: page.locator("h3", { hasText: "No sugar" }) })
+  const note = `E2E note ${Date.now()}`
+  await card.getByRole("button", { name: /^(Add a note|Edit note)$/ }).click()
+  const dialog = page.getByRole("dialog")
+  await dialog.getByRole("textbox").fill(note)
+  await withServerAction(page, () => dialog.getByRole("button", { name: "Save", exact: true }).click())
+  await expect(page.getByText("Note saved")).toBeVisible()
+
+  await card.getByRole("link", { name: "No sugar" }).click()
+  await expect(page.getByText(note)).toBeVisible()
+
+  // remove the note (empty text) and restore the original check-in state
+  await page.getByRole("button", { name: "Edit note" }).first().click()
+  await dialog.getByRole("textbox").fill("")
+  await withServerAction(page, () => dialog.getByRole("button", { name: "Save", exact: true }).click())
+  await expect(page.getByText(note)).toHaveCount(0)
+
+  if (!wasDone) {
+    await page.goto("/dashboard")
+    // uncheck again (the button is labelled "…as not done today" while checked)
+    await withServerAction(page, () => page.getByRole("button", { name: /"No sugar" as not done today/ }).click())
+  }
+})

@@ -26,11 +26,12 @@ type Props = {
   today: ISODate
   profile: { username: string; display_name: string | null; is_public: boolean } | null
   archivedCount: number
+  todayNotes: Record<string, string>
 }
 
 type Toggle = { habitId: string; date: ISODate; done: boolean }
 
-export function DashboardView({ habits: serverHabits, logs, today, profile, archivedCount }: Props) {
+export function DashboardView({ habits: serverHabits, logs, today, profile, archivedCount, todayNotes }: Props) {
   const { locale, t } = useI18n()
   const [createOpen, setCreateOpen] = useState(false)
   const [, startTransition] = useTransition()
@@ -147,6 +148,7 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
                 done={byHabit.get(h.id)!}
                 today={today}
                 onToggle={onToggle}
+                todayNote={todayNotes[h.id]}
                 dragHandle={habits.length > 1 ? dragHandle : undefined}
               />
             )}

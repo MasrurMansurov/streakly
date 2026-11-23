@@ -154,3 +154,25 @@ export async function restoreHabit(id: string): Promise<ActionResult> {
   refresh()
   return { ok: true }
 }
+
+/** Add, change or (with an empty note) remove the note on a check-in. */
+export async function saveNote(habitId: string, date: string, note: string): Promise<ActionResult> {
+  const { t } = await getActionT()
+  if (!isISODate(date)) return { ok: false, error: t.validation.invalidDate }
+  const text = note.trim()
+  if (text.length > 280) return { ok: false, error: t.notes.tooLong }
+
+  const { user, supabase } = await authed()
+  const { error } = text
+    ? await supabase
+        .from("habit_notes")
+        .upsert({ habit_id: habitId, log_date: date, note: text, updated_at: new Date().toISOString() })
+    : await supabase.from("habit_notes").delete().eq("habit_id", habitId).eq("log_date", date).eq("user_id", user.id)
+  if (error) {
+    // 23503: the day isn't checked off (notes belong to a check-in)
+    if (error.code === "23503") return { ok: false, error: t.notes.checkInFirst }
+    return { ok: false, error: error.message }
+  }
+  refresh()
+  return { ok: true, message: text ? t.notes.saved : t.notes.removed }
+}

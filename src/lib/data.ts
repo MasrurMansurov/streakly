@@ -67,7 +67,7 @@ export async function getDashboardData() {
   const [{ today, timeZone }, supabase] = await Promise.all([getToday(), createClient()])
   const since = addDays(today, -(HISTORY_DAYS - 1))
 
-  const [habitsRes, logs, profileRes, archivedCount] = await Promise.all([
+  const [habitsRes, logs, profileRes, archivedCount, notesRes] = await Promise.all([
     supabase
       .from("habits")
       .select("id, name, description, color, position, target_per_week, created_at")
@@ -86,6 +86,7 @@ export async function getDashboardData() {
     ),
     supabase.from("profiles").select("username, display_name, is_public").eq("id", user.id).single(),
     getArchivedCount(user.id),
+    supabase.from("habit_notes").select("habit_id, note").eq("user_id", user.id).eq("log_date", today),
   ])
   if (habitsRes.error) throw habitsRes.error
 
@@ -97,6 +98,7 @@ export async function getDashboardData() {
     today,
     timeZone,
     archivedCount,
+    todayNotes: Object.fromEntries((notesRes.data ?? []).map((n) => [n.habit_id, n.note])) as Record<string, string>,
   }
 }
 
@@ -196,7 +198,12 @@ export async function getHabitDetail(id: string) {
       .order("log_date")
       .range(from, to)
   )
-  return { habit, logs, today }
+  const { data: notes } = await supabase
+    .from("habit_notes")
+    .select("log_date, note")
+    .eq("habit_id", id)
+    .eq("user_id", user.id)
+  return { habit, logs, today, notes: Object.fromEntries((notes ?? []).map((n) => [n.log_date, n.note])) }
 }
 
 export type ReminderSettings = { enabled: boolean; remindAt: string; timezone: string; devices: number }

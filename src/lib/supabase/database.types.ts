@@ -56,6 +56,30 @@ export type Database = {
           },
         ]
       }
+      habit_notes: {
+        Row: {
+          habit_id: string
+          log_date: string
+          note: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          habit_id: string
+          log_date: string
+          note: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          habit_id?: string
+          log_date?: string
+          note?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       habits: {
         Row: {
           archived_at: string | null

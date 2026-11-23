@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils"
 
 import { ActivityChart } from "../../dashboard/activity-chart"
 import { HabitActions } from "./habit-actions"
+import { NotesList } from "./notes-list"
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -49,7 +50,7 @@ async function HabitDetail({ params }: Props) {
   const weekdays = Array.from({ length: 7 }, (_, i) => formatDay(locale, addDays(A_MONDAY, i), { weekday: "short" }))
   if (!data) notFound()
 
-  const { habit, logs, today } = data
+  const { habit, logs, today, notes } = data
   const color = habitColor(habit.color)
   const target = habit.target_per_week
   const createdOn = habit.created_at.slice(0, 10)
@@ -144,6 +145,21 @@ async function HabitDetail({ params }: Props) {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t.notes.title}</CardTitle>
+          <CardDescription>{t.notes.subtitle}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <NotesList
+            habitId={habit.id}
+            habitName={habit.name}
+            dates={[...done].filter((d) => d > addDays(today, -30)).sort().reverse()}
+            notes={notes}
+          />
+        </CardContent>
+      </Card>
     </div>
   )
 }
