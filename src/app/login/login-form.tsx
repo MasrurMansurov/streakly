@@ -15,6 +15,8 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { authSchema, type AuthInput } from "@/lib/validation"
 
+import { OAuthButtons } from "./oauth-buttons"
+
 type Mode = "signin" | "signup"
 
 export function LoginForm() {
@@ -71,6 +73,8 @@ export function LoginForm() {
             That link is invalid or expired. Please sign in again.
           </p>
         )}
+
+        <OAuthButtons />
 
         <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)}>
           <TabsList className="w-full">

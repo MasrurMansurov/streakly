@@ -25,7 +25,7 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 - **Activity heatmap** (26 weeks) and a 30-day bar chart (Recharts)
 - **Drag-and-drop ordering** (dnd-kit) — mouse, touch and keyboard, with screen reader announcements
 - **Public profile** at `/u/<username>`, opt-in; archived habits stay private, with a generated OG image for link previews
-- **Auth:** email + password via Supabase Auth with cookie sessions (`@supabase/ssr`)
+- **Auth:** email + password, optional GitHub / Google OAuth, via Supabase Auth with cookie sessions (`@supabase/ssr`)
 - **Timezone-aware:** "today" is computed in the user's own timezone, not the server's
 - Dark mode, responsive layout, accessible controls
 
@@ -87,6 +87,13 @@ cp .env.example .env.local   # fill in your Supabase URL and publishable key
 npm run dev
 ```
 
+### OAuth (optional)
+
+1. Create an OAuth app ([GitHub](https://github.com/settings/developers) / [Google Cloud](https://console.cloud.google.com/apis/credentials)) with the callback URL `https://<project-ref>.supabase.co/auth/v1/callback`.
+2. Enable the provider in Supabase → Authentication → Sign In / Providers with its client ID and secret.
+3. Add `https://your-domain/**` to Supabase → Authentication → URL Configuration → Redirect URLs.
+4. Set `NEXT_PUBLIC_AUTH_PROVIDERS=github,google` and redeploy.
+
 Apply the migrations from `supabase/migrations` to your Supabase project (SQL editor or `supabase db push`).
 
 ```bash
@@ -100,7 +107,7 @@ npm run build
 
 ## Roadmap
 
-- [ ] Google / GitHub OAuth
+- [x] Google / GitHub OAuth (behind `NEXT_PUBLIC_AUTH_PROVIDERS`)
 - [x] Drag-and-drop habit ordering (dnd-kit)
 - [x] Weekly targets ("3× per week")
 - [ ] Reminders (Edge Function + cron)
