@@ -223,3 +223,74 @@ export async function getReminderSettings(): Promise<ReminderSettings> {
     devices: count ?? 0,
   }
 }
+
+export type FeedItem = {
+  date: string
+  createdAt: string
+  habit: { name: string; color: string }
+  person: { username: string; name: string; avatarUrl: string | null }
+}
+
+/** People the user follows (only those still public) and their check-ins from the last 7 days. */
+export async function getFriendsData() {
+  const user = await requireUser()
+  const [{ today, timeZone }, supabase] = await Promise.all([getToday(), createClient()])
+
+  const { data: follows } = await supabase
+    .from("follows")
+    .select("following_id, created_at")
+    .eq("follower_id", user.id)
+    .order("created_at", { ascending: false })
+  const ids = (follows ?? []).map((f) => f.following_id)
+  if (ids.length === 0) return { people: [], feed: [] as FeedItem[], today, timeZone }
+
+  // RLS hides profiles that went private, so they simply drop out
+  const [{ data: profiles }, { data: logs }] = await Promise.all([
+    supabase.from("profiles").select("id, username, display_name, avatar_url").in("id", ids),
+    supabase
+      .from("habit_logs")
+      .select("log_date, created_at, user_id, habits(name, color)")
+      .in("user_id", ids)
+      .gte("log_date", addDays(today, -6))
+      .order("created_at", { ascending: false })
+      .limit(100),
+  ])
+
+  const byId = new Map((profiles ?? []).map((p) => [p.id, p]))
+  const people = ids.flatMap((id) => {
+    const p = byId.get(id)
+    return p ? [{ id: p.id, username: p.username, name: p.display_name || p.username, avatarUrl: p.avatar_url }] : []
+  })
+  const feed: FeedItem[] = (logs ?? []).flatMap((l) => {
+    const p = byId.get(l.user_id)
+    // habits(...) is null for archived habits (not public)
+    if (!p || !l.habits) return []
+    return [
+      {
+        date: l.log_date,
+        createdAt: l.created_at,
+        habit: { name: l.habits.name, color: l.habits.color },
+        person: { username: p.username, name: p.display_name || p.username, avatarUrl: p.avatar_url },
+      },
+    ]
+  })
+  return { people, feed, today, timeZone }
+}
+
+/** Follow state between the viewer and a profile, plus public counters. */
+export async function getFollowInfo(profileId: string) {
+  const [user, supabase] = await Promise.all([getCurrentUser(), createClient()])
+  const [{ data: counts }, { data: row }] = await Promise.all([
+    supabase.rpc("follow_counts", { p_profile: profileId }),
+    user
+      ? supabase.from("follows").select("following_id").eq("follower_id", user.id).eq("following_id", profileId).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ])
+  return {
+    signedIn: Boolean(user),
+    isSelf: user?.id === profileId,
+    following: Boolean(row),
+    followers: Number(counts?.[0]?.followers ?? 0),
+    followingCount: Number(counts?.[0]?.following ?? 0),
+  }
+}

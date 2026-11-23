@@ -8,7 +8,8 @@ import { SiteHeader } from "@/components/site-header"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { getPublicProfile, getToday } from "@/lib/data"
+import { FollowButton } from "@/components/follow-button"
+import { getFollowInfo, getPublicProfile, getToday } from "@/lib/data"
 import { formatDay } from "@/i18n"
 import { getT } from "@/i18n/server"
 import { addDays, type ISODate } from "@/lib/dates"
@@ -69,7 +70,7 @@ async function PublicProfile({ params }: Props) {
 
   return (
     <div className="grid gap-8">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <Avatar className="size-16">
           {profile.avatar_url && <AvatarImage src={profile.avatar_url} alt="" />}
           <AvatarFallback className="text-lg">{name.slice(0, 2).toUpperCase()}</AvatarFallback>
@@ -82,6 +83,10 @@ async function PublicProfile({ params }: Props) {
           </p>
           {profile.bio && <p className="mt-1 text-sm">{profile.bio}</p>}
         </div>
+        {/* per-viewer (reads the session) → streams in separately from the cached profile */}
+        <Suspense fallback={<Skeleton className="ml-auto h-12 w-36" />}>
+          <FollowArea profileId={profile.id} name={name} />
+        </Suspense>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
@@ -133,6 +138,20 @@ async function PublicProfile({ params }: Props) {
           })}
         </section>
       )}
+    </div>
+  )
+}
+
+async function FollowArea({ profileId, name }: { profileId: string; name: string }) {
+  const [info, { t }] = await Promise.all([getFollowInfo(profileId), getT()])
+  return (
+    <div className="ml-auto flex flex-col items-end gap-1">
+      {!info.isSelf && (
+        <FollowButton profileId={profileId} name={name} following={info.following} signedIn={info.signedIn} />
+      )}
+      <span className="text-xs text-muted-foreground">
+        {t.friends.followers(info.followers)} · {t.friends.followingCount(info.followingCount)}
+      </span>
     </div>
   )
 }
