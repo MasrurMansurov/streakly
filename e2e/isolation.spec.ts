@@ -17,7 +17,7 @@ test("users only see their own habits", async ({ page, context }) => {
   // grab the URL of one of the demo user's habits
   await signIn(page, DEMO)
   const demoHabitHref = await page.getByRole("link", { name: "Read 10 pages" }).getAttribute("href")
-  expect(demoHabitHref).toMatch(/^\/habits\//)
+  expect(demoHabitHref).toMatch(/^\/en\/habits\//)
   await context.clearCookies()
 
   await signIn(page, TESTER)

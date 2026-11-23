@@ -111,7 +111,7 @@ test("settings show the profile and sign out works", async ({ page }) => {
   await expect(page.getByLabel("Username")).toHaveValue("demo")
   await page.getByRole("button", { name: "Account menu" }).click()
   await page.getByRole("menuitem", { name: "Sign out" }).click()
-  await expect(page).toHaveURL(/\/$/)
+  await expect(page).toHaveURL(/\/en$/)
   await page.goto("/dashboard")
   await expect(page).toHaveURL(/\/login$/)
 })

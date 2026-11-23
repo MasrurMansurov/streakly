@@ -17,7 +17,10 @@ export function SiteHeader() {
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4">
         <Logo />
         <div className="flex items-center gap-1">
-          <LanguageSwitcher />
+          {/* reads the current URL (usePathname) → keep it out of the static shell */}
+          <Suspense fallback={<div className="h-8 w-12" />}>
+            <LanguageSwitcher />
+          </Suspense>
           <ThemeToggle />
           {/* reads the session → streams in behind its own boundary */}
           <Suspense fallback={<Skeleton className="size-8 rounded-full" />}>

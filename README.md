@@ -30,6 +30,7 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 - **Auth:** email + password, optional GitHub / Google OAuth, via Supabase Auth with cookie sessions (`@supabase/ssr`)
 - **Timezone-aware:** "today" is computed in the user's own timezone, not the server's
 - **Daily reminders (Web Push):** pick a time; a notification arrives only if habits are still due today. Supabase `pg_cron` calls an Edge Function every 15 min; VAPID keys and the cron token live in Supabase Vault
+- **English & Russian:** `/en/…` and `/ru/…` URLs (language picked from the browser, switcher in the header), proper Russian plurals via `Intl.PluralRules`, localized dates, validation messages and push notifications
 - **Installable (PWA):** add to the home screen and open full-screen, with app icons and theme colors
 - Dark mode, responsive layout, accessible controls
 
@@ -63,6 +64,7 @@ src/
 └── lib/
     ├── data.ts               # data access layer (server-only)
     ├── streaks.ts, dates.ts  # pure logic, unit-tested
+├── i18n/                     # dictionaries (en, ru), locale helpers, plurals
     ├── validation.ts         # zod schemas
     └── supabase/             # server, proxy and public clients + generated types
 supabase/migrations/          # schema, RLS policies, triggers, cron job
