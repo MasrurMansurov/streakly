@@ -4,7 +4,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 
 type Point = { date: string; label: string; done: number }
 
-export function ActivityChart({ data, max }: { data: Point[]; max: number }) {
+export function ActivityChart({ data, max, color = "#10b981" }: { data: Point[]; max: number; color?: string }) {
   return (
     <div className="h-48 w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -36,7 +36,7 @@ export function ActivityChart({ data, max }: { data: Point[]; max: number }) {
             }}
             formatter={(value) => [value, "Completed"]}
           />
-          <Bar dataKey="done" radius={[4, 4, 0, 0]} fill="#10b981" />
+          <Bar dataKey="done" radius={[4, 4, 0, 0]} fill={color} />
         </BarChart>
       </ResponsiveContainer>
     </div>

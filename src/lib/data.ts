@@ -67,7 +67,7 @@ export async function getDashboardData() {
   const [{ today, timeZone }, supabase] = await Promise.all([getToday(), createClient()])
   const since = addDays(today, -(HISTORY_DAYS - 1))
 
-  const [habitsRes, logs, profileRes] = await Promise.all([
+  const [habitsRes, logs, profileRes, archivedCount] = await Promise.all([
     supabase
       .from("habits")
       .select("id, name, description, color, position, target_per_week, created_at")
@@ -83,6 +83,7 @@ export async function getDashboardData() {
         .range(from, to)
     ),
     supabase.from("profiles").select("username, display_name, is_public").eq("id", user.id).single(),
+    getArchivedCount(),
   ])
   if (habitsRes.error) throw habitsRes.error
 
@@ -93,6 +94,7 @@ export async function getDashboardData() {
     logs,
     today,
     timeZone,
+    archivedCount,
   }
 }
 
@@ -136,4 +138,57 @@ export async function getPublicProfile(username: string) {
   ])
 
   return { profile, habits: habitsRes.data ?? [], logs }
+}
+
+export type ArchivedHabit = Habit & { archived_at: string; checkIns: number }
+
+/** The user's archived habits, newest first, with their total check-ins. */
+export async function getArchivedHabits(): Promise<ArchivedHabit[]> {
+  await requireUser()
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("habits")
+    .select("id, name, description, color, position, target_per_week, created_at, archived_at, habit_logs(count)")
+    .not("archived_at", "is", null)
+    .order("archived_at", { ascending: false })
+  if (error) throw error
+  return data.map(({ habit_logs, archived_at, ...h }) => ({
+    ...h,
+    archived_at: archived_at!,
+    checkIns: habit_logs[0]?.count ?? 0,
+  }))
+}
+
+/** How many habits are archived (for the dashboard link). */
+export async function getArchivedCount(): Promise<number> {
+  const supabase = await createClient()
+  const { count } = await supabase
+    .from("habits")
+    .select("id", { count: "exact", head: true })
+    .not("archived_at", "is", null)
+  return count ?? 0
+}
+
+/** One habit (active or archived) with a year of history. RLS limits it to the owner. */
+export async function getHabitDetail(id: string) {
+  await requireUser()
+  const [{ today }, supabase] = await Promise.all([getToday(), createClient()])
+  const { data: habit } = await supabase
+    .from("habits")
+    .select("id, name, description, color, position, target_per_week, created_at, archived_at")
+    .eq("id", id)
+    .maybeSingle()
+  if (!habit) return null
+
+  const since = addDays(today, -370)
+  const logs = await fetchAllLogs((from, to) =>
+    supabase
+      .from("habit_logs")
+      .select("habit_id, log_date")
+      .eq("habit_id", id)
+      .gte("log_date", since)
+      .order("log_date")
+      .range(from, to)
+  )
+  return { habit, logs, today }
 }

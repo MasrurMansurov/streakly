@@ -23,11 +23,12 @@ type Props = {
   logs: HabitLog[]
   today: ISODate
   profile: { username: string; display_name: string | null; is_public: boolean } | null
+  archivedCount: number
 }
 
 type Toggle = { habitId: string; date: ISODate; done: boolean }
 
-export function DashboardView({ habits: serverHabits, logs, today, profile }: Props) {
+export function DashboardView({ habits: serverHabits, logs, today, profile, archivedCount }: Props) {
   const [createOpen, setCreateOpen] = useState(false)
   const [, startTransition] = useTransition()
 
@@ -168,6 +169,14 @@ export function DashboardView({ habits: serverHabits, logs, today, profile }: Pr
               </CardContent>
             </Card>
           </div>
+
+          {archivedCount > 0 && (
+            <p className="-mt-4 text-center text-sm">
+              <Link href="/archive" className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
+                {archivedCount} archived habit{archivedCount === 1 ? "" : "s"}
+              </Link>
+            </p>
+          )}
 
           {profile && !profile.is_public && (
             <p className="text-center text-sm text-muted-foreground">

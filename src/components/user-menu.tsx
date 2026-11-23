@@ -1,6 +1,6 @@
 "use client"
 
-import { ExternalLinkIcon, LayoutDashboardIcon, LogOutIcon, SettingsIcon } from "lucide-react"
+import { ArchiveIcon, ExternalLinkIcon, LayoutDashboardIcon, LogOutIcon, SettingsIcon } from "lucide-react"
 import Link from "next/link"
 
 import { signOut } from "@/app/actions/auth"
@@ -46,6 +46,9 @@ export function UserMenu({ email, username, displayName, isPublic }: Props) {
         <DropdownMenuSeparator />
         <DropdownMenuItem render={<Link href="/dashboard" />}>
           <LayoutDashboardIcon /> Dashboard
+        </DropdownMenuItem>
+        <DropdownMenuItem render={<Link href="/archive" />}>
+          <ArchiveIcon /> Archive
         </DropdownMenuItem>
         <DropdownMenuItem render={<Link href="/settings" />}>
           <SettingsIcon /> Settings

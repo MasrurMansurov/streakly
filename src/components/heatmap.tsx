@@ -1,4 +1,5 @@
 import { addDays, formatDate, weekdayMon0, type ISODate } from "@/lib/dates"
+import { ScrollToEnd } from "@/components/scroll-to-end"
 import { cn } from "@/lib/utils"
 
 const LEVELS = [
@@ -17,10 +18,12 @@ type Props = {
   today: ISODate
   weeks?: number
   className?: string
+  /** single-habit mode: every completed day uses this class instead of the intensity scale */
+  doneClassName?: string
 }
 
 /** GitHub-style contribution grid: one column per week, Monday on top. */
-export function Heatmap({ counts, max, today, weeks = 26, className }: Props) {
+export function Heatmap({ counts, max, today, weeks = 26, className, doneClassName }: Props) {
   const start = addDays(today, -weekdayMon0(today) - (weeks - 1) * 7)
 
   const columns: { date: ISODate; future: boolean }[][] = []
@@ -42,14 +45,16 @@ export function Heatmap({ counts, max, today, weeks = 26, className }: Props) {
   const monthLabels = columns.map((col, i) => {
     const first = col[0].date
     const prev = i > 0 ? columns[i - 1][0].date : null
-    return !prev || first.slice(5, 7) !== prev.slice(5, 7) ? formatDate(first, { month: "short" }) : ""
+    const month = first.slice(5, 7)
+    // skip the very first column if the next month starts right after it (avoids "NovDec")
+    if (!prev) return columns[2]?.[0].date.slice(5, 7) === month ? formatDate(first, { month: "short" }) : ""
+    return month !== prev.slice(5, 7) ? formatDate(first, { month: "short" }) : ""
   })
 
   return (
-    // dir="rtl" makes the scroll container start at its right edge, so on narrow
-    // screens the most recent weeks are visible first; content stays left-to-right
-    <div dir="rtl" className={cn("overflow-x-auto pb-1", className)}>
-      <div dir="ltr" className="inline-flex flex-col gap-1">
+    // on narrow screens start scrolled to the most recent weeks
+    <ScrollToEnd className={cn("pb-1", className)}>
+      <div className="inline-flex flex-col gap-1">
         <div className="flex gap-[3px] pl-7 text-[10px] text-muted-foreground">
           {monthLabels.map((label, i) => (
             <div key={i} className="w-3 overflow-visible whitespace-nowrap">
@@ -73,14 +78,17 @@ export function Heatmap({ counts, max, today, weeks = 26, className }: Props) {
                   <div
                     key={date}
                     title={future ? undefined : `${formatDate(date, { month: "short", day: "numeric", year: "numeric" })}: ${n} done`}
-                    className={cn("size-3 rounded-[3px]", future ? "bg-transparent" : LEVELS[level(n)])}
+                    className={cn(
+                      "size-3 rounded-[3px]",
+                      future ? "bg-transparent" : doneClassName && n > 0 ? doneClassName : LEVELS[level(n)]
+                    )}
                   />
                 )
               })}
             </div>
           ))}
         </div>
-        <div className="flex items-center justify-end gap-1 text-[10px] text-muted-foreground">
+        <div className={cn("flex items-center justify-end gap-1 text-[10px] text-muted-foreground", doneClassName && "hidden")}>
           Less
           {LEVELS.map((c) => (
             <div key={c} className={cn("size-3 rounded-[3px]", c)} />
@@ -88,6 +96,6 @@ export function Heatmap({ counts, max, today, weeks = 26, className }: Props) {
           More
         </div>
       </div>
-    </div>
+    </ScrollToEnd>
   )
 }

@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server"
 
 import type { Database } from "./database.types"
 
-const PROTECTED_PREFIXES = ["/dashboard", "/settings"]
+const PROTECTED_PREFIXES = ["/dashboard", "/settings", "/archive", "/habits"]
 const AUTH_PAGES = ["/login"]
 
 /**

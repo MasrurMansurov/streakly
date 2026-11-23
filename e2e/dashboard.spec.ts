@@ -115,3 +115,51 @@ test("settings show the profile and sign out works", async ({ page }) => {
   await page.goto("/dashboard")
   await expect(page).toHaveURL(/\/login$/)
 })
+
+test("archive, undo, archive again and restore from the archive page", async ({ page }) => {
+  const name = `E2E archive ${Date.now()}`
+  const cardOf = (n: string) => page.locator("[data-slot=card]", { has: page.locator("h3", { hasText: n }) })
+
+  await page.getByRole("button", { name: "New habit" }).click()
+  await page.getByLabel("Name").fill(name)
+  await page.getByRole("button", { name: "Create habit" }).click()
+  await expect(cardOf(name)).toBeVisible()
+
+  // archive → undo from the toast
+  await cardOf(name).getByRole("button", { name: "Habit actions" }).click()
+  await page.getByRole("menuitem", { name: "Archive" }).click()
+  await expect(cardOf(name)).toHaveCount(0)
+  await page.getByRole("button", { name: "Undo" }).click()
+  await expect(cardOf(name)).toBeVisible()
+
+  // archive → restore from /archive
+  await cardOf(name).getByRole("button", { name: "Habit actions" }).click()
+  await page.getByRole("menuitem", { name: "Archive" }).click()
+  await expect(cardOf(name)).toHaveCount(0)
+  await page.getByRole("link", { name: /archived habit/ }).click()
+  await expect(page).toHaveURL(/\/archive$/)
+  const row = page.locator("main li", { hasText: name }) // toasts are <li> too, outside <main>
+  await row.getByRole("button", { name: "Restore" }).click()
+  await expect(row).toHaveCount(0)
+
+  // clean up
+  await page.goto("/dashboard")
+  await cardOf(name).getByRole("button", { name: "Habit actions" }).click()
+  await page.getByRole("menuitem", { name: "Delete" }).click()
+  await page.getByRole("button", { name: "Delete", exact: true }).click()
+  await expect(cardOf(name)).toHaveCount(0)
+})
+
+test("habit page shows history and stats", async ({ page }) => {
+  await page.getByRole("link", { name: "Read 10 pages" }).click()
+  await expect(page).toHaveURL(/\/habits\/[0-9a-f-]{36}$/)
+  await expect(page.getByRole("heading", { name: "Read 10 pages" })).toBeVisible()
+  await expect(page.getByText("Last 12 months")).toBeVisible()
+  await expect(page.getByText("By weekday")).toBeVisible()
+  await expect(page.getByText("Current streak", { exact: true })).toBeVisible()
+})
+
+test("unknown habit id shows not found", async ({ page }) => {
+  await page.goto("/habits/00000000-0000-0000-0000-000000000000")
+  await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible()
+})

@@ -130,3 +130,22 @@ export async function reorderHabits(ids: string[]): Promise<ActionResult> {
   refresh()
   return { ok: true }
 }
+
+/** Bring an archived habit back; it goes to the end of the active list. */
+export async function restoreHabit(id: string): Promise<ActionResult> {
+  const { user, supabase } = await authed()
+  const { count } = await supabase
+    .from("habits")
+    .select("id", { count: "exact", head: true })
+    .is("archived_at", null)
+
+  const { error } = await supabase
+    .from("habits")
+    .update({ archived_at: null, position: count ?? 0 })
+    .eq("id", id)
+  if (error) return { ok: false, error: error.message }
+
+  await invalidatePublicProfile(supabase, user.id)
+  refresh()
+  return { ok: true }
+}

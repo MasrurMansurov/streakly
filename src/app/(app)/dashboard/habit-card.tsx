@@ -1,10 +1,11 @@
 "use client"
 
 import { ArchiveIcon, CheckIcon, FlameIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import Link from "next/link"
 import { useState, useTransition, type ReactNode } from "react"
 import { toast } from "sonner"
 
-import { archiveHabit, deleteHabit } from "@/app/actions/habits"
+import { archiveHabit, deleteHabit, restoreHabit } from "@/app/actions/habits"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import {
@@ -78,7 +79,11 @@ export function HabitCard({ habit, done, today, onToggle, dragHandle }: Props) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className={cn("size-2 shrink-0 rounded-full", color.dot)} />
-            <h3 className="truncate font-medium">{habit.name}</h3>
+            <h3 className="truncate font-medium">
+              <Link href={`/habits/${habit.id}`} className="hover:underline">
+                {habit.name}
+              </Link>
+            </h3>
           </div>
           {habit.description && <p className="mt-0.5 truncate text-sm text-muted-foreground">{habit.description}</p>}
           <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
@@ -105,7 +110,17 @@ export function HabitCard({ habit, done, today, onToggle, dragHandle }: Props) {
             <DropdownMenuItem onClick={() => setEditOpen(true)}>
               <PencilIcon /> Edit
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => run(() => archiveHabit(habit.id), "Habit archived")}>
+            <DropdownMenuItem
+              onClick={() =>
+                startTransition(async () => {
+                  const res = await archiveHabit(habit.id)
+                  if (!res.ok) return void toast.error(res.error)
+                  toast.success(`“${habit.name}” archived`, {
+                    action: { label: "Undo", onClick: () => startTransition(async () => void (await restoreHabit(habit.id))) },
+                  })
+                })
+              }
+            >
               <ArchiveIcon /> Archive
             </DropdownMenuItem>
             <DropdownMenuSeparator />
