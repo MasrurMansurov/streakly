@@ -1,4 +1,12 @@
-import { ArrowLeftIcon } from "lucide-react"
+import {
+  ArrowLeftIcon,
+  CalendarDaysIcon,
+  FlameIcon,
+  StickyNoteIcon,
+  TrendingUpIcon,
+  TrophyIcon,
+  type LucideIcon,
+} from "lucide-react"
 import type { Metadata } from "next"
 
 import { getT } from "@/i18n/server"
@@ -6,7 +14,7 @@ import { notFound } from "next/navigation"
 import { Suspense } from "react"
 
 import { Heatmap } from "@/components/heatmap"
-import { Icon3D, type Icon3DName } from "@/components/icon-3d"
+import { IconTile, type IconTone } from "@/components/icon-tile"
 import { Link } from "@/components/link"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -96,14 +104,15 @@ async function HabitDetail({ params }: Props) {
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat icon="fire" label={t.habitPage.currentStreak} value={t.habit.streak(streak.current, streak.unit)} />
-        <Stat icon="trophy" label={t.habitPage.bestStreak} value={t.habit.streak(streak.best, streak.unit)} />
+        <Stat icon={FlameIcon} tone="orange" label={t.habitPage.currentStreak} value={t.habit.streak(streak.current, streak.unit)} />
+        <Stat icon={TrophyIcon} tone="amber" label={t.habitPage.bestStreak} value={t.habit.streak(streak.best, streak.unit)} />
         <Stat
-          icon="chart"
+          icon={TrendingUpIcon}
+          tone="sky"
           label={t.habitPage.completion}
           value={`${Math.round(completionRate(done, today, 30, createdOn, target) * 100)}%`}
         />
-        <Stat icon="calendar" label={t.habitPage.checkInsYear} value={String(yearCount)} />
+        <Stat icon={CalendarDaysIcon} tone="violet" label={t.habitPage.checkInsYear} value={String(yearCount)} />
       </div>
 
       <Card>
@@ -150,7 +159,7 @@ async function HabitDetail({ params }: Props) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Icon3D name="memo" size={24} /> {t.notes.title}
+            <IconTile icon={StickyNoteIcon} tone="amber" size="sm" /> {t.notes.title}
           </CardTitle>
           <CardDescription>{t.notes.subtitle}</CardDescription>
         </CardHeader>
@@ -167,17 +176,25 @@ async function HabitDetail({ params }: Props) {
   )
 }
 
-function Stat({ icon, label, value }: { icon: Icon3DName; label: string; value: string }) {
+function Stat({
+  icon,
+  tone,
+  label,
+  value,
+  index = 0,
+}: {
+  icon: LucideIcon
+  tone: IconTone
+  label: string
+  value: string
+  index?: number
+}) {
   return (
-    <Card className="group flex-row items-center gap-3 p-4 transition-shadow hover:shadow-md motion-safe:animate-rise">
-      <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-muted to-muted/30">
-        <Icon3D
-          name={icon}
-          size={46}
-          eager
-          className="transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"
-        />
-      </span>
+    <Card
+      className="flex-row items-center gap-3 p-4 transition-shadow hover:shadow-md motion-safe:animate-rise"
+      style={{ animationDelay: `${index * 70}ms` }}
+    >
+      <IconTile icon={icon} tone={tone} />
       <div className="min-w-0">
         <div className="truncate text-xs text-muted-foreground">{label}</div>
         <div className="text-2xl font-semibold tabular-nums">{value}</div>

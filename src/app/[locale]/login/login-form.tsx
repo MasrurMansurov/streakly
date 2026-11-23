@@ -7,7 +7,8 @@ import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 
 import { signIn, signUp } from "@/app/actions/auth"
-import { Icon3D } from "@/components/icon-3d"
+import { IconTile } from "@/components/icon-tile"
+import { MailCheckIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -49,7 +50,7 @@ export function LoginForm() {
     return (
       <Card className="w-full max-w-sm items-center text-center">
         <CardHeader className="w-full">
-          <Icon3D name="envelope" size={72} className="mx-auto motion-safe:animate-float" />
+          <IconTile icon={MailCheckIcon} size="lg" className="mx-auto" />
           <CardTitle>{t.auth.checkInbox}</CardTitle>
           <CardDescription>
             {t.auth.sentLink} <span className="font-medium text-foreground">{sentTo}</span>.

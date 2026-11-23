@@ -1,6 +1,6 @@
 "use client"
 
-import { ArchiveIcon, CheckIcon, MessageSquarePlusIcon, StickyNoteIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import { ArchiveIcon, CheckIcon, FlameIcon, MessageSquarePlusIcon, StickyNoteIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import { useState, useTransition, type ReactNode } from "react"
 import { toast } from "sonner"
 
@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import type { Habit } from "@/lib/data"
 import { ConfettiBurst } from "@/components/confetti-burst"
-import { Icon3D } from "@/components/icon-3d"
 import { Link } from "@/components/link"
 import { NoteDialog } from "@/components/note-dialog"
 import { formatDay } from "@/i18n"
@@ -109,11 +108,7 @@ export function HabitCard({ habit, done, today, onToggle, dragHandle, todayNote 
           {habit.description && <p className="mt-0.5 truncate text-sm text-muted-foreground">{habit.description}</p>}
           <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
             <span className={cn("inline-flex items-center gap-1 font-medium", streak.current > 0 && color.text)}>
-              <Icon3D
-                name="fire"
-                size={18}
-                className={cn("transition", streak.current === 0 && "opacity-40 grayscale")}
-              />{" "}
+              <FlameIcon className={cn("size-3.5", streak.current === 0 ? "text-muted-foreground/60" : "text-orange-500")} />
               {t.habit.streak(streak.current, streak.unit)}
             </span>
             {target < 7 && (

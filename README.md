@@ -41,7 +41,7 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 - **English & Russian:** `/en/…` and `/ru/…` URLs (language picked from the browser, switcher in the header), proper Russian plurals via `Intl.PluralRules`, localized dates, validation messages and push notifications
 - **Installable (PWA):** add to the home screen and open full-screen, with app icons and theme colors
 - **Brand & type:** custom logo (a flame with a check mark cut in — streak + habit done), Unbounded for headings, Onest for text; both with full Cyrillic
-- **3D icons & motion (inside the app):** a custom clay-style 3D icon set, staggered entrance, check-in confetti, floating hero icons — all CSS, disabled for `prefers-reduced-motion`
+- **One icon style & motion:** thin line icons on soft tinted tiles everywhere, medal-style achievement badges drawn in CSS, staggered entrance, check-in confetti, floating hero icons — all CSS, disabled for `prefers-reduced-motion`
 - Dark mode, responsive layout, accessible controls
 
 ## Tech stack
@@ -130,7 +130,3 @@ npm run build
 - [x] Reminders (Edge Function + cron)
 - [x] OG image for public profiles
 - [x] Playwright e2e tests
-
-## Credits
-
-3D icons: a custom clay-style set made for Streakly — generated with Canva AI and cut out from the background with a small numpy/scipy script.

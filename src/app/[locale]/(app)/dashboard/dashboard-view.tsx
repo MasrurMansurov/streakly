@@ -1,6 +1,15 @@
 "use client"
 
-import { CircleCheckIcon, PlusIcon } from "lucide-react"
+import {
+  CircleCheckBigIcon,
+  CircleCheckIcon,
+  FlameIcon,
+  PlusIcon,
+  SproutIcon,
+  TargetIcon,
+  TrendingUpIcon,
+  type LucideIcon,
+} from "lucide-react"
 import { useEffect, useMemo, useOptimistic, useRef, useState, useTransition } from "react"
 import { toast } from "sonner"
 
@@ -8,7 +17,7 @@ import { reorderHabits, toggleHabitLog } from "@/app/actions/habits"
 import { AchievementBadge } from "@/components/achievement-badge"
 import { Achievements } from "@/components/achievements"
 import { ConfettiBurst } from "@/components/confetti-burst"
-import { Icon3D, type Icon3DName } from "@/components/icon-3d"
+import { IconTile, type IconTone } from "@/components/icon-tile"
 import { Heatmap } from "@/components/heatmap"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -160,7 +169,7 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
 
       {habits.length === 0 ? (
         <Card className="items-center border-dashed py-12 text-center">
-          <Icon3D name="seedling" size={72} className="motion-safe:animate-float" />
+          <IconTile icon={SproutIcon} size="lg" />
           <div className="grid gap-1">
             <h2 className="font-medium">{t.dashboard.emptyTitle}</h2>
             <p className="max-w-sm text-sm text-muted-foreground">
@@ -174,10 +183,10 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <Stat index={0} icon="target" label={t.dashboard.statToday} value={`${doneToday}/${habits.length}`} />
-            <Stat index={1} icon="fire" label={t.dashboard.statBestStreak} value={bestStreak} />
-            <Stat index={2} icon="chart" label={t.dashboard.statCompletion} value={`${Math.round(rate30 * 100)}%`} />
-            <Stat index={3} icon="check" label={t.dashboard.statCheckIns} value={String(totalCheckIns)} />
+            <Stat index={0} icon={TargetIcon} tone="emerald" label={t.dashboard.statToday} value={`${doneToday}/${habits.length}`} />
+            <Stat index={1} icon={FlameIcon} tone="orange" label={t.dashboard.statBestStreak} value={bestStreak} />
+            <Stat index={2} icon={TrendingUpIcon} tone="sky" label={t.dashboard.statCompletion} value={`${Math.round(rate30 * 100)}%`} />
+            <Stat index={3} icon={CircleCheckBigIcon} tone="violet" label={t.dashboard.statCheckIns} value={String(totalCheckIns)} />
           </div>
 
           <SortableHabits
@@ -252,20 +261,25 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
   )
 }
 
-function Stat({ icon, label, value, index }: { icon: Icon3DName; label: string; value: string; index: number }) {
+function Stat({
+  icon,
+  tone,
+  label,
+  value,
+  index = 0,
+}: {
+  icon: LucideIcon
+  tone: IconTone
+  label: string
+  value: string
+  index?: number
+}) {
   return (
     <Card
-      className="group flex-row items-center gap-3 p-4 transition-shadow hover:shadow-md motion-safe:animate-rise"
+      className="flex-row items-center gap-3 p-4 transition-shadow hover:shadow-md motion-safe:animate-rise"
       style={{ animationDelay: `${index * 70}ms` }}
     >
-      <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-muted to-muted/30">
-        <Icon3D
-          name={icon}
-          size={46}
-          eager
-          className="transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"
-        />
-      </span>
+      <IconTile icon={icon} tone={tone} />
       <div className="min-w-0">
         <div className="truncate text-xs text-muted-foreground">{label}</div>
         <div className="text-2xl font-semibold tabular-nums">{value}</div>

@@ -2,6 +2,11 @@
 
 import {
   BellIcon,
+  MoonIcon,
+  SunIcon,
+  SunriseIcon,
+  SunsetIcon,
+  type LucideIcon,
   BellOffIcon,
   CheckCircle2Icon,
   ClockIcon,
@@ -17,7 +22,7 @@ import {
   saveReminderSettings,
   sendTestNotification,
 } from "@/app/actions/reminders"
-import { Icon3D, type Icon3DName } from "@/components/icon-3d"
+import { IconTile, type IconTone } from "@/components/icon-tile"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -29,11 +34,11 @@ import { cn } from "@/lib/utils"
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""
 
-const PRESETS = [
-  { time: "08:00", key: "morning", icon: "sunrise" },
-  { time: "13:00", key: "afternoon", icon: "sun" },
-  { time: "20:00", key: "evening", icon: "sunset" },
-  { time: "22:00", key: "night", icon: "moon" },
+const PRESETS: { time: string; key: string; icon: LucideIcon; tone: IconTone }[] = [
+  { time: "08:00", key: "morning", icon: SunriseIcon, tone: "amber" },
+  { time: "13:00", key: "afternoon", icon: SunIcon, tone: "orange" },
+  { time: "20:00", key: "evening", icon: SunsetIcon, tone: "rose" },
+  { time: "22:00", key: "night", icon: MoonIcon, tone: "violet" },
 ]
 
 type Support = "checking" | "ok" | "ios-install" | "unsupported" | "denied"
@@ -186,7 +191,7 @@ export function RemindersCard({ initial }: { initial: ReminderSettings }) {
         <div className="flex items-start justify-between gap-4">
           <div className="grid gap-1.5">
             <CardTitle className="flex items-center gap-2">
-              <Icon3D name="bell" size={26} className="transition-transform hover:motion-safe:animate-wiggle" />{" "}
+              <IconTile icon={BellIcon} tone="amber" size="sm" />
               {t.reminders.title}
             </CardTitle>
             <CardDescription>
@@ -220,7 +225,7 @@ export function RemindersCard({ initial }: { initial: ReminderSettings }) {
         <fieldset className="grid gap-3" disabled={pending}>
           <legend className="mb-3 text-sm font-medium">{t.reminders.when}</legend>
           <div role="radiogroup" aria-label={t.reminders.timeGroup} className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {PRESETS.map(({ time, key, icon }) => {
+            {PRESETS.map(({ time, key, icon, tone }) => {
               const label = t.reminders.presets[key as keyof typeof t.reminders.presets]
               const selected = remindAt === time
               return (
@@ -236,14 +241,7 @@ export function RemindersCard({ initial }: { initial: ReminderSettings }) {
                     selected && "border-primary bg-primary/5 ring-1 ring-primary"
                   )}
                 >
-                  <Icon3D
-                    name={icon as Icon3DName}
-                    size={32}
-                    className={cn(
-                      "transition-transform duration-300 group-hover:scale-110",
-                      selected ? "motion-safe:animate-pop" : "opacity-80"
-                    )}
-                  />
+                  <IconTile icon={icon} tone={selected ? tone : "muted"} size="sm" className="transition-colors" />
                   <span className="text-sm font-medium">{label}</span>
                   <span className="text-xs text-muted-foreground tabular-nums">{time}</span>
                 </button>

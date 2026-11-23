@@ -1,6 +1,6 @@
 "use client"
 
-import { ArchiveRestoreIcon, Trash2Icon } from "lucide-react"
+import { ArchiveIcon, ArchiveRestoreIcon, Trash2Icon } from "lucide-react"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 
@@ -16,7 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import type { ArchivedHabit } from "@/lib/data"
-import { Icon3D } from "@/components/icon-3d"
+import { IconTile } from "@/components/icon-tile"
 import { Link } from "@/components/link"
 import { formatDay } from "@/i18n"
 import { useI18n } from "@/i18n/client"
@@ -38,7 +38,7 @@ export function ArchivedList({ habits }: { habits: ArchivedHabit[] }) {
   if (habits.length === 0) {
     return (
       <Card className="items-center border-dashed py-12 text-center">
-        <Icon3D name="archive" size={72} className="motion-safe:animate-float" />
+        <IconTile icon={ArchiveIcon} tone="muted" size="lg" />
         <div className="grid gap-1">
           <h2 className="font-medium">{t.archive.emptyTitle}</h2>
           <p className="text-sm text-muted-foreground">{t.archive.emptyText}</p>
