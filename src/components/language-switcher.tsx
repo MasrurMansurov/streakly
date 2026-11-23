@@ -11,6 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { rememberLocale } from "@/app/actions/locale"
 import { localeNames, locales, localizePath, splitLocale, type Locale } from "@/i18n"
 import { useI18n } from "@/i18n/client"
 
@@ -23,7 +24,7 @@ export function LanguageSwitcher() {
 
   const switchTo = (next: Locale) => {
     if (next === locale) return
-    // the proxy remembers the new language (NEXT_LOCALE cookie) when the /<locale> URL loads
+    void rememberLocale(next) // so "/" opens in this language next time
     // read the query at click time (useSearchParams would need a Suspense boundary in the static header)
     const target = localizePath(next, splitLocale(pathname).path) + window.location.search
     startTransition(() => router.replace(target, { scroll: false }))

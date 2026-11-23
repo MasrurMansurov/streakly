@@ -1,10 +1,10 @@
 import "server-only"
 
-import { cookies } from "next/headers"
+import { cookies, headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { locale as rootLocale } from "next/root-params"
 
-import { defaultLocale, getDictionary, isLocale, LOCALE_COOKIE, localizePath, type Locale } from "."
+import { defaultLocale, getDictionary, isLocale, LOCALE_COOKIE, localizePath, splitLocale, type Locale } from "."
 
 /** Current UI language in Server Components (from the /[locale] URL segment). */
 export async function getLocale(): Promise<Locale> {
@@ -22,6 +22,13 @@ export async function getT() {
  * in sync with the URL, so use that.
  */
 export async function getActionLocale(): Promise<Locale> {
+  // The page the action was sent from (/ru/… or /en/…) is the most reliable signal;
+  // public pages are served without the proxy, so the cookie may be stale for guests.
+  const referer = (await headers()).get("referer")
+  if (referer) {
+    const { locale } = splitLocale(new URL(referer).pathname)
+    if (locale) return locale
+  }
   const value = (await cookies()).get(LOCALE_COOKIE)?.value
   return isLocale(value) ? value : defaultLocale
 }

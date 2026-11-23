@@ -17,6 +17,14 @@ test.describe("Russian browser", () => {
     await expect(page.getByText("Минимум 8 символов")).toBeVisible()
   })
 
+  test("server errors come back in Russian for guests", async ({ page }) => {
+    await page.goto("/ru/login")
+    await page.getByLabel("Email").fill("demo@streakly.dev")
+    await page.getByLabel("Пароль").fill("wrong-password-123")
+    await page.getByRole("button", { name: "Войти", exact: true }).last().click()
+    await expect(page.getByText("Неверный email или пароль")).toBeVisible()
+  })
+
   test("dashboard uses Russian plurals and dates", async ({ page }) => {
     await page.goto("/ru/login")
     await page.getByLabel("Email").fill("demo@streakly.dev")
