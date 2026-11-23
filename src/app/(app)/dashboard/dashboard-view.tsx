@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import type { Habit, HabitLog } from "@/lib/data"
 import { addDays, formatDate, type ISODate } from "@/lib/dates"
-import { completionRate, currentStreak } from "@/lib/streaks"
+import { completionRate, habitStreak, isDueToday } from "@/lib/streaks"
 
 import { ActivityChart } from "./activity-chart"
 import { HabitCard } from "./habit-card"
@@ -73,9 +73,14 @@ export function DashboardView({ habits: serverHabits, logs, today, profile }: Pr
   }, [byHabit])
 
   const doneToday = habits.filter((h) => byHabit.get(h.id)?.has(today)).length
-  const bestStreak = Math.max(0, ...habits.map((h) => currentStreak(byHabit.get(h.id)!, today)))
+  // weekly habits whose target is already met aren't "left" for today
+  const leftToday = habits.filter((h) => isDueToday(byHabit.get(h.id)!, today, h.target_per_week)).length
+  const best = habits
+    .map((h) => habitStreak(byHabit.get(h.id)!, today, h.target_per_week))
+    .sort((a, b) => (b.unit === "day" ? b.current : b.current * 7) - (a.unit === "day" ? a.current : a.current * 7))[0]
+  const bestStreak = best ? `${best.current}${best.unit === "day" ? "d" : "w"}` : "0d"
   const rate30 = habits.length
-    ? habits.reduce((s, h) => s + completionRate(byHabit.get(h.id)!, today, 30, h.created_at.slice(0, 10)), 0) /
+    ? habits.reduce((s, h) => s + completionRate(byHabit.get(h.id)!, today, 30, h.created_at.slice(0, 10), h.target_per_week), 0) /
       habits.length
     : 0
   const totalCheckIns = [...perDay.values()].reduce((a, b) => a + b, 0)
@@ -97,9 +102,9 @@ export function DashboardView({ habits: serverHabits, logs, today, profile }: Pr
           <h1 className="text-2xl font-semibold tracking-tight">
             {habits.length === 0
               ? `Welcome${name ? `, ${name}` : ""} 👋`
-              : doneToday === habits.length
+              : leftToday === 0
                 ? "All done for today 🎉"
-                : `${habits.length - doneToday} habit${habits.length - doneToday === 1 ? "" : "s"} left today`}
+                : `${leftToday} habit${leftToday === 1 ? "" : "s"} left today`}
           </h1>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
@@ -124,7 +129,7 @@ export function DashboardView({ habits: serverHabits, logs, today, profile }: Pr
         <>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Stat icon={<TargetIcon />} label="Today" value={`${doneToday}/${habits.length}`} />
-            <Stat icon={<FlameIcon />} label="Best current streak" value={`${bestStreak}d`} />
+            <Stat icon={<FlameIcon />} label="Best current streak" value={bestStreak} />
             <Stat icon={<TrendingUpIcon />} label="30-day completion" value={`${Math.round(rate30 * 100)}%`} />
             <Stat icon={<SparklesIcon />} label="Check-ins (26 wk)" value={String(totalCheckIns)} />
           </div>

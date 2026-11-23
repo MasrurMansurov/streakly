@@ -24,6 +24,15 @@ import { HABIT_COLOR_NAMES, habitColor, type HabitColor } from "@/lib/habit-colo
 import { cn } from "@/lib/utils"
 import { habitSchema, type HabitInput } from "@/lib/validation"
 
+const FREQUENCIES = [
+  { value: 7, label: "Every day" },
+  { value: 5, label: "5× a week" },
+  { value: 4, label: "4×" },
+  { value: 3, label: "3×" },
+  { value: 2, label: "2×" },
+  { value: 1, label: "Once a week" },
+] as const
+
 type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -39,6 +48,7 @@ export function HabitFormDialog({ open, onOpenChange, habit }: Props) {
       name: habit?.name ?? "",
       description: habit?.description ?? "",
       color: (habit?.color as HabitColor) ?? "emerald",
+      target_per_week: habit?.target_per_week ?? 7,
     },
   })
   const { errors } = form.formState
@@ -89,6 +99,36 @@ export function HabitFormDialog({ open, onOpenChange, habit }: Props) {
               {...form.register("description")}
             />
             {errors.description && <p className="text-xs text-destructive">{errors.description.message}</p>}
+          </div>
+
+          <div className="grid gap-2">
+            <Label id="habit-frequency">How often</Label>
+            <Controller
+              control={form.control}
+              name="target_per_week"
+              render={({ field }) => (
+                <div role="radiogroup" aria-labelledby="habit-frequency" className="flex flex-wrap gap-1.5">
+                  {FREQUENCIES.map(({ value, label }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      role="radio"
+                      aria-checked={field.value === value}
+                      aria-label={value === 7 ? "Every day" : `${value} ${value === 1 ? "time" : "times"} a week`}
+                      onClick={() => field.onChange(value)}
+                      className={cn(
+                        "h-8 rounded-lg border px-2.5 text-sm transition",
+                        field.value === value
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "hover:bg-muted"
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            />
           </div>
 
           <div className="grid gap-2">

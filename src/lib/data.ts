@@ -10,7 +10,7 @@ import { createClient, createPublicClient } from "./supabase/server"
 import type { Tables } from "./supabase/database.types"
 
 export type Profile = Tables<"profiles">
-export type Habit = Pick<Tables<"habits">, "id" | "name" | "description" | "color" | "position" | "created_at">
+export type Habit = Pick<Tables<"habits">, "id" | "name" | "description" | "color" | "position" | "target_per_week" | "created_at">
 export type HabitLog = Pick<Tables<"habit_logs">, "habit_id" | "log_date">
 
 /** How far back the dashboard and public profile look. */
@@ -70,7 +70,7 @@ export async function getDashboardData() {
   const [habitsRes, logs, profileRes] = await Promise.all([
     supabase
       .from("habits")
-      .select("id, name, description, color, position, created_at")
+      .select("id, name, description, color, position, target_per_week, created_at")
       .is("archived_at", null)
       .order("position")
       .order("created_at"),
@@ -119,7 +119,7 @@ export async function getPublicProfile(username: string) {
   const [habitsRes, logs] = await Promise.all([
     supabase
       .from("habits")
-      .select("id, name, description, color, position, created_at")
+      .select("id, name, description, color, position, target_per_week, created_at")
       .eq("user_id", profile.id)
       .is("archived_at", null)
       .order("position")

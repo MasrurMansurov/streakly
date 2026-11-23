@@ -46,8 +46,10 @@ export function Heatmap({ counts, max, today, weeks = 26, className }: Props) {
   })
 
   return (
-    <div className={cn("overflow-x-auto pb-1", className)}>
-      <div className="inline-flex flex-col gap-1">
+    // dir="rtl" makes the scroll container start at its right edge, so on narrow
+    // screens the most recent weeks are visible first; content stays left-to-right
+    <div dir="rtl" className={cn("overflow-x-auto pb-1", className)}>
+      <div dir="ltr" className="inline-flex flex-col gap-1">
         <div className="flex gap-[3px] pl-7 text-[10px] text-muted-foreground">
           {monthLabels.map((label, i) => (
             <div key={i} className="w-3 overflow-visible whitespace-nowrap">

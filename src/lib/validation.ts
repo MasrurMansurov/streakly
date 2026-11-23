@@ -12,6 +12,8 @@ export const habitSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(60, "Max 60 characters"),
   description: z.string().trim().max(200, "Max 200 characters").optional().or(z.literal("")),
   color: z.enum(HABIT_COLOR_NAMES),
+  /** 7 = every day, 1–6 = times per week */
+  target_per_week: z.number().int().min(1).max(7),
 })
 export type HabitInput = z.infer<typeof habitSchema>
 

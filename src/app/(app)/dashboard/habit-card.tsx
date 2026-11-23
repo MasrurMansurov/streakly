@@ -25,7 +25,7 @@ import {
 import type { Habit } from "@/lib/data"
 import { addDays, formatDate, type ISODate } from "@/lib/dates"
 import { habitColor } from "@/lib/habit-colors"
-import { currentStreak, longestStreak } from "@/lib/streaks"
+import { countInWeek, formatStreak, habitStreak, weekStart } from "@/lib/streaks"
 import { cn } from "@/lib/utils"
 
 import { HabitFormDialog } from "./habit-form-dialog"
@@ -41,8 +41,9 @@ type Props = {
 
 export function HabitCard({ habit, done, today, onToggle, dragHandle }: Props) {
   const color = habitColor(habit.color)
-  const streak = currentStreak(done, today)
-  const best = longestStreak(done)
+  const target = habit.target_per_week
+  const streak = habitStreak(done, today, target)
+  const thisWeek = countInWeek(done, weekStart(today))
   const doneToday = done.has(today)
   const createdOn = habit.created_at.slice(0, 10)
   const week = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6))
@@ -81,10 +82,15 @@ export function HabitCard({ habit, done, today, onToggle, dragHandle }: Props) {
           </div>
           {habit.description && <p className="mt-0.5 truncate text-sm text-muted-foreground">{habit.description}</p>}
           <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-            <span className={cn("inline-flex items-center gap-1 font-medium", streak > 0 && color.text)}>
-              <FlameIcon className="size-3.5" /> {streak} day{streak === 1 ? "" : "s"}
+            <span className={cn("inline-flex items-center gap-1 font-medium", streak.current > 0 && color.text)}>
+              <FlameIcon className="size-3.5" /> {formatStreak(streak)}
             </span>
-            <span>Best: {best}</span>
+            {target < 7 && (
+              <span className={cn(thisWeek >= target && "font-medium text-foreground")}>
+                {Math.min(thisWeek, target)}/{target} this week
+              </span>
+            )}
+            <span>Best: {streak.best}</span>
           </div>
         </div>
 

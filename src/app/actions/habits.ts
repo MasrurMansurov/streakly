@@ -36,6 +36,7 @@ export async function createHabit(input: HabitInput): Promise<ActionResult> {
     name: parsed.data.name,
     description: parsed.data.description || null,
     color: parsed.data.color,
+    target_per_week: parsed.data.target_per_week,
     position: count ?? 0,
   })
   if (error) return { ok: false, error: error.message }
@@ -56,6 +57,7 @@ export async function updateHabit(id: string, input: HabitInput): Promise<Action
       name: parsed.data.name,
       description: parsed.data.description || null,
       color: parsed.data.color,
+      target_per_week: parsed.data.target_per_week,
     })
     .eq("id", id)
   if (error) return { ok: false, error: error.message }

@@ -85,9 +85,12 @@ test("create, edit and delete a habit", async ({ page }) => {
 
   await page.getByRole("button", { name: "New habit" }).click()
   await page.getByLabel("Name").fill(name)
+  await page.getByRole("radio", { name: "3 times a week" }).click()
   await page.getByRole("radio", { name: "violet" }).click()
   await page.getByRole("button", { name: "Create habit" }).click()
   await expect(page.locator("section h3", { hasText: name })).toBeVisible()
+  const created = page.locator("[data-slot=card]", { has: page.locator("h3", { hasText: name }) })
+  await expect(created.getByText("0/3 this week")).toBeVisible()
 
   const card = page.locator("[data-slot=card]", { has: page.locator("h3", { hasText: name }) })
   await card.getByRole("button", { name: "Habit actions" }).click()

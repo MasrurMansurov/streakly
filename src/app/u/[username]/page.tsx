@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { getPublicProfile, getToday } from "@/lib/data"
 import { addDays, formatDate, type ISODate } from "@/lib/dates"
 import { habitColor } from "@/lib/habit-colors"
-import { currentStreak, longestStreak } from "@/lib/streaks"
+import { formatStreak, habitStreak, longestStreak } from "@/lib/streaks"
 import { cn } from "@/lib/utils"
 
 type Props = { params: Promise<{ username: string }> }
@@ -57,7 +57,7 @@ async function PublicProfile({ params }: Props) {
   }
 
   const name = profile.display_name || profile.username
-  const streaks = habits.map((h) => currentStreak(byHabit.get(h.id)!, today))
+  const streaks = habits.map((h) => habitStreak(byHabit.get(h.id)!, today, h.target_per_week))
   const best = Math.max(0, ...habits.map((h) => longestStreak(byHabit.get(h.id)!)))
 
   return (
@@ -112,10 +112,13 @@ async function PublicProfile({ params }: Props) {
                 <span className={cn("size-2.5 shrink-0 rounded-full", color.dot)} />
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">{h.name}</div>
-                  {h.description && <div className="truncate text-sm text-muted-foreground">{h.description}</div>}
+                  <div className="truncate text-sm text-muted-foreground">
+                    {h.target_per_week < 7 ? `${h.target_per_week}× a week` : "Every day"}
+                    {h.description && ` · ${h.description}`}
+                  </div>
                 </div>
-                <span className={cn("inline-flex items-center gap-1 text-sm font-medium", streaks[i] > 0 && color.text)}>
-                  <FlameIcon className="size-4" /> {streaks[i]}
+                <span className={cn("inline-flex shrink-0 items-center gap-1 text-sm font-medium", streaks[i].current > 0 && color.text)}>
+                  <FlameIcon className="size-4" /> {formatStreak(streaks[i])}
                 </span>
               </Card>
             )

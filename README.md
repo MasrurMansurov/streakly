@@ -8,10 +8,20 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 
 **Demo account:** `demo@streakly.dev` / `streakly-demo` · public profile: [/u/demo](https://streakly-pied-six.vercel.app/u/demo)
 
+<p align="center">
+  <img src="docs/screenshots/dashboard-light.png" alt="Dashboard (light)" width="49%" />
+  <img src="docs/screenshots/dashboard-dark.png" alt="Dashboard (dark)" width="49%" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/public-profile.png" alt="Public profile" width="49%" />
+  <img src="docs/screenshots/og-image.png" alt="Generated link preview" width="49%" />
+</p>
+
 ## Features
 
 - **One-tap check-ins** with optimistic UI (`useOptimistic`), plus a 7-day strip to fix missed days
 - **Streaks:** current and best streak per habit, 30-day completion rate
+- **Flexible goals:** every day or N× per week (weekly habits keep streaks in weeks)
 - **Activity heatmap** (26 weeks) and a 30-day bar chart (Recharts)
 - **Drag-and-drop ordering** (dnd-kit) — mouse, touch and keyboard, with screen reader announcements
 - **Public profile** at `/u/<username>`, opt-in; archived habits stay private, with a generated OG image for link previews
@@ -92,7 +102,7 @@ npm run build
 
 - [ ] Google / GitHub OAuth
 - [x] Drag-and-drop habit ordering (dnd-kit)
-- [ ] Weekly targets ("3× per week")
+- [x] Weekly targets ("3× per week")
 - [ ] Reminders (Edge Function + cron)
 - [x] OG image for public profiles
 - [x] Playwright e2e tests

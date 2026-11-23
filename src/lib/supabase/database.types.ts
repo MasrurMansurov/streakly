@@ -66,6 +66,7 @@ export type Database = {
           id: string
           name: string
           position: number
+          target_per_week: number
           user_id: string
         }
         Insert: {
@@ -77,6 +78,7 @@ export type Database = {
           id?: string
           name: string
           position?: number
+          target_per_week?: number
           user_id?: string
         }
         Update: {
@@ -88,6 +90,7 @@ export type Database = {
           id?: string
           name?: string
           position?: number
+          target_per_week?: number
           user_id?: string
         }
         Relationships: [
