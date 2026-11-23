@@ -37,6 +37,8 @@ export async function signUp(input: AuthInput): Promise<ActionResult> {
 
 export async function signOut() {
   const supabase = await createClient()
-  await supabase.auth.signOut()
+  // "local": sign out of this browser only. The default ("global") would also end
+  // the user's sessions on every other device.
+  await supabase.auth.signOut({ scope: "local" })
   redirect("/")
 }

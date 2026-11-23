@@ -1,5 +1,6 @@
 "use server"
 
+import { FunctionsHttpError } from "@supabase/supabase-js"
 import { refresh } from "next/cache"
 import { z } from "zod"
 
@@ -10,7 +11,8 @@ import type { ActionResult } from "@/lib/validation"
 
 const settingsSchema = z.object({
   enabled: z.boolean(),
-  remindAt: z.string().regex(/^([01]\d|2[0-3]):(00|30)$/, "Pick a time on the hour or half hour"),
+  // the scheduler runs every 15 minutes
+  remindAt: z.string().regex(/^([01]\d|2[0-3]):(00|15|30|45)$/, "Pick a time in 15-minute steps"),
   timezone: z.string().max(64).refine(isValidTimezone, "Unknown timezone"),
 })
 
@@ -72,17 +74,33 @@ export async function removePushSubscription(endpoint: string): Promise<ActionRe
 /** Ask the Edge Function to send a test notification to all of the user's devices. */
 export async function sendTestNotification(): Promise<ActionResult> {
   const { supabase } = await authed()
-  // the session was already verified by getCurrentUser(); pass its token so the
-  // function can identify the user (and only send to *their* devices)
-  const {
+
+  // getCurrentUser() checks the JWT signature locally, which stays valid until the
+  // token expires even if the session was ended elsewhere. The Edge Function asks
+  // the auth server, so confirm the session there first and use a fresh token.
+  const { error: userError } = await supabase.auth.getUser()
+  if (userError) return { ok: false, error: "Your session has ended. Please sign out and sign in again." }
+  let {
     data: { session },
   } = await supabase.auth.getSession()
-  if (!session) return { ok: false, error: "Not signed in" }
-  const { data, error } = await supabase.functions.invoke<{ sent: number; errors: string[] }>("send-reminders", {
-    body: { action: "test" },
-    headers: { Authorization: `Bearer ${session.access_token}` },
-  })
-  if (error) return { ok: false, error: "Couldn't send a test notification. Try turning reminders off and on again." }
-  if (!data?.sent) return { ok: false, error: data?.errors?.[0] ?? "No device received the notification" }
-  return { ok: true, message: `Sent to ${data.sent} device${data.sent === 1 ? "" : "s"}` }
+  if (session && (session.expires_at ?? 0) * 1000 < Date.now() + 60_000) {
+    session = (await supabase.auth.refreshSession()).data.session
+  }
+  if (!session) return { ok: false, error: "Your session has ended. Please sign in again." }
+
+  const { data, error } = await supabase.functions.invoke<{ sent: number; removed: number; errors: string[] }>(
+    "send-reminders",
+    { body: { action: "test" }, headers: { Authorization: `Bearer ${session.access_token}` } }
+  )
+  if (error) {
+    const detail = error instanceof FunctionsHttpError ? await error.context.json().catch(() => null) : null
+    if (detail?.error === "no subscriptions")
+      return { ok: false, error: "No device is subscribed yet. Turn reminders on in this browser first." }
+    return { ok: false, error: `Couldn't send a test notification (${detail?.error ?? error.message})` }
+  }
+  if (!data?.sent) {
+    if (data?.removed) return { ok: false, error: "This device's subscription expired. Turn reminders off and on again." }
+    return { ok: false, error: data?.errors?.[0] ?? "No device received the notification" }
+  }
+  return { ok: true, message: `Sent to ${data.sent} device${data.sent === 1 ? "" : "s"} — check your notifications` }
 }

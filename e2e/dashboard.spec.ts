@@ -193,5 +193,6 @@ test("settings show the reminders card", async ({ page }) => {
   await page.goto("/settings", { waitUntil: "networkidle" })
   await expect(page.getByText("Reminders", { exact: true })).toBeVisible()
   await expect(page.getByRole("switch", { name: "Daily reminder" })).toBeVisible()
-  await expect(page.getByLabel("Remind me at")).toHaveValue("20:00")
+  await expect(page.getByRole("radio", { name: /Evening/ })).toHaveAttribute("aria-checked", "true")
+  await expect(page.getByLabel("Or pick a time")).toHaveValue("20:00")
 })
