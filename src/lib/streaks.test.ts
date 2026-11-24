@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import { addDays, dateRange, diffDays, isISODate, todayIn, weekdayMon0 } from "./dates"
 import {
   frozenDays,
+  repairCandidate,
   completionRate,
   currentStreak,
   currentWeeklyStreak,
@@ -145,5 +146,44 @@ describe("streak freezes", () => {
   })
   it("weekly habits don't use freezes", () => {
     expect(habitStreak(set("2026-11-23"), today, 3).frozen).toBeUndefined()
+  })
+})
+
+describe("streak repair and vacation", () => {
+  const today = "2026-11-24"
+  const run = (from: string, to: string) => {
+    const out = new Set<string>()
+    for (let d = from; d <= to; d = addDays(d, 1)) out.add(d)
+    return out
+  }
+
+  it("repairs yesterday when the month's freezes are used up", () => {
+    // freezes for November already spent on the 3rd and 5th; the 23rd missed
+    const done = new Set([...run("2026-11-01", "2026-11-02"), "2026-11-04", ...run("2026-11-06", "2026-11-22")])
+    expect(habitStreak(done, today).current).toBe(0)
+    expect(repairCandidate(done, today, new Set(), false)).toEqual({ day: "2026-11-23", streak: 20 })
+  })
+
+  it("two misses: one repair + a freeze revive the streak", () => {
+    const done = run("2026-11-10", "2026-11-21") // 22nd and 23rd missed
+    expect(habitStreak(done, today).current).toBe(0)
+    // repairing yesterday lets a freeze cover the 22nd
+    expect(repairCandidate(done, today, new Set(), false)).toEqual({ day: "2026-11-23", streak: 12 })
+  })
+
+  it("is limited to once a month", () => {
+    const done = run("2026-11-10", "2026-11-21")
+    expect(repairCandidate(done, today, new Set(), true)).toBeNull()
+  })
+
+  it("vacation days bridge daily and weekly streaks", () => {
+    const done = new Set([...run("2026-11-01", "2026-11-10"), ...run("2026-11-20", "2026-11-24")])
+    const pause = new Set(run("2026-11-11", "2026-11-19"))
+    expect(habitStreak(done, today).current).toBe(5)
+    expect(habitStreak(done, today, 7, pause).current).toBe(15)
+    // weekly 3×: the week of the 16th wasn't hit but was on vacation
+    const weekly = new Set(["2026-11-03", "2026-11-04", "2026-11-05", "2026-11-10", "2026-11-11", "2026-11-12", "2026-11-23", "2026-11-24", "2026-11-25"])
+    expect(habitStreak(weekly, today, 3).current).toBe(1)
+    expect(habitStreak(weekly, today, 3, run("2026-11-16", "2026-11-22")).current).toBe(3)
   })
 })

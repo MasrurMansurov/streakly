@@ -17,7 +17,7 @@ import { getT } from "@/i18n/server"
 import { addDays, type ISODate } from "@/lib/dates"
 import { evaluateAchievements } from "@/lib/achievements"
 import { habitColor } from "@/lib/habit-colors"
-import { habitStreak, longestStreak } from "@/lib/streaks"
+import { bridgesFor, habitStreak, longestStreak } from "@/lib/streaks"
 import { cn } from "@/lib/utils"
 
 type Props = { params: Promise<{ username: string }> }
@@ -70,7 +70,9 @@ async function PublicProfile({ params }: Props) {
   }
 
   const name = profile.display_name || profile.username
-  const streaks = habits.map((h) => habitStreak(byHabit.get(h.id)!, today, h.target_per_week))
+  const streaks = habits.map((h) =>
+    habitStreak(byHabit.get(h.id)!, today, h.target_per_week, bridgesFor(h.id, data.repairs, data.pauses))
+  )
   const best = Math.max(0, ...habits.map((h) => longestStreak(byHabit.get(h.id)!)))
 
   return (

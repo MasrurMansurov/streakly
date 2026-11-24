@@ -35,6 +35,12 @@ export type Database = {
         }
         Relationships: []
       }
+      habit_repairs: {
+        Row: { created_at: string; day: string; habit_id: string; user_id: string }
+        Insert: { created_at?: string; day: string; habit_id: string; user_id?: string }
+        Update: { created_at?: string; day?: string; habit_id?: string; user_id?: string }
+        Relationships: []
+      }
       habit_logs: {
         Row: {
           is_mini: boolean
@@ -182,6 +188,12 @@ export type Database = {
           inviter_id?: string
           status?: string
         }
+        Relationships: []
+      }
+      pauses: {
+        Row: { created_at: string; end_date: string; id: string; start_date: string; user_id: string }
+        Insert: { created_at?: string; end_date: string; id?: string; start_date: string; user_id?: string }
+        Update: { created_at?: string; end_date?: string; id?: string; start_date?: string; user_id?: string }
         Relationships: []
       }
       profiles: {

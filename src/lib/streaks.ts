@@ -84,18 +84,26 @@ export const FREEZES_PER_MONTH = 2
 
 /**
  * Missed days that don't break a daily streak. Deterministic — nothing is stored:
- * a missed day is frozen when the day before was done, the day after is done (or is today, still open), and that month still has
- * a freeze left. Two misses in a row always break the streak ("never miss twice").
+ * a missed day is frozen when the day before was done (or bridged), the day after
+ * is done/bridged (or is today, still open), and that month still has a freeze left.
+ * Two misses in a row always break the streak ("never miss twice").
+ * `bridges` are days that never break a streak on their own (vacation, repaired days).
  */
-export function frozenDays(done: ReadonlySet<ISODate>, today: ISODate, perMonth = FREEZES_PER_MONTH): Set<ISODate> {
+export function frozenDays(
+  done: ReadonlySet<ISODate>,
+  today: ISODate,
+  perMonth = FREEZES_PER_MONTH,
+  bridges: ReadonlySet<ISODate> = new Set()
+): Set<ISODate> {
   const frozen = new Set<ISODate>()
   if (done.size === 0 || perMonth <= 0) return frozen
+  const covered = (d: ISODate) => done.has(d) || bridges.has(d)
   const first = [...done].sort()[0]
   const used = new Map<string, number>()
   for (let d = addDays(first, 1); d < today; d = addDays(d, 1)) {
-    if (done.has(d)) continue
+    if (covered(d)) continue
     const next = addDays(d, 1)
-    if (!done.has(addDays(d, -1)) || !(done.has(next) || next === today)) continue
+    if (!covered(addDays(d, -1)) || !(covered(next) || next === today)) continue
     const month = d.slice(0, 7)
     if ((used.get(month) ?? 0) >= perMonth) continue
     used.set(month, (used.get(month) ?? 0) + 1)
@@ -109,20 +117,20 @@ export function freezesUsedThisMonth(frozen: ReadonlySet<ISODate>, today: ISODat
   return [...frozen].filter((d) => d.startsWith(today.slice(0, 7))).length
 }
 
-/** Current streak where frozen days bridge the gap (but don't add to the count). */
-export function currentStreakWithFreezes(done: ReadonlySet<ISODate>, frozen: ReadonlySet<ISODate>, today: ISODate): number {
+/** Current streak where gap days (frozen, paused, repaired) bridge but don't add to the count. */
+export function currentStreakWithFreezes(done: ReadonlySet<ISODate>, gaps: ReadonlySet<ISODate>, today: ISODate): number {
   let day = done.has(today) ? today : addDays(today, -1)
   let streak = 0
-  while (done.has(day) || frozen.has(day)) {
+  while (done.has(day) || gaps.has(day)) {
     if (done.has(day)) streak++
     day = addDays(day, -1)
   }
   return streak
 }
 
-/** Longest run where frozen days bridge gaps. */
-export function longestStreakWithFreezes(done: ReadonlySet<ISODate>, frozen: ReadonlySet<ISODate>): number {
-  const days = [...new Set([...done, ...frozen])].sort()
+/** Longest run where gap days bridge. */
+export function longestStreakWithFreezes(done: ReadonlySet<ISODate>, gaps: ReadonlySet<ISODate>): number {
+  const days = [...new Set([...done, ...gaps])].sort()
   let best = 0
   let run = 0
   let prev: ISODate | null = null
@@ -135,6 +143,20 @@ export function longestStreakWithFreezes(done: ReadonlySet<ISODate>, frozen: Rea
   return best
 }
 
+/** Weekly streak where weeks touched by a bridge (vacation) never break it. */
+function currentWeeklyStreakBridged(done: ReadonlySet<ISODate>, today: ISODate, target: Target, bridges: ReadonlySet<ISODate>): number {
+  const touched = (monday: ISODate) => Array.from({ length: 7 }, (_, i) => addDays(monday, i)).some((d) => bridges.has(d))
+  let week = weekStart(today)
+  let streak = countInWeek(done, week) >= target ? 1 : 0
+  week = addDays(week, -7)
+  for (;;) {
+    if (countInWeek(done, week) >= target) streak++
+    else if (!touched(week)) break
+    week = addDays(week, -7)
+  }
+  return streak
+}
+
 export type HabitStreak = {
   current: number
   best: number
@@ -144,19 +166,62 @@ export type HabitStreak = {
   freezesUsed?: number
 }
 
-/** Streaks in days for daily habits (with freezes), in weeks for "N× per week" habits. */
-export function habitStreak(done: ReadonlySet<ISODate>, today: ISODate, target: Target = DAILY): HabitStreak {
+/**
+ * Streaks in days for daily habits (with freezes), in weeks for "N× per week" habits.
+ * `bridges`: vacation days and repaired days — they keep a streak alive.
+ */
+export function habitStreak(
+  done: ReadonlySet<ISODate>,
+  today: ISODate,
+  target: Target = DAILY,
+  bridges: ReadonlySet<ISODate> = new Set()
+): HabitStreak {
   if (target < DAILY) {
-    return { current: currentWeeklyStreak(done, today, target), best: longestWeeklyStreak(done, target), unit: "week" }
+    return {
+      current: bridges.size ? currentWeeklyStreakBridged(done, today, target, bridges) : currentWeeklyStreak(done, today, target),
+      best: longestWeeklyStreak(done, target),
+      unit: "week",
+    }
   }
-  const frozen = frozenDays(done, today)
+  const frozen = frozenDays(done, today, FREEZES_PER_MONTH, bridges)
+  const gaps = new Set([...frozen, ...bridges])
   return {
-    current: currentStreakWithFreezes(done, frozen, today),
-    best: longestStreakWithFreezes(done, frozen),
+    current: currentStreakWithFreezes(done, gaps, today),
+    best: longestStreakWithFreezes(done, gaps),
     unit: "day",
     frozen,
     freezesUsed: freezesUsedThisMonth(frozen, today),
   }
+}
+
+/**
+ * Can a broken daily streak be repaired? Looks at yesterday and the day before:
+ * the day whose repair revives the longest streak (3+ days) wins. One repair per
+ * habit per month (`repairedThisMonth`).
+ */
+export function repairCandidate(
+  done: ReadonlySet<ISODate>,
+  today: ISODate,
+  bridges: ReadonlySet<ISODate>,
+  repairedThisMonth: boolean
+): { day: ISODate; streak: number } | null {
+  if (repairedThisMonth) return null
+  const now = habitStreak(done, today, DAILY, bridges).current
+  let best: { day: ISODate; streak: number } | null = null
+  for (const offset of [1, 2]) {
+    const day = addDays(today, -offset)
+    if (done.has(day) || bridges.has(day)) continue
+    const streak = habitStreak(done, today, DAILY, new Set([...bridges, day])).current
+    if (streak > now && streak >= 3 && (!best || streak > best.streak)) best = { day, streak }
+  }
+  return best
+}
+
+/** Days in [start, end] (inclusive) — used to turn pause ranges into bridge days. */
+export function daysBetween(start: ISODate, end: ISODate): ISODate[] {
+  const out: ISODate[] = []
+  for (let d = start; d <= end; d = addDays(d, 1)) out.push(d)
+  return out
 }
 
 export function formatStreak({ current, unit }: Pick<HabitStreak, "current" | "unit">): string {
@@ -191,4 +256,15 @@ export function completionRate(
   }
   if (total === 0) return 0
   return Math.min(1, hit / ((total * Math.min(target, DAILY)) / DAILY))
+}
+
+/** Bridge days for one habit: its repaired days plus every vacation day. */
+export function bridgesFor(
+  habitId: string,
+  repairs: readonly { habit_id: string; day: ISODate }[],
+  pauses: readonly { start_date: ISODate; end_date: ISODate }[]
+): Set<ISODate> {
+  const out = new Set<ISODate>(repairs.filter((r) => r.habit_id === habitId).map((r) => r.day))
+  for (const p of pauses) for (const d of daysBetween(p.start_date, p.end_date)) out.add(d)
+  return out
 }

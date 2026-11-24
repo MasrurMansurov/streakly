@@ -208,7 +208,13 @@ async function runReminders(dryRun: boolean) {
       and exists (select 1 from public.push_subscriptions s where s.user_id = rs.user_id)
       and ((now() at time zone rs.timezone)::time - rs.remind_at) >= interval '0'
       and ((now() at time zone rs.timezone)::time - rs.remind_at) < interval '2 hours'
-      and (rs.last_reminded_on is null or rs.last_reminded_on < (now() at time zone rs.timezone)::date)`
+      and (rs.last_reminded_on is null or rs.last_reminded_on < (now() at time zone rs.timezone)::date)
+      -- vacation mode: stay quiet
+      and not exists (
+        select 1 from public.pauses p
+        where p.user_id = rs.user_id
+          and (now() at time zone rs.timezone)::date between p.start_date and p.end_date
+      )`
 
   const results = []
   for (const c of candidates) {
@@ -261,6 +267,10 @@ async function runPactNudge(userId: string, habitId: string) {
       select enabled, locale, ((now() at time zone timezone)::date)::text as local_date
       from public.reminder_settings where user_id = ${p.partner_id}`
     if (!rs?.enabled) continue
+    const [onVacation] = await sql`
+      select 1 from public.pauses
+      where user_id = ${p.partner_id} and ${rs.local_date}::date between start_date and end_date`
+    if (onVacation) continue
 
     // claim the partner's day for this pact so repeated check-ins never spam
     const claimed = p.partner_is_inviter

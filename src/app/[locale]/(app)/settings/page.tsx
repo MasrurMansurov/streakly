@@ -5,12 +5,13 @@ import { Suspense } from "react"
 import { getT } from "@/i18n/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { getMyProfile, getReminderSettings } from "@/lib/data"
+import { getActivePause, getMyProfile, getReminderSettings } from "@/lib/data"
 
 import { AccountCard } from "./account-card"
 import { AvatarUploader } from "./avatar-uploader"
 import { ProfileForm } from "./profile-form"
 import { RemindersCard } from "./reminders-card"
+import { VacationCard } from "./vacation-card"
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getT()).t.meta.settings }
@@ -32,7 +33,7 @@ export default async function SettingsPage() {
 }
 
 async function Settings() {
-  const [profile, reminders, { t }] = await Promise.all([getMyProfile(), getReminderSettings(), getT()])
+  const [profile, reminders, vacation, { t }] = await Promise.all([getMyProfile(), getReminderSettings(), getActivePause(), getT()])
   return (
     <div className="grid gap-6">
       <Card>
@@ -49,6 +50,7 @@ async function Settings() {
         </CardContent>
       </Card>
       <RemindersCard initial={reminders} />
+      <VacationCard today={vacation.today} pause={"id" in vacation ? vacation : null} />
       <ProfileForm profile={profile} />
       <AccountCard username={profile.username} />
     </div>

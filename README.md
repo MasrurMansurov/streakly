@@ -27,6 +27,9 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 - **One-tap check-ins** with optimistic UI (`useOptimistic`), plus a 7-day strip to fix missed days
 - **Streaks:** current and best streak per habit, 30-day completion rate
 - **Streak freezes:** a single missed day doesn't break a daily streak, up to 2× a month per habit (two misses in a row still do). Deterministic — derived from the check-ins, nothing extra stored
+- **Mini versions:** "At least: 1 page" keeps the streak on a hard day; shown as a lighter check-in, upgradable to full
+- **Coming back is easy:** repair a streak once a month per habit (yesterday or the day before), a gentle note instead of "you broke it", a "welcome back" on the first check-in after a break, and vacation mode (up to 30 days: streaks paused, reminders quiet; no retroactive pauses)
+- **One-tap check-in from notifications** ("✓ Read 10 pages" button, handled by the service worker via a same-origin API), an app-icon badge with habits left today, and a daily reminder that leads with the streak at risk
 - **Flexible goals:** every day or N× per week (weekly habits keep streaks in weeks)
 - **Activity heatmap** (26 weeks) and a 30-day bar chart (Recharts)
 - **Drag-and-drop ordering** (dnd-kit) — mouse, touch and keyboard, with screen reader announcements

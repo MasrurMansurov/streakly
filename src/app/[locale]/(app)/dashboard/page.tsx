@@ -22,7 +22,7 @@ export default function DashboardPage() {
 }
 
 async function Dashboard() {
-  const [{ habits, logs, today, profile, archivedCount, todayNotes, stats }, pacts] = await Promise.all([
+  const [{ habits, logs, today, profile, archivedCount, todayNotes, stats, repairs, pauses }, pacts] = await Promise.all([
     getDashboardData(),
     getPacts(),
   ])
@@ -36,6 +36,8 @@ async function Dashboard() {
       todayNotes={todayNotes}
       achievements={evaluateAchievements(stats)}
       pacts={pacts}
+      repairs={repairs}
+      pauses={pauses}
     />
   )
 }

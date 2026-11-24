@@ -73,6 +73,18 @@ async function fetchAllLogs(query: LogQuery): Promise<HabitLog[]> {
   }
 }
 
+export type Repair = { habit_id: string; day: ISODate }
+export type Pause = { id: string; start_date: ISODate; end_date: ISODate }
+
+/** Repaired days and vacation ranges of a user (RLS: own, or a public profile's). */
+async function bridgesData(supabase: Awaited<ReturnType<typeof createClient>> | ReturnType<typeof createPublicClient>, userId: string, since: ISODate) {
+  const [{ data: repairs }, { data: pauses }] = await Promise.all([
+    supabase.from("habit_repairs").select("habit_id, day").eq("user_id", userId).gte("day", since),
+    supabase.from("pauses").select("id, start_date, end_date").eq("user_id", userId).gte("end_date", since).order("start_date"),
+  ])
+  return { repairs: (repairs ?? []) as Repair[], pauses: (pauses ?? []) as Pause[] }
+}
+
 export async function getDashboardData() {
   const user = await requireUser()
   const [{ today, timeZone }, supabase] = await Promise.all([getToday(), createClient()])
@@ -101,6 +113,7 @@ export async function getDashboardData() {
     achievementStats(supabase, user.id),
   ])
   if (habitsRes.error) throw habitsRes.error
+  const { repairs, pauses } = await bridgesData(supabase, user.id, since)
 
   return {
     user,
@@ -111,6 +124,8 @@ export async function getDashboardData() {
     timeZone,
     archivedCount,
     stats,
+    repairs,
+    pauses,
     todayNotes: Object.fromEntries((notesRes.data ?? []).map((n) => [n.habit_id, n.note])) as Record<string, string>,
   }
 }
@@ -154,7 +169,8 @@ export async function getPublicProfile(username: string) {
     ),
   ])
 
-  return { profile, habits: habitsRes.data ?? [], logs, stats: await achievementStats(supabase, profile.id) }
+  const [stats, { repairs, pauses }] = await Promise.all([achievementStats(supabase, profile.id), bridgesData(supabase, profile.id, since)])
+  return { profile, habits: habitsRes.data ?? [], logs, stats, repairs, pauses }
 }
 
 export type ArchivedHabit = Habit & { archived_at: string; checkIns: number }
@@ -216,7 +232,15 @@ export async function getHabitDetail(id: string) {
     .select("log_date, note")
     .eq("habit_id", id)
     .eq("user_id", user.id)
-  return { habit, logs, today, notes: Object.fromEntries((notes ?? []).map((n) => [n.log_date, n.note])) }
+  const { repairs, pauses } = await bridgesData(supabase, user.id, since)
+  return {
+    habit,
+    logs,
+    today,
+    repairs: repairs.filter((r) => r.habit_id === id),
+    pauses,
+    notes: Object.fromEntries((notes ?? []).map((n) => [n.log_date, n.note])),
+  }
 }
 
 export type ReminderSettings = { enabled: boolean; remindAt: string; timezone: string; devices: number }
@@ -393,4 +417,19 @@ export async function searchPeople(query: string) {
     bio: p.bio,
     following: following.has(p.id),
   }))
+}
+
+/** The viewer's current or upcoming vacation, if any. */
+export async function getActivePause(): Promise<(Pause & { today: ISODate }) | { today: ISODate }> {
+  const user = await requireUser()
+  const [{ today }, supabase] = await Promise.all([getToday(), createClient()])
+  const { data } = await supabase
+    .from("pauses")
+    .select("id, start_date, end_date")
+    .eq("user_id", user.id)
+    .gte("end_date", today)
+    .order("start_date")
+    .limit(1)
+    .maybeSingle()
+  return data ? { ...(data as Pause), today } : { today }
 }

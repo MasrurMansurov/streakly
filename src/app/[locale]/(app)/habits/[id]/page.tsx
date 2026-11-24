@@ -24,7 +24,7 @@ import { getHabitDetail } from "@/lib/data"
 import { formatDay } from "@/i18n"
 import { addDays, weekdayMon0, type ISODate } from "@/lib/dates"
 import { habitColor } from "@/lib/habit-colors"
-import { completionRate, habitStreak } from "@/lib/streaks"
+import { bridgesFor, completionRate, habitStreak } from "@/lib/streaks"
 import { cn } from "@/lib/utils"
 
 import { ActivityChart } from "../../dashboard/activity-chart"
@@ -59,12 +59,12 @@ async function HabitDetail({ params }: Props) {
   const weekdays = Array.from({ length: 7 }, (_, i) => formatDay(locale, addDays(A_MONDAY, i), { weekday: "short" }))
   if (!data) notFound()
 
-  const { habit, logs, today, notes } = data
+  const { habit, logs, today, notes, repairs, pauses } = data
   const color = habitColor(habit.color)
   const target = habit.target_per_week
   const createdOn = habit.created_at.slice(0, 10)
   const done = new Set<ISODate>(logs.map((l) => l.log_date))
-  const streak = habitStreak(done, today, target)
+  const streak = habitStreak(done, today, target, bridgesFor(habit.id, repairs, pauses))
   const counts = new Map<ISODate, number>([...done].map((d) => [d, 1]))
   const yearCount = [...done].filter((d) => d > addDays(today, -365)).length
 

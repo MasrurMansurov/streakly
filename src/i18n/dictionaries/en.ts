@@ -335,6 +335,34 @@ export const en = {
     tooShort: "Type at least 2 characters.",
     hint: "Search public profiles by name or @username — or browse the leaderboard.",
   },
+  repair: {
+    offer: (n: number) => `Your ${n}-day streak can be repaired`,
+    hint: "Once a month per habit, for a day missed yesterday or the day before.",
+    button: "Repair streak",
+    done: "Streak repaired — welcome back!",
+    used: "This habit's repair for the month is already used",
+    tooOld: "Only yesterday or the day before can be repaired",
+    dayStatus: (day: string) => `${day}: missed, repaired`,
+  },
+  comeback: {
+    title: "Welcome back!",
+    text: "Coming back after a miss is the real habit skill.",
+    broken: (best: number) =>
+      `The streak paused — it happens to everyone. Your record of ${best} stays yours. Start again today; even the mini version counts.`,
+  },
+  vacation: {
+    title: "Vacation mode",
+    description: "Going away or ill? Pause everything: streaks don't break and reminders stay quiet. Up to 30 days.",
+    until: "Until",
+    start: "Start vacation",
+    started: "Vacation mode is on — enjoy!",
+    end: "End vacation",
+    ended: "Welcome back! Vacation mode is off.",
+    active: (date: string) => `Vacation until ${date} — streaks are paused and reminders are off.`,
+    invalid: "Pick an end date within the next 30 days",
+    alreadyOn: "Vacation mode is already on",
+    dayStatus: (day: string) => `${day}: vacation`,
+  },
   offline: {
     offline: (n: number) =>
       n === 0 ? "You're offline. Check-ins will be saved on this device and sent when you're back online." : `You're offline · ${n} ${p(n, "check-in", "check-ins")} saved on this device, will be sent automatically.`,

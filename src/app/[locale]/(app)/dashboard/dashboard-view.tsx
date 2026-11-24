@@ -4,6 +4,7 @@ import {
   CircleCheckBigIcon,
   CircleCheckIcon,
   CloudOffIcon,
+  TreePalmIcon,
   FlameIcon,
   PlusIcon,
   SproutIcon,
@@ -26,6 +27,7 @@ import { HabitTemplates } from "./habit-templates"
 import { InsightsCard } from "./insights-card"
 import { PactsCard } from "./pacts-card"
 import type { Pact } from "@/lib/pacts"
+import type { Pause, Repair } from "@/lib/data"
 import { WeeklyReview } from "./weekly-review"
 import { findInsights } from "@/lib/insights"
 import { weeklyReview } from "@/lib/review"
@@ -38,7 +40,7 @@ import { formatDay } from "@/i18n"
 import { useI18n } from "@/i18n/client"
 import { addDays, type ISODate } from "@/lib/dates"
 import { newlyEarned, type Achievement } from "@/lib/achievements"
-import { completionRate, habitStreak, isDueToday } from "@/lib/streaks"
+import { bridgesFor, completionRate, habitStreak, isDueToday } from "@/lib/streaks"
 
 import { ActivityChart } from "./activity-chart"
 import { HabitCard } from "./habit-card"
@@ -54,11 +56,13 @@ type Props = {
   todayNotes: Record<string, string>
   achievements: Achievement[]
   pacts: Pact[]
+  repairs: Repair[]
+  pauses: Pause[]
 }
 
 type Toggle = { habitId: string; date: ISODate; done: boolean; mini?: boolean }
 
-export function DashboardView({ habits: serverHabits, logs, today, profile, archivedCount, todayNotes, achievements, pacts }: Props) {
+export function DashboardView({ habits: serverHabits, logs, today, profile, archivedCount, todayNotes, achievements, pacts, repairs, pauses }: Props) {
   const { locale, t } = useI18n()
   const router = useRouter()
   const [createOpen, setCreateOpen] = useState(false)
@@ -167,6 +171,16 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
     return map
   }, [optimisticLogs])
 
+  // vacation days and per-habit repaired days (both keep streaks alive)
+  const pausedDays = useMemo(() => bridgesFor("", [], pauses), [pauses])
+  const repairedByHabit = useMemo(() => {
+    const map = new Map<string, Set<ISODate>>()
+    for (const r of repairs) map.set(r.habit_id, (map.get(r.habit_id) ?? new Set()).add(r.day))
+    return map
+  }, [repairs])
+  const activePause = pauses.find((p) => p.start_date <= today && p.end_date >= today)
+  const bridgesOf = (habitId: string) => new Set<ISODate>([...pausedDays, ...(repairedByHabit.get(habitId) ?? [])])
+
   const perDay = useMemo(() => {
     const map = new Map<ISODate, number>()
     for (const [, days] of byHabit) for (const d of days) map.set(d, (map.get(d) ?? 0) + 1)
@@ -177,6 +191,13 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
   const [celebration, setCelebration] = useState(0)
 
   const onToggle = (habitId: string, date: ISODate, done: boolean, mini = false) => {
+    const habit = habits.find((h) => h.id === habitId)
+    const days = byHabit.get(habitId)
+    // first check-in after a broken streak → celebrate the comeback
+    if (done && date === today && habit && days && !days.has(today) && days.size > 0) {
+      const before = habitStreak(days, today, habit.target_per_week, bridgesOf(habitId))
+      if (before.current === 0) toast.success(t.comeback.title, { description: t.comeback.text })
+    }
     if (done && date === today && !byHabit.get(habitId)?.has(today)) {
       const stillDue = habits.filter((h) => h.id !== habitId && isDueToday(byHabit.get(h.id)!, today, h.target_per_week))
       if (stillDue.length === 0) setCelebration((n) => n + 1)
@@ -216,7 +237,7 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
   // weekly habits whose target is already met aren't "left" for today
   const leftToday = habits.filter((h) => isDueToday(byHabit.get(h.id)!, today, h.target_per_week)).length
   const best = habits
-    .map((h) => habitStreak(byHabit.get(h.id)!, today, h.target_per_week))
+    .map((h) => habitStreak(byHabit.get(h.id)!, today, h.target_per_week, bridgesOf(h.id)))
     .sort((a, b) => (b.unit === "day" ? b.current : b.current * 7) - (a.unit === "day" ? a.current : a.current * 7))[0]
   const bestStreak = t.dashboard.streakShort(best?.current ?? 0, best?.unit ?? "day")
   const rate30 = habits.length
@@ -318,6 +339,21 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
             <Stat index={3} icon={CircleCheckBigIcon} tone="violet" label={t.dashboard.statCheckIns} value={String(totalCheckIns)} />
           </div>
 
+          {activePause && (
+            <p
+              role="status"
+              className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-200"
+            >
+              <TreePalmIcon className="size-4 shrink-0" />
+              <span className="flex-1">
+                {t.vacation.active(formatDay(locale, activePause.end_date, { month: "long", day: "numeric" }))}
+              </span>
+              <Link href="/settings#vacation" className="font-medium underline underline-offset-4">
+                {t.vacation.end}
+              </Link>
+            </p>
+          )}
+
           {(!online || queue.length > 0) && (
             <p
               role="status"
@@ -336,6 +372,8 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
                 habit={h}
                 done={byHabit.get(h.id)!}
                 mini={miniByHabit.get(h.id)}
+                paused={pausedDays}
+                repaired={repairedByHabit.get(h.id)}
                 today={today}
                 onToggle={onToggle}
                 todayNote={todayNotes[h.id]}

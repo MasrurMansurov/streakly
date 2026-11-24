@@ -1,7 +1,7 @@
 "use client"
 
-import { ArchiveIcon, CheckIcon, FlameIcon, SnowflakeIcon, MessageSquarePlusIcon, StickyNoteIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
-import { useState, useTransition, type ReactNode } from "react"
+import { ArchiveIcon, CheckIcon, FlameIcon, SnowflakeIcon, TreePalmIcon, WrenchIcon, MessageSquarePlusIcon, StickyNoteIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import { useState, useTransition, type ReactNode, useMemo } from "react"
 import { toast } from "sonner"
 
 import { archiveHabit, deleteHabit, restoreHabit } from "@/app/actions/habits"
@@ -30,7 +30,8 @@ import { formatDay } from "@/i18n"
 import { useI18n } from "@/i18n/client"
 import { addDays, type ISODate } from "@/lib/dates"
 import { habitColor } from "@/lib/habit-colors"
-import { countInWeek, FREEZES_PER_MONTH, habitStreak, weekStart } from "@/lib/streaks"
+import { countInWeek, FREEZES_PER_MONTH, habitStreak, repairCandidate, weekStart } from "@/lib/streaks"
+import { repairStreak } from "@/app/actions/streaks"
 import { cn } from "@/lib/utils"
 
 import { HabitFormDialog } from "./habit-form-dialog"
@@ -40,6 +41,10 @@ type Props = {
   done: ReadonlySet<ISODate>
   /** days done in the mini version */
   mini?: ReadonlySet<ISODate>
+  /** vacation days (never break a streak) */
+  paused?: ReadonlySet<ISODate>
+  /** repaired days of this habit */
+  repaired?: ReadonlySet<ISODate>
   today: ISODate
   onToggle: (habitId: string, date: ISODate, done: boolean, mini?: boolean) => void
   /** drag handle rendered next to the menu (from the sortable wrapper) */
@@ -47,11 +52,18 @@ type Props = {
   todayNote?: string
 }
 
-export function HabitCard({ habit, done, mini, today, onToggle, dragHandle, todayNote }: Props) {
+export function HabitCard({ habit, done, mini, paused, repaired, today, onToggle, dragHandle, todayNote }: Props) {
   const { locale, t } = useI18n()
   const color = habitColor(habit.color)
   const target = habit.target_per_week
-  const streak = habitStreak(done, today, target)
+  const bridges = useMemo(() => new Set<ISODate>([...(paused ?? []), ...(repaired ?? [])]), [paused, repaired])
+  const streak = habitStreak(done, today, target, bridges)
+  const repairedThisMonth = [...(repaired ?? [])].some((d) => d.startsWith(today.slice(0, 7)))
+  const repair = target >= 7 && !paused?.has(today) ? repairCandidate(done, today, bridges, repairedThisMonth) : null
+  // a recent break (last check-in within two weeks) of a streak worth caring about
+  const lastDone = [...done].sort().at(-1)
+  const recentlyBroken =
+    !repair && streak.current === 0 && streak.best >= 3 && lastDone !== undefined && lastDone >= addDays(today, -14)
   const thisWeek = countInWeek(done, weekStart(today))
   const doneToday = done.has(today)
   const miniToday = doneToday && Boolean(mini?.has(today))
@@ -212,12 +224,35 @@ export function HabitCard({ habit, done, mini, today, onToggle, dragHandle, toda
         </DropdownMenu>
       </div>
 
+      {repair ? (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-sky-500/30 bg-sky-500/5 px-3 py-2">
+          <div className="min-w-0">
+            <p className="text-sm font-medium">{t.repair.offer(repair.streak)}</p>
+            <p className="text-xs text-muted-foreground">{t.repair.hint}</p>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={pending}
+            onClick={() => run(() => repairStreak(habit.id, repair.day), t.repair.done)}
+          >
+            <WrenchIcon /> {t.repair.button}
+          </Button>
+        </div>
+      ) : recentlyBroken && !doneToday ? (
+        <p className="mt-3 rounded-lg bg-muted/60 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+          {t.comeback.broken(streak.best)}
+        </p>
+      ) : null}
+
       {/* last 7 days — click to fix a missed check-in */}
       <div className="mt-4 grid grid-cols-7 gap-1.5">
         {week.map((date) => {
           const isDone = done.has(date)
           const isMini = isDone && Boolean(mini?.has(date))
-          const isFrozen = !isDone && Boolean(streak.frozen?.has(date))
+          const isPaused = !isDone && Boolean(paused?.has(date))
+          const isRepaired = !isDone && !isPaused && Boolean(repaired?.has(date))
+          const isFrozen = !isDone && !isPaused && !isRepaired && Boolean(streak.frozen?.has(date))
           const beforeCreated = date < createdOn
           return (
             <button
@@ -227,7 +262,11 @@ export function HabitCard({ habit, done, mini, today, onToggle, dragHandle, toda
               onClick={() => onToggle(habit.id, date, !isDone)}
               aria-pressed={isDone}
               aria-label={
-                isFrozen
+                isPaused
+                  ? t.vacation.dayStatus(formatDay(locale, date, { weekday: "long", month: "short", day: "numeric" }))
+                  : isRepaired
+                    ? t.repair.dayStatus(formatDay(locale, date, { weekday: "long", month: "short", day: "numeric" }))
+                    : isFrozen
                   ? t.habit.frozenDay(formatDay(locale, date, { weekday: "long", month: "short", day: "numeric" }))
                   : isMini
                     ? t.habit.miniDayStatus(formatDay(locale, date, { weekday: "long", month: "short", day: "numeric" }))
@@ -241,11 +280,19 @@ export function HabitCard({ habit, done, mini, today, onToggle, dragHandle, toda
               <span
                 className={cn(
                   "flex h-6 w-full items-center justify-center rounded-md transition group-enabled:group-hover:opacity-80",
-                  isDone ? cn(color.dot, isMini && "opacity-45") : isFrozen ? "bg-sky-500/15 text-sky-600 dark:text-sky-400" : "bg-muted",
+                  isDone
+                    ? cn(color.dot, isMini && "opacity-45")
+                    : isPaused
+                      ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                      : isFrozen || isRepaired
+                        ? "bg-sky-500/15 text-sky-600 dark:text-sky-400"
+                        : "bg-muted",
                   date === today && "ring-2 ring-foreground/20 ring-offset-1 ring-offset-background"
                 )}
               >
                 {isFrozen && <SnowflakeIcon className="size-3.5" aria-hidden />}
+                {isRepaired && <WrenchIcon className="size-3.5" aria-hidden />}
+                {isPaused && <TreePalmIcon className="size-3.5" aria-hidden />}
               </span>
             </button>
           )
