@@ -6,6 +6,7 @@ import { connection } from "next/server"
 import { redirect } from "next/navigation"
 
 import type { Pact } from "./pacts"
+import { buildChallenges, type Challenge } from "./challenges"
 import { periodRange, type SharePeriod, type ShareHabit } from "./share"
 import { bridgesFor } from "./streaks"
 import { addDays, DEFAULT_TIMEZONE, isValidTimezone, TIMEZONE_COOKIE, todayIn, type ISODate } from "./dates"
@@ -474,4 +475,13 @@ export async function getShareData(period: SharePeriod) {
     bridges: bridgesFor(h.id, repairs, pauses),
   }))
   return { today, name: profile?.display_name || `@${profile?.username ?? "me"}`, habits: shareHabits }
+}
+
+/** The viewer's challenges (active, upcoming and finished in the last week) with standings. */
+export async function getChallenges(): Promise<Challenge[]> {
+  await requireUser()
+  const [{ today }, supabase] = await Promise.all([getToday(), createClient()])
+  const { data, error } = await supabase.rpc("my_challenges", { p_today: today })
+  if (error) throw new Error(error.message)
+  return buildChallenges(data ?? [], today)
 }

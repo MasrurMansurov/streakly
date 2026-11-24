@@ -28,6 +28,8 @@ import { HabitTemplates } from "./habit-templates"
 import { PactsCard } from "./pacts-card"
 import { ShareDialog } from "./share-dialog"
 import type { Pact } from "@/lib/pacts"
+import type { Challenge } from "@/lib/challenges"
+import { ChallengesCard } from "@/components/challenges/challenges-card"
 import type { Pause, Repair } from "@/lib/data"
 import { findInsights } from "@/lib/insights"
 import { weeklyReview } from "@/lib/review"
@@ -55,13 +57,14 @@ type Props = {
   todayNotes: Record<string, string>
   achievements: Achievement[]
   pacts: Pact[]
+  challenges: Challenge[]
   repairs: Repair[]
   pauses: Pause[]
 }
 
 type Toggle = { habitId: string; date: ISODate; done: boolean; mini?: boolean }
 
-export function DashboardView({ habits: serverHabits, logs, today, profile, archivedCount, todayNotes, achievements, pacts, repairs, pauses }: Props) {
+export function DashboardView({ habits: serverHabits, logs, today, profile, archivedCount, todayNotes, achievements, pacts, challenges, repairs, pauses }: Props) {
   const { locale, t } = useI18n()
   const router = useRouter()
   const [createOpen, setCreateOpen] = useState(false)
@@ -397,6 +400,10 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
               habits={habits.map((h) => ({ id: h.id, name: h.name, color: h.color }))}
             />
           )}
+          {challenges.length > 0 && (
+            <ChallengesCard challenges={challenges} habits={habits.map((h) => ({ id: h.id, name: h.name, color: h.color }))} />
+          )}
+
           <Link
             href="/progress"
             className="group flex items-center gap-4 rounded-xl border bg-card p-4 transition hover:shadow-md"

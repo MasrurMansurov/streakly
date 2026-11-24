@@ -2,6 +2,7 @@ import { CheckCircle2Icon, SearchIcon, TrophyIcon, UsersIcon } from "lucide-reac
 import type { Metadata } from "next"
 import { Suspense } from "react"
 
+import { ChallengesCard } from "@/components/challenges/challenges-card"
 import { FollowButton } from "@/components/follow-button"
 import { IconTile } from "@/components/icon-tile"
 import { PactInviteButton } from "@/components/pact-invite-button"
@@ -13,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatDay, intlLocale, type Dictionary, type Locale } from "@/i18n"
 import { getT } from "@/i18n/server"
-import { getFriendsData, getMyHabitChoices, getPacts, searchPeople, type FeedItem } from "@/lib/data"
+import { getChallenges, getFriendsData, getMyHabitChoices, getPacts, searchPeople, type FeedItem } from "@/lib/data"
 import { addDays } from "@/lib/dates"
 import { habitColor } from "@/lib/habit-colors"
 import { cn } from "@/lib/utils"
@@ -111,16 +112,20 @@ async function SearchResults({ searchParams }: { searchParams: Promise<{ q?: str
 }
 
 async function Friends() {
-  const [{ people, feed, today, timeZone }, { locale, t }, pacts, myHabits] = await Promise.all([
+  const [{ people, feed, today, timeZone }, { locale, t }, pacts, myHabits, challenges] = await Promise.all([
     getFriendsData(),
     getT(),
     getPacts(),
     getMyHabitChoices(),
+    getChallenges(),
   ])
+  const challengesCard = <ChallengesCard challenges={challenges} habits={myHabits} people={people} />
   const inPact = new Set(pacts.map((p) => p.partner.username))
 
   if (people.length === 0) {
     return (
+      <div className="grid gap-6">
+      {challengesCard}
       <Card className="items-center border-dashed py-12 text-center">
         <IconTile icon={UsersIcon} tone="sky" size="lg" />
         <div className="grid gap-1">
@@ -131,6 +136,7 @@ async function Friends() {
           {t.friends.tryDemo}
         </Button>
       </Card>
+      </div>
     )
   }
 
@@ -148,6 +154,7 @@ async function Friends() {
 
   return (
     <div className="grid gap-6">
+      {challengesCard}
       <Card>
         <CardHeader>
           <CardTitle>{t.friends.peopleTitle}</CardTitle>

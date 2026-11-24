@@ -17,6 +17,18 @@ export type Database = {
   }
   public: {
     Tables: {
+      challenges: {
+        Row: { created_at: string; end_date: string; id: string; owner_id: string; stake: string | null; start_date: string; title: string }
+        Insert: { created_at?: string; end_date: string; id?: string; owner_id?: string; stake?: string | null; start_date: string; title: string }
+        Update: { created_at?: string; end_date?: string; id?: string; owner_id?: string; stake?: string | null; start_date?: string; title?: string }
+        Relationships: []
+      }
+      challenge_members: {
+        Row: { challenge_id: string; habit_id: string | null; invited_at: string; joined_at: string | null; status: string; user_id: string }
+        Insert: { challenge_id: string; habit_id?: string | null; invited_at?: string; joined_at?: string | null; status?: string; user_id: string }
+        Update: { challenge_id?: string; habit_id?: string | null; invited_at?: string; joined_at?: string | null; status?: string; user_id?: string }
+        Relationships: []
+      }
       follows: {
         Row: {
           created_at: string
@@ -323,6 +335,27 @@ export type Database = {
           checkins_30: number
           display_name: string | null
           score: number
+          username: string
+        }[]
+      }
+      my_challenges: {
+        Args: { p_today: string }
+        Returns: {
+          avatar_url: string | null
+          challenge_id: string
+          done_today: boolean
+          end_date: string
+          habit_color: string | null
+          habit_name: string | null
+          i_own: boolean
+          is_me: boolean
+          member_id: string
+          name: string
+          score: number
+          stake: string | null
+          start_date: string
+          status: string
+          title: string
           username: string
         }[]
       }
