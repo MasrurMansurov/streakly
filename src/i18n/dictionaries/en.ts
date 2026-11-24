@@ -519,6 +519,18 @@ export const en = {
     undo: "Back to active",
     weeks: "Last weeks",
   },
+  letter: {
+    title: "Letter of the week",
+    subtitle: "A short note about your week, written by AI from your numbers.",
+    write: "Write my letter",
+    writing: "Writing…",
+    privacy: "To write it, Streakly sends Anthropic (Claude) your habit names and this week's numbers — never notes, photos or your email. One letter per week.",
+    unavailable: "The letter isn't available right now",
+    noHabits: "Add a habit and check in first",
+    failed: "Couldn't write the letter — try again later",
+    busy: "Too many requests right now — try again in a minute",
+    signature: "AI-written · based on your data",
+  },
   offline: {
     offline: (n: number) =>
       n === 0 ? "You're offline. Check-ins will be saved on this device and sent when you're back online." : `You're offline · ${n} ${p(n, "check-in", "check-ins")} saved on this device, will be sent automatically.`,

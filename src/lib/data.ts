@@ -9,7 +9,7 @@ import type { Pact, PactProof } from "./pacts"
 import { buildChallenges, type Challenge } from "./challenges"
 import { periodRange, type SharePeriod, type ShareHabit } from "./share"
 import type { DayFeeling } from "./insights"
-import { bridgesFor, habitStreak } from "./streaks"
+import { bridgesFor, habitStreak, weekStart } from "./streaks"
 import { evaluateAchievements } from "./achievements"
 import { addDays, DEFAULT_TIMEZONE, isValidTimezone, TIMEZONE_COOKIE, todayIn, type ISODate } from "./dates"
 import { createClient, createPublicClient } from "./supabase/server"
@@ -563,4 +563,17 @@ export async function getAppearanceData() {
       streak: habitStreak(byHabit.get(h.id) ?? new Set(), today, h.target_per_week, bridgesFor(h.id, repairs, pauses)),
     })),
   }
+}
+
+/** This week's AI letter, if one was written. */
+export async function getWeeklyLetter() {
+  const user = await requireUser()
+  const [{ today }, supabase] = await Promise.all([getToday(), createClient()])
+  const { data } = await supabase
+    .from("weekly_letters")
+    .select("body, created_at")
+    .eq("user_id", user.id)
+    .eq("week_start", weekStart(today))
+    .maybeSingle()
+  return data
 }

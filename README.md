@@ -87,6 +87,7 @@ research review of retention mechanics (Duolingo, Strava, Wordle…) and habit-f
 ### Habit strength & how you feel
 - **Habit strength** — once a week, right after a check-in, one question: "How automatic does it feel now?" (1–5, a simplified SRBAI). Strength = 60% how automatic + 40% consistency over 4 weeks, with a weekly chart on the habit page.
 - **Graduation at 66 days** — when a habit is 66+ days old, the last two checks are 4+ and 80%+ of the goal was met for 4 weeks, it can graduate to **On autopilot**: still trackable, but no longer "due" and never reminded (Lally et al., 2010: a median of 66 days to automaticity).
+- **AI letter of the week** (optional) — a short, specific note about your week written by Claude (`claude-opus-5-5`, low effort, server-side refusal fallback, cached system prompt) from aggregated numbers only (habit names, counts, streaks, patterns, mood averages — no notes, photos or email). One per week, stored; the card appears only when `ANTHROPIC_API_KEY` is set.
 - **Mood & energy** in one tap each on the Today screen; Insights show which habit lifts them ("on days with “Run” your mood is 4.2 of 5 vs 3.1").
 
 ### Progress & insights
@@ -155,7 +156,7 @@ src/
     ├── ranks.ts offline-queue.ts csv.ts dates.ts …                             ┘
     └── supabase/               # server, browser, proxy and public clients + generated types
 supabase/
-├── migrations/                 # schema, RLS policies, functions, triggers, cron (25 migrations)
+├── migrations/                 # schema, RLS policies, functions, triggers, cron (26 migrations)
 └── functions/send-reminders/   # Web Push: daily reminders, pact nudges, test pushes
 public/sw.js                    # service worker: push, notification actions, offline cache
 ```
@@ -237,6 +238,7 @@ npm run dev
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | publishable (anon) key |
 | `NEXT_PUBLIC_SITE_URL` | optional — absolute URLs for OG images, sitemap, robots |
+| `ANTHROPIC_API_KEY` | optional — enables the AI letter of the week (server-side only) |
 
 ## Deployment
 
@@ -247,7 +249,6 @@ Vercel deploys `main` automatically. Functions run in `fra1` (see `vercel.json`)
 Done in the latest rounds — research-backed retention features: one-tap check-ins from notifications, mini versions, streak repair & vacation mode, if-then plans, share cards and "My year in habits", Google sign-in, the Progress page and phone tab bar; challenges with soft stakes, and proof with a shared daily moment in pacts.
 
 Next:
-- [ ] An **AI weekly letter** grounded in your own insights
 - [ ] A **Telegram bot** for check-ins (a widget substitute for the web)
 
 ## License & credits

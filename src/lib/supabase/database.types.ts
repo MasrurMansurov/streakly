@@ -17,6 +17,12 @@ export type Database = {
   }
   public: {
     Tables: {
+      weekly_letters: {
+        Row: { body: string; created_at: string; locale: string; user_id: string; week_start: string }
+        Insert: { body: string; created_at?: string; locale: string; user_id?: string; week_start: string }
+        Update: { body?: string; created_at?: string; locale?: string; user_id?: string; week_start?: string }
+        Relationships: []
+      }
       challenges: {
         Row: { created_at: string; end_date: string; id: string; owner_id: string; stake: string | null; start_date: string; title: string }
         Insert: { created_at?: string; end_date: string; id?: string; owner_id?: string; stake?: string | null; start_date: string; title: string }

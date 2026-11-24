@@ -17,10 +17,10 @@ import { ActivityChart } from "../dashboard/activity-chart"
 import { InsightsCard } from "../dashboard/insights-card"
 import { WeeklyReview } from "../dashboard/weekly-review"
 
-type Props = { habits: Habit[]; logs: HabitLog[]; today: ISODate; achievements: Achievement[]; feelings: Record<ISODate, DayFeeling> }
+type Props = { habits: Habit[]; logs: HabitLog[]; today: ISODate; achievements: Achievement[]; feelings: Record<ISODate, DayFeeling>; letter?: React.ReactNode }
 
 /** Everything about how it's going: this week, patterns, activity, achievements. */
-export function ProgressView({ habits, logs, today, achievements, feelings }: Props) {
+export function ProgressView({ habits, logs, today, achievements, feelings, letter }: Props) {
   const { t, locale } = useI18n()
 
   const byHabit = useMemo(() => {
@@ -62,6 +62,7 @@ export function ProgressView({ habits, logs, today, achievements, feelings }: Pr
       ) : (
         <>
           <WeeklyReview review={review} />
+          {letter}
           <InsightsCard insights={insights} />
 
           <div className="grid gap-4 lg:grid-cols-5">
