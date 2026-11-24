@@ -5,6 +5,7 @@ import { cookies } from "next/headers"
 import { connection } from "next/server"
 import { redirect } from "next/navigation"
 
+import type { Pact } from "./pacts"
 import { addDays, DEFAULT_TIMEZONE, isValidTimezone, TIMEZONE_COOKIE, todayIn, type ISODate } from "./dates"
 import { createClient, createPublicClient } from "./supabase/server"
 import type { AchievementStats } from "./achievements"
@@ -305,4 +306,34 @@ export async function getFollowInfo(profileId: string) {
     followers: Number(counts?.[0]?.followers ?? 0),
     followingCount: Number(counts?.[0]?.following ?? 0),
   }
+}
+
+/** The viewer's pacts (pending and active) with partner details. */
+export async function getPacts(): Promise<Pact[]> {
+  await requireUser()
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc("my_pacts")
+  if (error) throw new Error(error.message)
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    status: r.status === "active" ? "active" : "pending",
+    iInvited: r.i_invited,
+    partner: { username: r.partner_username, name: r.partner_name, avatarUrl: r.partner_avatar },
+    myHabit: r.my_habit_id && r.my_habit_name ? { id: r.my_habit_id, name: r.my_habit_name } : null,
+    partnerHabit: r.partner_habit_name ? { name: r.partner_habit_name, color: r.partner_habit_color ?? "emerald" } : null,
+    partnerDates: (r.partner_dates ?? []) as ISODate[],
+  }))
+}
+
+/** The viewer's active habits, for pickers. */
+export async function getMyHabitChoices() {
+  const user = await requireUser()
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from("habits")
+    .select("id, name, color")
+    .eq("user_id", user.id)
+    .is("archived_at", null)
+    .order("position")
+  return data ?? []
 }

@@ -4,6 +4,7 @@ import { Suspense } from "react"
 
 import { FollowButton } from "@/components/follow-button"
 import { IconTile } from "@/components/icon-tile"
+import { PactInviteButton } from "@/components/pact-invite-button"
 import { Link } from "@/components/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -11,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatDay, intlLocale, type Dictionary, type Locale } from "@/i18n"
 import { getT } from "@/i18n/server"
-import { getFriendsData, type FeedItem } from "@/lib/data"
+import { getFriendsData, getMyHabitChoices, getPacts, type FeedItem } from "@/lib/data"
 import { addDays } from "@/lib/dates"
 import { habitColor } from "@/lib/habit-colors"
 import { cn } from "@/lib/utils"
@@ -36,7 +37,13 @@ export default async function FriendsPage() {
 }
 
 async function Friends() {
-  const [{ people, feed, today, timeZone }, { locale, t }] = await Promise.all([getFriendsData(), getT()])
+  const [{ people, feed, today, timeZone }, { locale, t }, pacts, myHabits] = await Promise.all([
+    getFriendsData(),
+    getT(),
+    getPacts(),
+    getMyHabitChoices(),
+  ])
+  const inPact = new Set(pacts.map((p) => p.partner.username))
 
   if (people.length === 0) {
     return (
@@ -84,6 +91,7 @@ async function Friends() {
                   <div className="truncate font-medium">{p.name}</div>
                   <div className="truncate text-xs text-muted-foreground">@{p.username}</div>
                 </Link>
+                <PactInviteButton inviteeId={p.id} name={p.name} habits={myHabits} inPact={inPact.has(p.username)} />
                 <FollowButton profileId={p.id} name={p.name} following signedIn />
               </li>
             ))}

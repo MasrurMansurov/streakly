@@ -145,6 +145,39 @@ export type Database = {
           },
         ]
       }
+      pacts: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          id: string
+          invitee_habit_id: string | null
+          invitee_id: string
+          inviter_habit_id: string
+          inviter_id: string
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          id?: string
+          invitee_habit_id?: string | null
+          invitee_id: string
+          inviter_habit_id: string
+          inviter_id?: string
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          id?: string
+          invitee_habit_id?: string | null
+          invitee_id?: string
+          inviter_habit_id?: string
+          inviter_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -261,6 +294,23 @@ export type Database = {
         Returns: { total_checkins: number; best_streak: number }[]
       }
       delete_my_account: { Args: never; Returns: undefined }
+      my_pacts: {
+        Args: never
+        Returns: {
+          accepted_at: string | null
+          i_invited: boolean
+          id: string
+          my_habit_id: string | null
+          my_habit_name: string | null
+          partner_avatar: string | null
+          partner_dates: string[]
+          partner_habit_color: string | null
+          partner_habit_name: string | null
+          partner_name: string
+          partner_username: string
+          status: string
+        }[]
+      }
       follow_counts: {
         Args: { p_profile: string }
         Returns: { followers: number; following: number }[]

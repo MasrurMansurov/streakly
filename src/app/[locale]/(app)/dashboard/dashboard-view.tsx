@@ -21,6 +21,8 @@ import { IconTile, type IconTone } from "@/components/icon-tile"
 import { Heatmap } from "@/components/heatmap"
 import { HabitTemplates } from "./habit-templates"
 import { InsightsCard } from "./insights-card"
+import { PactsCard } from "./pacts-card"
+import type { Pact } from "@/lib/pacts"
 import { WeeklyReview } from "./weekly-review"
 import { findInsights } from "@/lib/insights"
 import { weeklyReview } from "@/lib/review"
@@ -48,11 +50,12 @@ type Props = {
   archivedCount: number
   todayNotes: Record<string, string>
   achievements: Achievement[]
+  pacts: Pact[]
 }
 
 type Toggle = { habitId: string; date: ISODate; done: boolean }
 
-export function DashboardView({ habits: serverHabits, logs, today, profile, archivedCount, todayNotes, achievements }: Props) {
+export function DashboardView({ habits: serverHabits, logs, today, profile, archivedCount, todayNotes, achievements, pacts }: Props) {
   const { locale, t } = useI18n()
   const [createOpen, setCreateOpen] = useState(false)
 
@@ -238,6 +241,14 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
             )}
           />
 
+          {pacts.length > 0 && (
+            <PactsCard
+              pacts={pacts}
+              byHabit={byHabit}
+              today={today}
+              habits={habits.map((h) => ({ id: h.id, name: h.name, color: h.color }))}
+            />
+          )}
           <WeeklyReview review={review} />
           <InsightsCard insights={insights} />
 
