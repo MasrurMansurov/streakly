@@ -8,6 +8,8 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false, // tests share the demo account
   workers: 1,
+  // real network round trips to Supabase: allow for the occasional slow refresh
+  expect: { timeout: 10_000 },
   retries: process.env.CI ? 1 : 0,
   reporter: [["list"]],
   use: {

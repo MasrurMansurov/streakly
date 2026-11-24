@@ -84,6 +84,11 @@ research review of retention mechanics (Duolingo, Strava, Wordle…) and habit-f
 - **Streak repair** — once a month per habit, a day missed yesterday or the day before; offered only when it revives a 3+ day streak.
 - **Vacation mode** — up to 30 days: streaks are bridged (daily and weekly), reminders and pact nudges stay quiet. No retroactive pauses.
 
+### Habit strength & how you feel
+- **Habit strength** — once a week, right after a check-in, one question: "How automatic does it feel now?" (1–5, a simplified SRBAI). Strength = 60% how automatic + 40% consistency over 4 weeks, with a weekly chart on the habit page.
+- **Graduation at 66 days** — when a habit is 66+ days old, the last two checks are 4+ and 80%+ of the goal was met for 4 weeks, it can graduate to **On autopilot**: still trackable, but no longer "due" and never reminded (Lally et al., 2010: a median of 66 days to automaticity).
+- **Mood & energy** in one tap each on the Today screen; Insights show which habit lifts them ("on days with “Run” your mood is 4.2 of 5 vs 3.1").
+
 ### Progress & insights
 - **Weekly review** — this week vs. the same days of last week, an 8-week trend, the habit on a roll and the one falling behind.
 - **Insights** from the last 12 weeks — habits that go together ("on days you run, you read 85% vs 40%"), a habit's weak weekday, your "never miss twice" recovery rate, and a nudge to add a plan to a struggling habit.
@@ -150,7 +155,7 @@ src/
     ├── ranks.ts offline-queue.ts csv.ts dates.ts …                             ┘
     └── supabase/               # server, browser, proxy and public clients + generated types
 supabase/
-├── migrations/                 # schema, RLS policies, functions, triggers, cron (24 migrations)
+├── migrations/                 # schema, RLS policies, functions, triggers, cron (25 migrations)
 └── functions/send-reminders/   # Web Push: daily reminders, pact nudges, test pushes
 public/sw.js                    # service worker: push, notification actions, offline cache
 ```
@@ -170,6 +175,8 @@ auth.users ─1:1─ profiles (username, display_name, bio, avatar_url, is_publi
                    ├─n:m─ pacts (inviter/invitee + their habits, status)  one per pair
                    │        └─1:n─ pact_proofs (day, note, photo_path)      partner sees after own check-in
                    ├─n:m─ challenges ─ challenge_members (habit, status)   2–6 people, stake, dates
+                   ├─1:n─ habit_strength (week_start, score 1–5)  ·  habits.graduated_at
+                   ├─1:n─ daily_moods (day, mood, energy)
                    ├─1:1─ reminder_settings (time, timezone, locale, enabled)
                    └─1:n─ push_subscriptions (endpoint, keys)
 ```
@@ -240,8 +247,6 @@ Vercel deploys `main` automatically. Functions run in `fra1` (see `vercel.json`)
 Done in the latest rounds — research-backed retention features: one-tap check-ins from notifications, mini versions, streak repair & vacation mode, if-then plans, share cards and "My year in habits", Google sign-in, the Progress page and phone tab bar; challenges with soft stakes, and proof with a shared daily moment in pacts.
 
 Next:
-- [ ] **Habit strength** (a short automaticity check) and **graduating** a habit around day 66
-- [ ] One-tap **mood & energy**, so Insights can show "habit → how I feel"
 - [ ] An **AI weekly letter** grounded in your own insights
 - [ ] A **Telegram bot** for check-ins (a widget substitute for the web)
 

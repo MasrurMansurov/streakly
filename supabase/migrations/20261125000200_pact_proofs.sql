@@ -127,3 +127,19 @@ create policy "proofs: read own, or the partner's once you've checked in that da
 create policy "proofs: delete own"
   on storage.objects for delete to authenticated
   using (bucket_id = 'proofs' and (storage.foldername(name))[2] = (select auth.uid())::text);
+
+-- partners can be in different time zones: look at proofs from p_day onwards
+create or replace function public.pacts_with_partner_proof(p_day date)
+returns setof uuid
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select distinct pr.pact_id
+  from public.pact_proofs pr
+  join public.pacts p on p.id = pr.pact_id and p.status = 'active'
+  where pr.day >= p_day
+    and pr.user_id <> (select auth.uid())
+    and (select auth.uid()) in (p.inviter_id, p.invitee_id);
+$$;

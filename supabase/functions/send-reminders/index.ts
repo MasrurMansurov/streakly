@@ -120,6 +120,7 @@ async function dueHabits(userId: string, localDate: string) {
     from public.habits h
     where h.user_id = ${userId}
       and h.archived_at is null
+      and h.graduated_at is null  -- graduated habits run on autopilot: no reminders
       and not exists (select 1 from public.habit_logs l where l.habit_id = h.id and l.log_date = ${localDate}::date)
       and (
         h.target_per_week >= 7

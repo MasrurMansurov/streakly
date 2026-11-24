@@ -1,4 +1,4 @@
-import { CalendarX2Icon, ClockArrowUpIcon, LinkIcon, RotateCcwIcon, LightbulbIcon, type LucideIcon } from "lucide-react"
+import { CalendarX2Icon, ClockArrowUpIcon, SmileIcon, LinkIcon, RotateCcwIcon, LightbulbIcon, type LucideIcon } from "lucide-react"
 
 import { IconTile, type IconTone } from "@/components/icon-tile"
 import { Link } from "@/components/link"
@@ -14,10 +14,25 @@ const LOOK: Record<Insight["kind"], { icon: LucideIcon; tone: IconTone }> = {
   weekday: { icon: CalendarX2Icon, tone: "amber" },
   recovery: { icon: RotateCcwIcon, tone: "emerald" },
   plan: { icon: ClockArrowUpIcon, tone: "sky" },
+  mood: { icon: SmileIcon, tone: "rose" },
 }
 
 /** Two labelled bars: "with" vs "without". */
-function Compare({ a, b, labelA, labelB, tone }: { a: number; b: number; labelA: string; labelB: string; tone: string }) {
+function Compare({
+  a,
+  b,
+  labelA,
+  labelB,
+  tone,
+  format = (v) => `${pct(v)}%`,
+}: {
+  a: number
+  b: number
+  labelA: string
+  labelB: string
+  tone: string
+  format?: (v: number) => string
+}) {
   return (
     <div className="grid gap-1.5 text-xs" aria-hidden>
       {[
@@ -29,7 +44,7 @@ function Compare({ a, b, labelA, labelB, tone }: { a: number; b: number; labelA:
           <span className="h-1.5 overflow-hidden rounded-full bg-muted">
             <span className={cn("block h-full rounded-full", color as string)} style={{ width: `${pct(v as number)}%` }} />
           </span>
-          <span className="text-right tabular-nums">{pct(v as number)}%</span>
+          <span className="text-right tabular-nums">{format(v as number)}</span>
         </div>
       ))}
     </div>
@@ -73,6 +88,20 @@ export function InsightsCard({ insights }: { insights: Insight[] }) {
                       <p className="text-sm leading-relaxed">{x.weekday(i.habit, i.weekday, pct(i.rate), pct(i.others))}</p>
                       <Compare a={i.others} b={i.rate} labelA={x.otherDays} labelB={x.weekdayShort[i.weekday]} tone="bg-amber-500" />
                       <p className="text-xs text-muted-foreground">{x.weekdayTip}</p>
+                    </>
+                  )}
+                  {i.kind === "mood" && (
+                    <>
+                      <p className="text-sm leading-relaxed">{x.mood(i.habit, i.metric, i.withAvg, i.withoutAvg)}</p>
+                      <Compare
+                        a={i.withAvg / 5}
+                        b={i.withoutAvg / 5}
+                        labelA={x.withLabel}
+                        labelB={x.withoutLabel}
+                        tone="bg-rose-500"
+                        format={(v) => `${Math.round(v * 50) / 10}/5`}
+                      />
+                      <p className="text-xs text-muted-foreground">{x.moodTip}</p>
                     </>
                   )}
                   {i.kind === "plan" && (

@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
   // how many habits are still due today (for the app-icon badge)
   const weekAgo = addDays(today, -7)
   const [{ data: habits }, { data: logs }, { data: profile }] = await Promise.all([
-    supabase.from("habits").select("id, target_per_week").eq("user_id", user.id).is("archived_at", null),
+    supabase.from("habits").select("id, target_per_week").eq("user_id", user.id).is("archived_at", null).is("graduated_at", null),
     supabase.from("habit_logs").select("habit_id, log_date").eq("user_id", user.id).gte("log_date", weekAgo),
     supabase.from("profiles").select("username").eq("id", user.id).single(),
   ])

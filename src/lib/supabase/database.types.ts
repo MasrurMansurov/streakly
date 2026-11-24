@@ -53,6 +53,18 @@ export type Database = {
         Update: { created_at?: string; day?: string; habit_id?: string; user_id?: string }
         Relationships: []
       }
+      habit_strength: {
+        Row: { created_at: string; habit_id: string; score: number; user_id: string; week_start: string }
+        Insert: { created_at?: string; habit_id: string; score: number; user_id?: string; week_start: string }
+        Update: { created_at?: string; habit_id?: string; score?: number; user_id?: string; week_start?: string }
+        Relationships: []
+      }
+      daily_moods: {
+        Row: { day: string; energy: number | null; mood: number | null; updated_at: string; user_id: string }
+        Insert: { day: string; energy?: number | null; mood?: number | null; updated_at?: string; user_id?: string }
+        Update: { day?: string; energy?: number | null; mood?: number | null; updated_at?: string; user_id?: string }
+        Relationships: []
+      }
       habit_logs: {
         Row: {
           is_mini: boolean
@@ -121,6 +133,7 @@ export type Database = {
       }
       habits: {
         Row: {
+          graduated_at: string | null
           cue: string | null
           mini_label: string | null
           archived_at: string | null
@@ -135,6 +148,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          graduated_at?: string | null
           cue?: string | null
           mini_label?: string | null
           archived_at?: string | null
@@ -149,6 +163,7 @@ export type Database = {
           user_id?: string
         }
         Update: {
+          graduated_at?: string | null
           cue?: string | null
           mini_label?: string | null
           archived_at?: string | null

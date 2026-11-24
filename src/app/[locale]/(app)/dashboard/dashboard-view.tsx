@@ -4,6 +4,7 @@ import {
   CircleCheckBigIcon,
   ChartNoAxesColumnIcon,
   ChevronRightIcon,
+  GraduationCapIcon,
   CircleCheckIcon,
   CloudOffIcon,
   TreePalmIcon,
@@ -28,6 +29,8 @@ import { HabitTemplates } from "./habit-templates"
 import { PactsCard } from "./pacts-card"
 import { ShareDialog } from "./share-dialog"
 import type { Pact } from "@/lib/pacts"
+import type { DayFeeling } from "@/lib/insights"
+import { FeelingCard } from "./feeling-card"
 import type { Challenge } from "@/lib/challenges"
 import { ChallengesCard } from "@/components/challenges/challenges-card"
 import type { Pause, Repair } from "@/lib/data"
@@ -60,11 +63,13 @@ type Props = {
   challenges: Challenge[]
   repairs: Repair[]
   pauses: Pause[]
+  strength: Record<string, { week: ISODate; score: number }[]>
+  feelings: Record<ISODate, DayFeeling>
 }
 
 type Toggle = { habitId: string; date: ISODate; done: boolean; mini?: boolean }
 
-export function DashboardView({ habits: serverHabits, logs, today, profile, archivedCount, todayNotes, achievements, pacts, challenges, repairs, pauses }: Props) {
+export function DashboardView({ habits: serverHabits, logs, today, profile, archivedCount, todayNotes, achievements, pacts, challenges, repairs, pauses, strength, feelings }: Props) {
   const { locale, t } = useI18n()
   const router = useRouter()
   const [createOpen, setCreateOpen] = useState(false)
@@ -220,7 +225,10 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
 
   const doneToday = habits.filter((h) => byHabit.get(h.id)?.has(today)).length
   // nothing is "due" on vacation
-  const leftNow = activePause ? 0 : habits.filter((h) => isDueToday(byHabit.get(h.id)!, today, h.target_per_week)).length
+  // graduated habits run on autopilot — never "due"
+  const activeHabits = habits.filter((h) => !h.graduated_at)
+  const autopilot = habits.filter((h) => h.graduated_at)
+  const leftNow = activePause ? 0 : activeHabits.filter((h) => isDueToday(byHabit.get(h.id)!, today, h.target_per_week)).length
 
   // "N left today" on the installed app's icon
   useEffect(() => {
@@ -239,7 +247,7 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
     return () => navigator.serviceWorker.removeEventListener("message", onMessage)
   }, [router])
   // weekly habits whose target is already met aren't "left" for today
-  const leftToday = habits.filter((h) => isDueToday(byHabit.get(h.id)!, today, h.target_per_week)).length
+  const leftToday = activeHabits.filter((h) => isDueToday(byHabit.get(h.id)!, today, h.target_per_week)).length
   const best = habits
     .map((h) => habitStreak(byHabit.get(h.id)!, today, h.target_per_week, bridgesOf(h.id)))
     .sort((a, b) => (b.unit === "day" ? b.current : b.current * 7) - (a.unit === "day" ? a.current : a.current * 7))[0]
@@ -273,9 +281,11 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
           done: byHabit.get(h.id)!,
           hasPlan: Boolean(h.cue),
         })),
-        today
+        today,
+        3,
+        new Map(Object.entries(feelings) as [ISODate, DayFeeling][])
       ),
-    [habits, byHabit, today]
+    [habits, byHabit, today, feelings]
   )
   const totalCheckIns = [...perDay.values()].reduce((a, b) => a + b, 0)
 
@@ -374,8 +384,10 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
             </p>
           )}
 
+          <FeelingCard today={feelings[today] ?? { mood: null, energy: null }} />
+
           <SortableHabits
-            habits={habits}
+            habits={activeHabits}
             onReorder={onReorder}
             renderHabit={(h, dragHandle) => (
               <HabitCard
@@ -384,13 +396,44 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
                 mini={miniByHabit.get(h.id)}
                 paused={pausedDays}
                 repaired={repairedByHabit.get(h.id)}
+                strength={strength[h.id]}
                 today={today}
                 onToggle={onToggle}
                 todayNote={todayNotes[h.id]}
-                dragHandle={habits.length > 1 ? dragHandle : undefined}
+                dragHandle={activeHabits.length > 1 ? dragHandle : undefined}
               />
             )}
           />
+
+          {autopilot.length > 0 && (
+            <details className="group rounded-xl border bg-card">
+              <summary className="flex cursor-pointer list-none items-center gap-3 p-4">
+                <IconTile icon={GraduationCapIcon} tone="emerald" size="sm" />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium">
+                    {t.strength.autopilot} <span className="text-muted-foreground tabular-nums">· {autopilot.length}</span>
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">{t.strength.autopilotSub}</span>
+                </span>
+                <ChevronRightIcon className="size-5 text-muted-foreground transition group-open:rotate-90" />
+              </summary>
+              <div className="grid gap-3 px-4 pb-4 md:grid-cols-2">
+                {autopilot.map((h) => (
+                  <HabitCard
+                    key={h.id}
+                    habit={h}
+                    done={byHabit.get(h.id)!}
+                    mini={miniByHabit.get(h.id)}
+                    paused={pausedDays}
+                    repaired={repairedByHabit.get(h.id)}
+                    today={today}
+                    onToggle={onToggle}
+                    todayNote={todayNotes[h.id]}
+                  />
+                ))}
+              </div>
+            </details>
+          )}
 
           {pacts.length > 0 && (
             <PactsCard

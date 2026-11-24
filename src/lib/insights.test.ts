@@ -48,6 +48,17 @@ describe("findInsights", () => {
     expect(findInsights([{ ...gym, hasPlan: true }], today).some((x) => x.kind === "plan")).toBe(false)
   })
 
+  it("links a habit to better mood", () => {
+    const run = past((_, i) => i % 2 === 0)
+    const feelings = new Map<ISODate, { mood: number | null; energy: number | null }>()
+    for (let i = 1; i <= 30; i++) {
+      const d = addDays(today, -i)
+      feelings.set(d, { mood: run.has(d) ? 4 : 3, energy: null })
+    }
+    const insight = findInsights([habit("Run", run, 4)], today, 3, feelings).find((x) => x.kind === "mood")
+    expect(insight).toEqual({ kind: "mood", habit: "Run", metric: "mood", withAvg: 4, withoutAvg: 3 })
+  })
+
   it("stays quiet without enough data", () => {
     const fresh = { ...habit("New", past((_, i) => i < 4)), createdOn: addDays(today, -4) }
     expect(findInsights([fresh], today)).toEqual([])

@@ -8,6 +8,7 @@ import { redirect } from "next/navigation"
 import type { Pact, PactProof } from "./pacts"
 import { buildChallenges, type Challenge } from "./challenges"
 import { periodRange, type SharePeriod, type ShareHabit } from "./share"
+import type { DayFeeling } from "./insights"
 import { bridgesFor, habitStreak } from "./streaks"
 import { evaluateAchievements } from "./achievements"
 import { addDays, DEFAULT_TIMEZONE, isValidTimezone, TIMEZONE_COOKIE, todayIn, type ISODate } from "./dates"
@@ -16,7 +17,7 @@ import type { AchievementStats } from "./achievements"
 import type { Tables } from "./supabase/database.types"
 
 export type Profile = Tables<"profiles">
-export type Habit = Pick<Tables<"habits">, "id" | "name" | "description" | "color" | "position" | "target_per_week" | "created_at" | "mini_label" | "cue">
+export type Habit = Pick<Tables<"habits">, "id" | "name" | "description" | "color" | "position" | "target_per_week" | "created_at" | "mini_label" | "cue" | "graduated_at">
 export type HabitLog = Pick<Tables<"habit_logs">, "habit_id" | "log_date"> & { is_mini?: boolean }
 
 /** How far back the dashboard and public profile look. */
@@ -97,7 +98,7 @@ export async function getDashboardData() {
   const [habitsRes, logs, profileRes, archivedCount, notesRes, stats] = await Promise.all([
     supabase
       .from("habits")
-      .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue")
+      .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue, graduated_at")
       .eq("user_id", user.id) // RLS also exposes other users' *public* habits
       .is("archived_at", null)
       .order("position")
@@ -117,7 +118,15 @@ export async function getDashboardData() {
     achievementStats(supabase, user.id),
   ])
   if (habitsRes.error) throw habitsRes.error
-  const { repairs, pauses } = await bridgesData(supabase, user.id, since)
+  const [{ repairs, pauses }, { data: strengthRows }, { data: moodRows }] = await Promise.all([
+    bridgesData(supabase, user.id, since),
+    supabase.from("habit_strength").select("habit_id, week_start, score").eq("user_id", user.id).gte("week_start", addDays(today, -7 * 10)).order("week_start", { ascending: false }),
+    supabase.from("daily_moods").select("day, mood, energy").eq("user_id", user.id).gte("day", addDays(today, -90)),
+  ])
+  // weekly self-reports per habit, newest first
+  const strength: Record<string, { week: ISODate; score: number }[]> = {}
+  for (const r of strengthRows ?? []) (strength[r.habit_id] ??= []).push({ week: r.week_start as ISODate, score: r.score })
+  const feelings = Object.fromEntries((moodRows ?? []).map((m) => [m.day, { mood: m.mood, energy: m.energy }])) as Record<ISODate, DayFeeling>
 
   return {
     user,
@@ -130,6 +139,8 @@ export async function getDashboardData() {
     stats,
     repairs,
     pauses,
+    strength,
+    feelings,
     todayNotes: Object.fromEntries((notesRes.data ?? []).map((n) => [n.habit_id, n.note])) as Record<string, string>,
   }
 }
@@ -187,7 +198,7 @@ export async function getArchivedHabits(): Promise<ArchivedHabit[]> {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from("habits")
-    .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue, archived_at, habit_logs(count)")
+    .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue, graduated_at, archived_at, habit_logs(count)")
     .eq("user_id", user.id)
     .not("archived_at", "is", null)
     .order("archived_at", { ascending: false })
@@ -216,7 +227,7 @@ export async function getHabitDetail(id: string) {
   const [{ today }, supabase] = await Promise.all([getToday(), createClient()])
   const { data: habit } = await supabase
     .from("habits")
-    .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue, archived_at")
+    .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue, graduated_at, archived_at")
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle()
@@ -239,10 +250,17 @@ export async function getHabitDetail(id: string) {
     .eq("habit_id", id)
     .eq("user_id", user.id)
   const { repairs, pauses } = await bridgesData(supabase, user.id, since)
+  const { data: strengthRows } = await supabase
+    .from("habit_strength")
+    .select("week_start, score")
+    .eq("habit_id", id)
+    .order("week_start", { ascending: false })
+    .limit(12)
   return {
     habit,
     logs,
     today,
+    strength: (strengthRows ?? []).map((r) => ({ week: r.week_start as ISODate, score: r.score })),
     repairs: repairs.filter((r) => r.habit_id === id),
     pauses,
     notes: Object.fromEntries((notes ?? []).map((n) => [n.log_date, n.note])),
@@ -345,8 +363,13 @@ export async function getPacts(): Promise<Pact[]> {
   const [{ data, error }, { data: proofs }, { data: lockedIds }] = await Promise.all([
     supabase.rpc("my_pacts"),
     // RLS returns my proofs and the partner's only if I've checked in that day
-    supabase.from("pact_proofs").select("pact_id, user_id, note, photo_path").eq("day", today),
-    supabase.rpc("pacts_with_partner_proof", { p_day: today }),
+    // yesterday too: a partner in another time zone may still be on "yesterday"
+    supabase
+      .from("pact_proofs")
+      .select("pact_id, user_id, note, photo_path, day")
+      .gte("day", addDays(today, -1))
+      .order("day", { ascending: false }),
+    supabase.rpc("pacts_with_partner_proof", { p_day: addDays(today, -1) }),
   ])
   if (error) throw new Error(error.message)
 
@@ -361,7 +384,8 @@ export async function getPacts(): Promise<Pact[]> {
   const partnerHasProof = new Set(lockedIds ?? [])
 
   return (data ?? []).map((r) => {
-    const mine = proofs?.find((p) => p.pact_id === r.id && p.user_id === user.id)
+    // newest first: my proof for today, the partner's latest (today or yesterday)
+    const mine = proofs?.find((p) => p.pact_id === r.id && p.user_id === user.id && p.day === today)
     const theirs = proofs?.find((p) => p.pact_id === r.id && p.user_id !== user.id)
     return {
       id: r.id,

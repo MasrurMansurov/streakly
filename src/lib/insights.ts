@@ -20,6 +20,10 @@ export type Insight =
   | { kind: "recovery"; rate: number; slips: number }
   /** a habit that struggles and has no if-then plan yet */
   | { kind: "plan"; habitId: string; habit: string; rate: number }
+  /** on days with this habit, mood/energy (1–5) is noticeably higher */
+  | { kind: "mood"; habit: string; metric: "mood" | "energy"; withAvg: number; withoutAvg: number }
+
+export type DayFeeling = { mood: number | null; energy: number | null }
 
 export const INSIGHT_WINDOW = 84 // 12 weeks
 const MIN_SUPPORT = 6 // days on each side of a comparison
@@ -118,12 +122,42 @@ function needsPlan(habits: InsightHabit[], today: ISODate): Extract<Insight, { k
   return found
 }
 
+/** The habit whose days come with the biggest lift in mood or energy (≥ 0.5 on a 1–5 scale). */
+function moodLink(habits: InsightHabit[], feelings: ReadonlyMap<ISODate, DayFeeling>, today: ISODate) {
+  let best: Extract<Insight, { kind: "mood" }> | null = null
+  for (const metric of ["mood", "energy"] as const) {
+    for (const h of habits) {
+      const withH: number[] = []
+      const without: number[] = []
+      for (const d of activeDays(h, today)) {
+        const v = feelings.get(d)?.[metric]
+        if (v == null) continue
+        ;(h.done.has(d) ? withH : without).push(v)
+      }
+      if (withH.length < MIN_SUPPORT || without.length < MIN_SUPPORT) continue
+      const avg = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length
+      const w = avg(withH)
+      const wo = avg(without)
+      if (w - wo >= 0.5 && (!best || w - wo > best.withAvg - best.withoutAvg)) {
+        best = { kind: "mood", habit: h.name, metric, withAvg: Math.round(w * 10) / 10, withoutAvg: Math.round(wo * 10) / 10 }
+      }
+    }
+  }
+  return best
+}
+
 /** Up to `limit` patterns found in the last 12 weeks, most useful first. */
-export function findInsights(habits: InsightHabit[], today: ISODate, limit = 3): Insight[] {
+export function findInsights(
+  habits: InsightHabit[],
+  today: ISODate,
+  limit = 3,
+  feelings: ReadonlyMap<ISODate, DayFeeling> = new Map()
+): Insight[] {
   const p = pairs(habits, today)
   const w = weakWeekday(habits, today)
   const r = recovery(habits, today)
   const plan = needsPlan(habits, today)
-  const out: Insight[] = [...p.slice(0, 1), ...(plan ? [plan] : []), ...(w ? [w] : []), ...(r ? [r] : []), ...p.slice(1)]
+  const mood = moodLink(habits, feelings, today)
+  const out: Insight[] = [...(mood ? [mood] : []), ...p.slice(0, 1), ...(plan ? [plan] : []), ...(w ? [w] : []), ...(r ? [r] : []), ...p.slice(1)]
   return out.slice(0, limit)
 }

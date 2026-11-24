@@ -1,5 +1,6 @@
 import {
   ArrowLeftIcon,
+  GraduationCapIcon,
   ClockArrowUpIcon,
   CalendarDaysIcon,
   FlameIcon,
@@ -22,10 +23,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getHabitDetail } from "@/lib/data"
-import { formatDay } from "@/i18n"
+import { formatDay, type Dictionary, type Locale } from "@/i18n"
 import { addDays, weekdayMon0, type ISODate } from "@/lib/dates"
 import { habitColor } from "@/lib/habit-colors"
 import { bridgesFor, completionRate, habitStreak } from "@/lib/streaks"
+import { graduation, habitStrength } from "@/lib/strength"
 import { cn } from "@/lib/utils"
 
 import { ActivityChart } from "../../dashboard/activity-chart"
@@ -60,7 +62,7 @@ async function HabitDetail({ params }: Props) {
   const weekdays = Array.from({ length: 7 }, (_, i) => formatDay(locale, addDays(A_MONDAY, i), { weekday: "short" }))
   if (!data) notFound()
 
-  const { habit, logs, today, notes, repairs, pauses } = data
+  const { habit, logs, today, notes, repairs, pauses, strength } = data
   const color = habitColor(habit.color)
   const target = habit.target_per_week
   const createdOn = habit.created_at.slice(0, 10)
@@ -120,6 +122,16 @@ async function HabitDetail({ params }: Props) {
         />
         <Stat icon={CalendarDaysIcon} tone="violet" label={t.habitPage.checkInsYear} value={String(yearCount)} />
       </div>
+
+      <StrengthCard
+        t={t}
+        locale={locale}
+        strength={strength}
+        createdOn={createdOn as ISODate}
+        today={today}
+        completion28={completionRate(done, today, 28, createdOn, target)}
+        graduated={Boolean(habit.graduated_at)}
+      />
 
       <Card>
         <CardHeader>
@@ -220,5 +232,63 @@ function HabitSkeleton() {
       </div>
       <Skeleton className="h-48 rounded-xl" />
     </div>
+  )
+}
+
+function StrengthCard({
+  t,
+  locale,
+  strength,
+  createdOn,
+  today,
+  completion28,
+  graduated,
+}: {
+  t: Dictionary
+  locale: Locale
+  strength: { week: ISODate; score: number }[]
+  createdOn: ISODate
+  today: ISODate
+  completion28: number
+  graduated: boolean
+}) {
+  const value = habitStrength({ scores: strength.map((s) => s.score), completion28 })
+  const g = graduation({ createdOn, today, scores: strength.map((s) => s.score), completion28 })
+  const weeks = [...strength].slice(0, 8).reverse()
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <GraduationCapIcon className="size-4 text-emerald-500" /> {t.strength.title}
+        </CardTitle>
+        <CardDescription>{t.strength.subtitle}</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-end">
+        <div className="grid gap-1">
+          <span className="font-heading text-4xl font-semibold tabular-nums">{value === null ? "—" : `${value}%`}</span>
+          <span className="text-xs text-muted-foreground">
+            {graduated ? t.strength.graduated : g.ready ? t.strength.readyTitle : t.strength.progress(g.daysLeft)}
+          </span>
+        </div>
+        {weeks.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t.strength.none}</p>
+        ) : (
+          <div className="grid gap-1">
+            <div className="flex h-16 items-end gap-1.5" role="img" aria-label={`${t.strength.weeks}: ${weeks.map((w) => w.score).join(", ")}`}>
+              {weeks.map((w) => (
+                <div key={w.week} className="flex h-full flex-1 flex-col justify-end" title={`${formatDay(locale, w.week)}: ${w.score}/5`}>
+                  <div className="rounded-sm bg-emerald-500/80" style={{ height: `${(w.score / 5) * 100}%` }} />
+                </div>
+              ))}
+            </div>
+            {!graduated && !g.ready && (g.needsFeel || g.needsConsistency) && (
+              <p className="text-xs text-muted-foreground">
+                {[g.needsFeel && t.strength.needsFeel, g.needsConsistency && t.strength.needsConsistency].filter(Boolean).join(" · ")}
+              </p>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }

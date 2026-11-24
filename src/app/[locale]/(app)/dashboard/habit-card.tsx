@@ -1,6 +1,6 @@
 "use client"
 
-import { ArchiveIcon, CheckIcon, ClockArrowUpIcon, FlameIcon, SnowflakeIcon, TreePalmIcon, WrenchIcon, MessageSquarePlusIcon, StickyNoteIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import { ArchiveIcon, CheckIcon, ClockArrowUpIcon, GraduationCapIcon, RotateCcwIcon, FlameIcon, SnowflakeIcon, TreePalmIcon, WrenchIcon, MessageSquarePlusIcon, StickyNoteIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import { useState, useTransition, type ReactNode, useMemo } from "react"
 import { toast } from "sonner"
 
@@ -28,9 +28,11 @@ import { Link } from "@/components/link"
 import { NoteDialog } from "@/components/note-dialog"
 import { formatDay } from "@/i18n"
 import { useI18n } from "@/i18n/client"
-import { addDays, type ISODate } from "@/lib/dates"
+import { addDays, diffDays, type ISODate } from "@/lib/dates"
 import { habitColor } from "@/lib/habit-colors"
-import { countInWeek, FREEZES_PER_MONTH, habitStreak, repairCandidate, weekStart } from "@/lib/streaks"
+import { completionRate, countInWeek, FREEZES_PER_MONTH, habitStreak, repairCandidate, weekStart } from "@/lib/streaks"
+import { graduation } from "@/lib/strength"
+import { rateStrength, setGraduated } from "@/app/actions/wellbeing"
 import { repairStreak } from "@/app/actions/streaks"
 import { cn } from "@/lib/utils"
 
@@ -45,6 +47,8 @@ type Props = {
   paused?: ReadonlySet<ISODate>
   /** repaired days of this habit */
   repaired?: ReadonlySet<ISODate>
+  /** weekly "how automatic" reports, newest first */
+  strength?: { week: ISODate; score: number }[]
   today: ISODate
   onToggle: (habitId: string, date: ISODate, done: boolean, mini?: boolean) => void
   /** drag handle rendered next to the menu (from the sortable wrapper) */
@@ -52,12 +56,19 @@ type Props = {
   todayNote?: string
 }
 
-export function HabitCard({ habit, done, mini, paused, repaired, today, onToggle, dragHandle, todayNote }: Props) {
+export function HabitCard({ habit, done, mini, paused, repaired, strength = [], today, onToggle, dragHandle, todayNote }: Props) {
   const { locale, t } = useI18n()
   const color = habitColor(habit.color)
   const target = habit.target_per_week
   const bridges = useMemo(() => new Set<ISODate>([...(paused ?? []), ...(repaired ?? [])]), [paused, repaired])
   const streak = habitStreak(done, today, target, bridges)
+  const createdOn = habit.created_at.slice(0, 10)
+  const graduationState = graduation({
+    createdOn: createdOn as ISODate,
+    today,
+    scores: strength.map((s) => s.score),
+    completion28: completionRate(done, today, 28, createdOn, target),
+  })
   const repairedThisMonth = [...(repaired ?? [])].some((d) => d.startsWith(today.slice(0, 7)))
   const repair = target >= 7 && !paused?.has(today) ? repairCandidate(done, today, bridges, repairedThisMonth) : null
   // a recent break (last check-in within two weeks) of a streak worth caring about
@@ -67,7 +78,6 @@ export function HabitCard({ habit, done, mini, paused, repaired, today, onToggle
   const thisWeek = countInWeek(done, weekStart(today))
   const doneToday = done.has(today)
   const miniToday = doneToday && Boolean(mini?.has(today))
-  const createdOn = habit.created_at.slice(0, 10)
   const week = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6))
 
   const [editOpen, setEditOpen] = useState(false)
@@ -222,6 +232,11 @@ export function HabitCard({ habit, done, mini, paused, repaired, today, onToggle
             >
               <ArchiveIcon /> {t.common.archive}
             </DropdownMenuItem>
+            {habit.graduated_at && (
+              <DropdownMenuItem onClick={() => run(() => setGraduated(habit.id, false), t.strength.undo)}>
+                <RotateCcwIcon /> {t.strength.undo}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
               <Trash2Icon /> {t.common.delete}
@@ -229,6 +244,43 @@ export function HabitCard({ habit, done, mini, paused, repaired, today, onToggle
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {doneToday && !habit.graduated_at && diffDays(createdOn, today) >= 7 && strength[0]?.week !== weekStart(today) && (
+        <div className="mt-3 grid gap-2 rounded-lg bg-muted/60 p-3">
+          <span className="text-sm">{t.strength.ask}</span>
+          <div role="radiogroup" aria-label={t.strength.ask} className="grid grid-cols-5 gap-1.5">
+            {t.strength.scale.map((label, i) => (
+              <button
+                key={label}
+                type="button"
+                role="radio"
+                aria-checked={false}
+                title={label}
+                aria-label={`${i + 1}: ${label}`}
+                disabled={pending}
+                onClick={() => run(() => rateStrength(habit.id, i + 1), t.strength.thanks)}
+                className="rounded-md border bg-card py-1 text-sm font-medium tabular-nums transition hover:border-foreground/30"
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+          <div className="flex justify-between text-[11px] text-muted-foreground">
+            <span>{t.strength.scale[0]}</span>
+            <span>{t.strength.scale[4]}</span>
+          </div>
+        </div>
+      )}
+
+      {!habit.graduated_at && graduationState.ready && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg bg-emerald-500/10 py-2 pr-2 pl-3 text-sm">
+          <GraduationCapIcon className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <span className="min-w-0 flex-1">{t.strength.ready(habit.name)}</span>
+          <Button size="sm" disabled={pending} onClick={() => run(() => setGraduated(habit.id, true), t.strength.graduated)}>
+            {t.strength.graduate}
+          </Button>
+        </div>
+      )}
 
       {repair ? (
         <div className="mt-3 flex items-center gap-2 rounded-lg bg-sky-500/10 py-1.5 pr-1.5 pl-3 text-sm" title={t.repair.hint}>

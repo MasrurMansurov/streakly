@@ -83,6 +83,7 @@ test("two friends start a pact, see each other's check-ins, then end it", async 
     await expect(tester.getByText("Proof shared")).toBeVisible()
 
     await demo.reload()
+    await expect(pactsCard(demo)).toBeVisible() // isVisible() below doesn't wait for the streamed page
     const demoCheckIn = demo.getByRole("button", { name: 'Mark "Read 10 pages" as done today' })
     if (await demoCheckIn.isVisible()) {
       await expect(pactsCard(demo).getByText("Check in to see their proof")).toBeVisible()
@@ -105,11 +106,15 @@ test("two friends start a pact, see each other's check-ins, then end it", async 
     await expect(tester.locator("section h3").first()).toBeVisible()
     if (await end.isVisible()) {
       await end.click()
+      const ended = serverAction(tester)
       await tester.getByRole("dialog").getByRole("button", { name: "End pact" }).click()
+      await ended
     } else if (await cancel.isVisible()) {
+      const cancelled = serverAction(tester)
       await cancel.click()
+      await cancelled
     }
-    await expect(card).toHaveCount(0)
+    await expect(card).toHaveCount(0, { timeout: 15_000 })
 
     const habit = tester.locator("[data-slot=card]", { has: tester.locator("h3", { hasText: "Drink 8 glasses of water" }) })
     await habit.getByRole("button", { name: "Habit actions" }).click()

@@ -10,17 +10,17 @@ import { useI18n } from "@/i18n/client"
 import type { Achievement } from "@/lib/achievements"
 import type { Habit, HabitLog } from "@/lib/data"
 import { addDays, type ISODate } from "@/lib/dates"
-import { findInsights } from "@/lib/insights"
+import { findInsights, type DayFeeling } from "@/lib/insights"
 import { weeklyReview } from "@/lib/review"
 
 import { ActivityChart } from "../dashboard/activity-chart"
 import { InsightsCard } from "../dashboard/insights-card"
 import { WeeklyReview } from "../dashboard/weekly-review"
 
-type Props = { habits: Habit[]; logs: HabitLog[]; today: ISODate; achievements: Achievement[] }
+type Props = { habits: Habit[]; logs: HabitLog[]; today: ISODate; achievements: Achievement[]; feelings: Record<ISODate, DayFeeling> }
 
 /** Everything about how it's going: this week, patterns, activity, achievements. */
-export function ProgressView({ habits, logs, today, achievements }: Props) {
+export function ProgressView({ habits, logs, today, achievements, feelings }: Props) {
   const { t, locale } = useI18n()
 
   const byHabit = useMemo(() => {
@@ -44,7 +44,7 @@ export function ProgressView({ habits, logs, today, achievements }: Props) {
     hasPlan: Boolean(h.cue),
   }))
   const review = weeklyReview(input, today)
-  const insights = findInsights(input, today)
+  const insights = findInsights(input, today, 3, new Map(Object.entries(feelings) as [ISODate, DayFeeling][]))
   const chartData = Array.from({ length: 30 }, (_, i) => {
     const date = addDays(today, i - 29)
     return { date, label: formatDay(locale, date), done: perDay.get(date) ?? 0 }

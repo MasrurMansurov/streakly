@@ -21,6 +21,6 @@ export default function ProgressPage() {
 }
 
 async function Progress() {
-  const { habits, logs, today, stats } = await getDashboardData()
-  return <ProgressView habits={habits} logs={logs} today={today} achievements={evaluateAchievements(stats)} />
+  const { habits, logs, today, stats, feelings } = await getDashboardData()
+  return <ProgressView habits={habits} logs={logs} today={today} feelings={feelings} achievements={evaluateAchievements(stats)} />
 }
