@@ -260,6 +260,7 @@ export type Database = {
         Args: { p_user: string }
         Returns: { total_checkins: number; best_streak: number }[]
       }
+      delete_my_account: { Args: never; Returns: undefined }
       follow_counts: {
         Args: { p_profile: string }
         Returns: { followers: number; following: number }[]

@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton"
 import { getMyProfile, getReminderSettings } from "@/lib/data"
 
+import { AccountCard } from "./account-card"
 import { AvatarUploader } from "./avatar-uploader"
 import { ProfileForm } from "./profile-form"
 import { RemindersCard } from "./reminders-card"
@@ -49,6 +50,7 @@ async function Settings() {
       </Card>
       <RemindersCard initial={reminders} />
       <ProfileForm profile={profile} />
+      <AccountCard username={profile.username} />
     </div>
   )
 }
