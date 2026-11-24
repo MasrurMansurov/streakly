@@ -81,7 +81,7 @@ export const en = {
     confirmEmail: "Check your inbox to confirm your email.",
   },
   dashboard: {
-    welcome: (name?: string | null) => `Welcome${name ? `, ${name}` : ""} 👋`,
+    welcome: (name?: string | null) => `Welcome${name ? `, ${name}` : ""}`,
     allDone: "All done for today",
     leftToday: (n: number) => `${n} ${p(n, "habit", "habits")} left today`,
     newHabit: "New habit",
@@ -284,6 +284,23 @@ export const en = {
       streak_100: { name: "Hundred days", description: "Keep a 100-day streak" },
       checkins_100: { name: "Centurion", description: "Make 100 check-ins" },
       checkins_500: { name: "Unstoppable", description: "Make 500 check-ins" },
+    } as Record<string, { name: string; description: string }>,
+  },
+  templates: {
+    title: "Pick a habit to start",
+    subtitle: "One tap adds it — you can edit everything later.",
+    orOwn: "or create your own",
+    quickPicks: "Quick picks",
+    added: (name: string) => `“${name}” added`,
+    items: {
+      water: { name: "Drink 8 glasses of water", description: "Keep a bottle on your desk" },
+      read: { name: "Read 10 pages", description: "Before bed, any book" },
+      walk: { name: "Walk 20 minutes", description: "Outside, no phone" },
+      workout: { name: "Workout", description: "Gym, run or home training" },
+      meditate: { name: "Meditate 10 minutes", description: "Right after waking up" },
+      sleep: { name: "In bed by 23:00", description: "Screens off 30 min before" },
+      language: { name: "Learn a language", description: "15 minutes of practice" },
+      journal: { name: "Write a journal", description: "Three lines about the day" },
     } as Record<string, { name: string; description: string }>,
   },
   publicProfile: {

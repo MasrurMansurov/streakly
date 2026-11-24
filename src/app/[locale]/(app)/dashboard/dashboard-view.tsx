@@ -19,6 +19,7 @@ import { Achievements } from "@/components/achievements"
 import { ConfettiBurst } from "@/components/confetti-burst"
 import { IconTile, type IconTone } from "@/components/icon-tile"
 import { Heatmap } from "@/components/heatmap"
+import { HabitTemplates } from "./habit-templates"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -168,17 +169,18 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
       </div>
 
       {habits.length === 0 ? (
-        <Card className="items-center border-dashed py-12 text-center">
-          <IconTile icon={SproutIcon} size="lg" />
-          <div className="grid gap-1">
-            <h2 className="font-medium">{t.dashboard.emptyTitle}</h2>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              {t.dashboard.emptyText}
-            </p>
+        <Card className="gap-6 border-dashed px-4 py-10 sm:px-8">
+          <div className="grid justify-items-center gap-3 text-center">
+            <IconTile icon={SproutIcon} size="lg" />
+            <h2 className="font-medium">{t.templates.title}</h2>
+            <p className="max-w-sm text-sm text-muted-foreground">{t.templates.subtitle}</p>
           </div>
-          <Button onClick={() => setCreateOpen(true)}>
-            <PlusIcon /> {t.dashboard.createFirst}
-          </Button>
+          <HabitTemplates />
+          <div className="flex justify-center">
+            <Button variant="outline" onClick={() => setCreateOpen(true)}>
+              <PlusIcon /> {t.templates.orOwn}
+            </Button>
+          </div>
         </Card>
       ) : (
         <>

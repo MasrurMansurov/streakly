@@ -28,7 +28,7 @@ test("public profile shows earned badges only", async ({ page }) => {
 test("first check-in unlocks 'First step'", async ({ page }) => {
   await signIn(page, "tester@streakly.dev", "streakly-tester")
   const name = `E2E first ${Date.now()}`
-  await page.getByRole("button", { name: "Create your first habit" }).click()
+  await page.getByRole("button", { name: "or create your own" }).click()
   await page.getByLabel("Name").fill(name)
   await page.getByRole("button", { name: "Create habit" }).click()
   await expect(page.locator("section h3", { hasText: name })).toBeVisible()
@@ -43,5 +43,5 @@ test("first check-in unlocks 'First step'", async ({ page }) => {
   await card.getByRole("button", { name: "Habit actions" }).click()
   await page.getByRole("menuitem", { name: "Delete" }).click()
   await page.getByRole("button", { name: "Delete", exact: true }).click()
-  await expect(page.getByRole("button", { name: "Create your first habit" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "or create your own" })).toBeVisible()
 })

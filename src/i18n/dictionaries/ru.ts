@@ -83,7 +83,7 @@ export const ru: Dictionary = {
     confirmEmail: "Проверьте почту, чтобы подтвердить email.",
   },
   dashboard: {
-    welcome: (name?: string | null) => `Добро пожаловать${name ? `, ${name}` : ""} 👋`,
+    welcome: (name?: string | null) => `Добро пожаловать${name ? `, ${name}` : ""}`,
     allDone: "На сегодня всё сделано",
     leftToday: (n: number) => `На сегодня ${p(n, "осталась", "осталось", "осталось")} ${n} ${p(n, "привычка", "привычки", "привычек")}`,
     newHabit: "Новая привычка",
@@ -287,6 +287,23 @@ export const ru: Dictionary = {
       streak_100: { name: "Сто дней", description: "Серия 100 дней подряд" },
       checkins_100: { name: "Центурион", description: "Сделайте 100 отметок" },
       checkins_500: { name: "Неудержимый", description: "Сделайте 500 отметок" },
+    },
+  },
+  templates: {
+    title: "Выберите привычку для старта",
+    subtitle: "Одно нажатие — и она добавлена. Всё можно изменить позже.",
+    orOwn: "или создайте свою",
+    quickPicks: "Быстрый выбор",
+    added: (name: string) => `«${name}» добавлена`,
+    items: {
+      water: { name: "Выпить 8 стаканов воды", description: "Держите бутылку на столе" },
+      read: { name: "Прочитать 10 страниц", description: "Перед сном, любая книга" },
+      walk: { name: "Прогулка 20 минут", description: "На улице, без телефона" },
+      workout: { name: "Тренировка", description: "Зал, бег или дома" },
+      meditate: { name: "Медитация 10 минут", description: "Сразу после пробуждения" },
+      sleep: { name: "Лечь до 23:00", description: "Экраны выключить за 30 минут" },
+      language: { name: "Изучать язык", description: "15 минут практики" },
+      journal: { name: "Вести дневник", description: "Три строчки о дне" },
     },
   },
   publicProfile: {

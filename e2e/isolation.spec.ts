@@ -21,7 +21,7 @@ test("users only see their own habits", async ({ page, context }) => {
   await context.clearCookies()
 
   await signIn(page, TESTER)
-  await expect(page.getByRole("button", { name: "Create your first habit" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "or create your own" })).toBeVisible()
   await expect(page.getByRole("link", { name: "Read 10 pages" })).toHaveCount(0)
 
   await page.goto(demoHabitHref!)
@@ -29,4 +29,18 @@ test("users only see their own habits", async ({ page, context }) => {
 
   await page.goto("/archive")
   await expect(page.getByText("Nothing archived")).toBeVisible()
+})
+
+test("a new user can start from a template in one tap", async ({ page }) => {
+  await signIn(page, TESTER)
+  await page.getByRole("button", { name: /Drink 8 glasses of water/ }).click()
+  await expect(page.getByText("“Drink 8 glasses of water” added")).toBeVisible()
+  const card = page.locator("[data-slot=card]", { has: page.locator("h3", { hasText: "Drink 8 glasses of water" }) })
+  await expect(card).toBeVisible()
+
+  // clean up so the tester account stays empty
+  await card.getByRole("button", { name: "Habit actions" }).click()
+  await page.getByRole("menuitem", { name: "Delete" }).click()
+  await page.getByRole("button", { name: "Delete", exact: true }).click()
+  await expect(page.getByRole("button", { name: "or create your own" })).toBeVisible()
 })
