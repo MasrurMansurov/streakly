@@ -97,7 +97,7 @@ export const en = {
     createFirst: "Create your first habit",
     statToday: "Today",
     statBestStreak: "Best streak",
-    statCompletion: "30-day completion",
+    statCompletion: "30-day rate",
     statCheckIns: "Check-ins",
     activity: "Activity",
     activitySub: "Last 26 weeks, all habits",

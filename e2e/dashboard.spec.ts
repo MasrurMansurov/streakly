@@ -39,7 +39,7 @@ test.beforeEach(async ({ page }) => {
 
 test("dashboard shows habits and stats", async ({ page }) => {
   await expect(page.locator("section h3")).toHaveCount(4)
-  await expect(page.getByText("30-day completion")).toBeVisible()
+  await expect(page.getByText("30-day rate")).toBeVisible()
   await page.goto("/progress")
   await expect(page.getByText("Activity", { exact: true })).toBeVisible()
 })
