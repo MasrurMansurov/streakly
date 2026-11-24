@@ -1,4 +1,4 @@
-import { CheckCircle2Icon, UsersIcon } from "lucide-react"
+import { CheckCircle2Icon, SearchIcon, TrophyIcon, UsersIcon } from "lucide-react"
 import type { Metadata } from "next"
 import { Suspense } from "react"
 
@@ -8,11 +8,12 @@ import { PactInviteButton } from "@/components/pact-invite-button"
 import { Link } from "@/components/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatDay, intlLocale, type Dictionary, type Locale } from "@/i18n"
 import { getT } from "@/i18n/server"
-import { getFriendsData, getMyHabitChoices, getPacts, type FeedItem } from "@/lib/data"
+import { getFriendsData, getMyHabitChoices, getPacts, searchPeople, type FeedItem } from "@/lib/data"
 import { addDays } from "@/lib/dates"
 import { habitColor } from "@/lib/habit-colors"
 import { cn } from "@/lib/utils"
@@ -21,18 +22,91 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getT()).t.meta.friends }
 }
 
-export default async function FriendsPage() {
-  const { t } = await getT()
+export default async function FriendsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const { t, locale } = await getT()
   return (
     <div className="mx-auto grid max-w-2xl gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{t.friends.title}</h1>
-        <p className="text-sm text-muted-foreground">{t.friends.subtitle}</p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">{t.friends.title}</h1>
+          <p className="text-sm text-muted-foreground">{t.friends.subtitle}</p>
+        </div>
+        <Button variant="outline" size="sm" render={<Link href="/leaderboard" />}>
+          <TrophyIcon className="text-amber-500" /> {t.nav.leaderboard}
+        </Button>
       </div>
+
+      <form role="search" action={`/${locale}/friends`} className="grid gap-2">
+        <label htmlFor="people-search" className="text-sm font-medium">
+          {t.search.label}
+        </label>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Suspense fallback={<Input id="people-search" name="q" placeholder={t.search.placeholder} className="pl-8" />}>
+              <SearchInput searchParams={searchParams} placeholder={t.search.placeholder} />
+            </Suspense>
+          </div>
+          <Button type="submit">{t.search.submit}</Button>
+        </div>
+        <p className="text-xs text-muted-foreground">{t.search.hint}</p>
+      </form>
+
+      <Suspense fallback={<Skeleton className="h-24 rounded-xl" />}>
+        <SearchResults searchParams={searchParams} />
+      </Suspense>
+
       <Suspense fallback={<Skeleton className="h-64 rounded-xl" />}>
         <Friends />
       </Suspense>
     </div>
+  )
+}
+
+async function SearchInput({ searchParams, placeholder }: { searchParams: Promise<{ q?: string }>; placeholder: string }) {
+  const { q } = await searchParams
+  return (
+    <Input id="people-search" name="q" type="search" defaultValue={q ?? ""} placeholder={placeholder} className="pl-8" autoComplete="off" />
+  )
+}
+
+async function SearchResults({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const { q = "" } = await searchParams
+  const query = q.trim()
+  if (!query) return null
+  const { t } = await getT()
+  if (query.replace(/^@/, "").length < 2) return <p className="text-sm text-muted-foreground">{t.search.tooShort}</p>
+  const people = await searchPeople(query)
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t.search.results(query)}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {people.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t.search.none}</p>
+        ) : (
+          <ul className="grid grid-cols-1 gap-3">
+            {people.map((p) => (
+              <li key={p.id} className="flex min-w-0 items-center gap-3">
+                <Avatar className="size-9">
+                  {p.avatarUrl && <AvatarImage src={p.avatarUrl} alt="" />}
+                  <AvatarFallback>{p.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <Link href={`/u/${p.username}`} className="min-w-0 flex-1 hover:underline">
+                  <div className="truncate font-medium">{p.name}</div>
+                  <div className="truncate text-xs text-muted-foreground">
+                    @{p.username}
+                    {p.bio ? ` · ${p.bio}` : ""}
+                  </div>
+                </Link>
+                <FollowButton profileId={p.id} name={p.name} following={p.following} signedIn />
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
   )
 }
 
@@ -80,9 +154,9 @@ async function Friends() {
           <CardDescription>{t.friends.followingCount(people.length)}</CardDescription>
         </CardHeader>
         <CardContent>
-          <ul className="grid gap-3">
+          <ul className="grid grid-cols-1 gap-3">
             {people.map((p) => (
-              <li key={p.id} className="flex items-center gap-3">
+              <li key={p.id} className="flex min-w-0 items-center gap-3">
                 <Avatar className="size-9">
                   {p.avatarUrl && <AvatarImage src={p.avatarUrl} alt="" />}
                   <AvatarFallback>{p.name.slice(0, 2).toUpperCase()}</AvatarFallback>

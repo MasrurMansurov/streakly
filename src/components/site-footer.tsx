@@ -11,6 +11,9 @@ export async function SiteFooter() {
           <LogoMark size={18} /> Streakly · {t.landing.footer}
         </span>
         <nav aria-label={t.legal.nav} className="flex gap-5">
+          <Link href="/leaderboard" className="hover:text-foreground">
+            {t.nav.leaderboard}
+          </Link>
           <Link href="/privacy" className="hover:text-foreground">
             {t.legal.privacy}
           </Link>

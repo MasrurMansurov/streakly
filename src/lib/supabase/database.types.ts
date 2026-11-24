@@ -294,6 +294,17 @@ export type Database = {
         Returns: { total_checkins: number; best_streak: number }[]
       }
       delete_my_account: { Args: never; Returns: undefined }
+      leaderboard: {
+        Args: { p_limit?: number }
+        Returns: {
+          active_days_30: number
+          avatar_url: string | null
+          checkins_30: number
+          display_name: string | null
+          score: number
+          username: string
+        }[]
+      }
       my_pacts: {
         Args: never
         Returns: {

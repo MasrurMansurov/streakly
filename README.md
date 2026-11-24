@@ -33,6 +33,7 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 - **Habit page** with a 12-month heatmap, monthly chart and weekday breakdown; **archive** with restore and undo
 - **Notes on check-ins** — private, owner-only (kept out of the world-readable logs table)
 - **Friends** — follow public profiles; a 7-day feed of their check-ins. Follow lists are visible only to the two people involved
+- **Find people & leaderboard** — search public profiles by name or @username (input sanitized before it reaches the PostgREST filter) and follow from the results; a public leaderboard of the last 30 days (score = check-ins + 2 × active days) with ranks from Newcomer to Legend, colored names and "points to next rank"
 - **Pacts (shared streaks)** — invite a friend: each commits one habit and the duo streak grows only on days you *both* check in; see whether your partner is done today. A security-definer function reveals the partner's dates only for that one habit and only to the other participant
 - **Insights** — patterns found in your own last 12 weeks: habits that go together ("on days you run, you read 85% vs 40%"), a daily habit's weak weekday, and your "never miss twice" recovery rate — computed locally, no third-party services
 - **Weekly review** — this week vs. the same days last week, an 8-week trend, the habit on a roll and the one falling behind

@@ -337,3 +337,60 @@ export async function getMyHabitChoices() {
     .order("position")
   return data ?? []
 }
+
+export type LeaderboardRow = {
+  username: string
+  name: string
+  avatarUrl: string | null
+  checkins: number
+  activeDays: number
+  score: number
+}
+
+/** Top public profiles over the last 30 days (cached for a few minutes). */
+export async function getLeaderboard(): Promise<LeaderboardRow[]> {
+  "use cache"
+  cacheTag("leaderboard")
+  cacheLife("minutes")
+  const { data, error } = await createPublicClient().rpc("leaderboard", { p_limit: 50 })
+  if (error) throw new Error(error.message)
+  return (data ?? []).map((r) => ({
+    username: r.username,
+    name: r.display_name || r.username,
+    avatarUrl: r.avatar_url,
+    checkins: r.checkins_30,
+    activeDays: r.active_days_30,
+    score: r.score,
+  }))
+}
+
+/** Public profiles matching a name or @username (excluding the viewer), with follow state. */
+export async function searchPeople(query: string) {
+  const user = await requireUser()
+  // keep letters, digits, spaces, "_", "-", "." — nothing that could change the filter syntax
+  const q = query.replace(/^@/, "").replace(/[^\p{L}\p{N} _.-]/gu, "").trim().slice(0, 40)
+  if (q.length < 2) return []
+  // "_" stays a one-character wildcard in ILIKE — harmless, it only widens the match
+  const like = `*${q}*`
+  const supabase = await createClient()
+  const [{ data: people }, { data: follows }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, username, display_name, avatar_url, bio")
+      .eq("is_public", true)
+      .neq("id", user.id)
+      .or(`username.ilike."${like}",display_name.ilike."${like}"`)
+      .order("username")
+      .limit(10),
+    supabase.from("follows").select("following_id").eq("follower_id", user.id),
+  ])
+  const following = new Set((follows ?? []).map((f) => f.following_id))
+  return (people ?? []).map((p) => ({
+    id: p.id,
+    username: p.username,
+    name: p.display_name || p.username,
+    avatarUrl: p.avatar_url,
+    bio: p.bio,
+    following: following.has(p.id),
+  }))
+}
