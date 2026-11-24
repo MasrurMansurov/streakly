@@ -49,7 +49,8 @@ test("two friends start a pact, see each other's check-ins, then end it", async 
     await card.getByRole("radio", { name: "Read 10 pages" }).click()
     await card.getByRole("button", { name: "Accept" }).click()
     await expect(demo.getByText("Pact started — good luck to you both!")).toBeVisible()
-    await expect(card.getByText("Your partner is waiting for you today.")).toBeVisible()
+    // demo may or may not have checked in today already (other tests toggle it)
+    await expect(card.getByText(/Your partner is waiting for you today\.|now it's .+'s turn\./)).toBeVisible()
 
     // tester checks in → demo sees it
     await tester.goto("/dashboard")
@@ -57,7 +58,12 @@ test("two friends start a pact, see each other's check-ins, then end it", async 
     await tester.getByRole("button", { name: 'Mark "Drink 8 glasses of water" as done today' }).click()
     await done
     await demo.reload()
-    await expect(pactsCard(demo).getByText("done today")).toBeVisible()
+    // the partner's row (not demo's own) shows the check-in
+    const partnerRow = pactsCard(demo)
+      .getByRole("listitem")
+      .filter({ hasNot: demo.getByRole("listitem") }) // the inner rows, not the whole pact
+      .filter({ hasText: "E2E Tester" })
+    await expect(partnerRow.getByText("done today")).toBeVisible()
   } finally {
     // clean up so the tester account is back to "no habits, follows nobody"
     await tester.goto("/dashboard")
