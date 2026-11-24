@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useSearchParams } from "next/navigation"
+import { Suspense } from "react"
 import { useState, useTransition } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
@@ -24,9 +25,7 @@ type Mode = "signin" | "signup"
 
 
 export function LoginForm() {
-  const params = useSearchParams()
   const { t } = useI18n()
-  const linkError = params.get("error")
   const [mode, setMode] = useState<Mode>("signin")
   const [sentTo, setSentTo] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
@@ -74,11 +73,10 @@ export function LoginForm() {
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
-        {linkError && (
-          <p role="alert" className="rounded-md bg-destructive/10 p-2 text-sm text-destructive">
-            {t.auth.linkErrors[linkError as keyof typeof t.auth.linkErrors] ?? t.auth.linkErrors.default}
-          </p>
-        )}
+        {/* only this notice reads the URL, so the form itself is in the static HTML */}
+        <Suspense>
+          <LinkErrorNotice />
+        </Suspense>
 
         <OAuthButtons />
 
@@ -119,5 +117,17 @@ export function LoginForm() {
         </form>
       </CardContent>
     </Card>
+  )
+}
+
+/** Explains a failed email/OAuth link (?error=otp_expired etc.). */
+function LinkErrorNotice() {
+  const { t } = useI18n()
+  const linkError = useSearchParams().get("error")
+  if (!linkError) return null
+  return (
+    <p role="alert" className="rounded-md bg-destructive/10 p-2 text-sm text-destructive">
+      {t.auth.linkErrors[linkError as keyof typeof t.auth.linkErrors] ?? t.auth.linkErrors.default}
+    </p>
   )
 }
