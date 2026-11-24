@@ -12,8 +12,8 @@ import type { AchievementStats } from "./achievements"
 import type { Tables } from "./supabase/database.types"
 
 export type Profile = Tables<"profiles">
-export type Habit = Pick<Tables<"habits">, "id" | "name" | "description" | "color" | "position" | "target_per_week" | "created_at">
-export type HabitLog = Pick<Tables<"habit_logs">, "habit_id" | "log_date">
+export type Habit = Pick<Tables<"habits">, "id" | "name" | "description" | "color" | "position" | "target_per_week" | "created_at" | "mini_label">
+export type HabitLog = Pick<Tables<"habit_logs">, "habit_id" | "log_date"> & { is_mini?: boolean }
 
 /** How far back the dashboard and public profile look. */
 export const HISTORY_DAYS = 26 * 7
@@ -81,7 +81,7 @@ export async function getDashboardData() {
   const [habitsRes, logs, profileRes, archivedCount, notesRes, stats] = await Promise.all([
     supabase
       .from("habits")
-      .select("id, name, description, color, position, target_per_week, created_at")
+      .select("id, name, description, color, position, target_per_week, created_at, mini_label")
       .eq("user_id", user.id) // RLS also exposes other users' *public* habits
       .is("archived_at", null)
       .order("position")
@@ -89,7 +89,7 @@ export async function getDashboardData() {
     fetchAllLogs((from, to) =>
       supabase
         .from("habit_logs")
-        .select("habit_id, log_date")
+        .select("habit_id, log_date, is_mini")
         .eq("user_id", user.id)
         .gte("log_date", since)
         .order("log_date")
@@ -165,7 +165,7 @@ export async function getArchivedHabits(): Promise<ArchivedHabit[]> {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from("habits")
-    .select("id, name, description, color, position, target_per_week, created_at, archived_at, habit_logs(count)")
+    .select("id, name, description, color, position, target_per_week, created_at, mini_label, archived_at, habit_logs(count)")
     .eq("user_id", user.id)
     .not("archived_at", "is", null)
     .order("archived_at", { ascending: false })
@@ -194,7 +194,7 @@ export async function getHabitDetail(id: string) {
   const [{ today }, supabase] = await Promise.all([getToday(), createClient()])
   const { data: habit } = await supabase
     .from("habits")
-    .select("id, name, description, color, position, target_per_week, created_at, archived_at")
+    .select("id, name, description, color, position, target_per_week, created_at, mini_label, archived_at")
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle()

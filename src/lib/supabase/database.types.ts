@@ -37,6 +37,7 @@ export type Database = {
       }
       habit_logs: {
         Row: {
+          is_mini: boolean
           created_at: string
           habit_id: string
           id: string
@@ -44,6 +45,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          is_mini?: boolean
           created_at?: string
           habit_id: string
           id?: string
@@ -51,6 +53,7 @@ export type Database = {
           user_id?: string
         }
         Update: {
+          is_mini?: boolean
           created_at?: string
           habit_id?: string
           id?: string
@@ -100,6 +103,7 @@ export type Database = {
       }
       habits: {
         Row: {
+          mini_label: string | null
           archived_at: string | null
           color: string
           created_at: string
@@ -112,6 +116,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          mini_label?: string | null
           archived_at?: string | null
           color?: string
           created_at?: string
@@ -124,6 +129,7 @@ export type Database = {
           user_id?: string
         }
         Update: {
+          mini_label?: string | null
           archived_at?: string | null
           color?: string
           created_at?: string

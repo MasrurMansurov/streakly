@@ -14,6 +14,8 @@ export type AuthInput = z.infer<typeof authSchema>
 export const habitSchema = z.object({
   name: z.string().trim().min(1, "nameRequired").max(60, "nameMax"),
   description: z.string().trim().max(200, "descriptionMax").optional().or(z.literal("")),
+  /** smaller version that still keeps the streak, e.g. "1 page" */
+  mini_label: z.string().trim().max(60, "miniMax").optional().or(z.literal("")),
   color: z.enum(HABIT_COLOR_NAMES),
   /** 7 = every day, 1–6 = times per week */
   target_per_week: z.number().int().min(1).max(7),

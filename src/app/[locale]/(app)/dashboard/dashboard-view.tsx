@@ -56,7 +56,7 @@ type Props = {
   pacts: Pact[]
 }
 
-type Toggle = { habitId: string; date: ISODate; done: boolean }
+type Toggle = { habitId: string; date: ISODate; done: boolean; mini?: boolean }
 
 export function DashboardView({ habits: serverHabits, logs, today, profile, archivedCount, todayNotes, achievements, pacts }: Props) {
   const { locale, t } = useI18n()
@@ -125,9 +125,11 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
       let sent = 0
       try {
         for (const item of pending) {
-          const res = await toggleHabitLog(item.habitId, item.date, item.done)
+          const res = await toggleHabitLog(item.habitId, item.date, item.done, item.mini)
           if (!res.ok) toast.error(res.error)
-          updateQueue((q) => q.filter((x) => x !== item && !(x.habitId === item.habitId && x.date === item.date && x.done === item.done)))
+          updateQueue((q) =>
+            q.filter((x) => x !== item && !(x.habitId === item.habitId && x.date === item.date && x.done === item.done && !x.mini === !item.mini))
+          )
           sent++
         }
       } catch {
@@ -141,13 +143,13 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
   }, [online, queue.length])
 
   const baseLogs = useMemo(
-    () => applyQueue(logs, queue, (q) => ({ habit_id: q.habitId, log_date: q.date })),
+    () => applyQueue(logs, queue, (q) => ({ habit_id: q.habitId, log_date: q.date, is_mini: Boolean(q.mini) })),
     [logs, queue]
   )
 
   const [optimisticLogs, applyToggle] = useOptimistic(baseLogs, (state: HabitLog[], t: Toggle) =>
     t.done
-      ? [...state, { habit_id: t.habitId, log_date: t.date }]
+      ? [...state.filter((l) => !(l.habit_id === t.habitId && l.log_date === t.date)), { habit_id: t.habitId, log_date: t.date, is_mini: Boolean(t.mini) }]
       : state.filter((l) => !(l.habit_id === t.habitId && l.log_date === t.date))
   )
 
@@ -158,6 +160,13 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
     return map
   }, [habits, optimisticLogs])
 
+  // days done in the "mini" version, per habit
+  const miniByHabit = useMemo(() => {
+    const map = new Map<string, Set<ISODate>>()
+    for (const l of optimisticLogs) if (l.is_mini) map.set(l.habit_id, (map.get(l.habit_id) ?? new Set()).add(l.log_date))
+    return map
+  }, [optimisticLogs])
+
   const perDay = useMemo(() => {
     const map = new Map<ISODate, number>()
     for (const [, days] of byHabit) for (const d of days) map.set(d, (map.get(d) ?? 0) + 1)
@@ -167,20 +176,20 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
   // bumped when a check-in completes the day → plays the celebration once
   const [celebration, setCelebration] = useState(0)
 
-  const onToggle = (habitId: string, date: ISODate, done: boolean) => {
-    if (done && date === today) {
+  const onToggle = (habitId: string, date: ISODate, done: boolean, mini = false) => {
+    if (done && date === today && !byHabit.get(habitId)?.has(today)) {
       const stillDue = habits.filter((h) => h.id !== habitId && isDueToday(byHabit.get(h.id)!, today, h.target_per_week))
       if (stillDue.length === 0) setCelebration((n) => n + 1)
     }
-    if (!navigator.onLine) return void updateQueue((q) => enqueue(q, { habitId, date, done }))
+    if (!navigator.onLine) return void updateQueue((q) => enqueue(q, { habitId, date, done, mini }))
     startTransition(async () => {
-      applyToggle({ habitId, date, done })
+      applyToggle({ habitId, date, done, mini })
       try {
-        const res = await toggleHabitLog(habitId, date, done)
+        const res = await toggleHabitLog(habitId, date, done, mini)
         if (!res.ok) toast.error(res.error)
       } catch {
         // the request never reached the server: keep it for later
-        updateQueue((q) => enqueue(q, { habitId, date, done }))
+        updateQueue((q) => enqueue(q, { habitId, date, done, mini }))
       }
     })
   }
@@ -326,6 +335,7 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
               <HabitCard
                 habit={h}
                 done={byHabit.get(h.id)!}
+                mini={miniByHabit.get(h.id)}
                 today={today}
                 onToggle={onToggle}
                 todayNote={todayNotes[h.id]}

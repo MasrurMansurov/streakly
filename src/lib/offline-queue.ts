@@ -1,6 +1,6 @@
 import type { ISODate } from "./dates"
 
-export type QueuedToggle = { habitId: string; date: ISODate; done: boolean }
+export type QueuedToggle = { habitId: string; date: ISODate; done: boolean; mini?: boolean }
 type Log = { habit_id: string; log_date: ISODate }
 
 /** Last action per habit+day wins (check → uncheck → check is just "check"). */
@@ -13,7 +13,8 @@ export function applyQueue<L extends Log>(logs: L[], queue: QueuedToggle[], make
   let out = logs
   for (const t of queue) {
     const has = out.some((l) => l.habit_id === t.habitId && l.log_date === t.date)
-    if (t.done && !has) out = [...out, make(t)]
+    // done: (re)place the log so a mini ↔ full switch is reflected too
+    if (t.done) out = [...out.filter((l) => !(l.habit_id === t.habitId && l.log_date === t.date)), make(t)]
     if (!t.done && has) out = out.filter((l) => !(l.habit_id === t.habitId && l.log_date === t.date))
   }
   return out

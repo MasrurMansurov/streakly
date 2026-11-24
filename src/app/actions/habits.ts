@@ -41,6 +41,7 @@ export async function createHabit(input: HabitInput): Promise<ActionResult> {
   const { error } = await supabase.from("habits").insert({
     name: parsed.data.name,
     description: parsed.data.description || null,
+    mini_label: parsed.data.mini_label || null,
     color: parsed.data.color,
     target_per_week: parsed.data.target_per_week,
     position: count ?? 0,
@@ -62,6 +63,7 @@ export async function updateHabit(id: string, input: HabitInput): Promise<Action
     .update({
       name: parsed.data.name,
       description: parsed.data.description || null,
+      mini_label: parsed.data.mini_label || null,
       color: parsed.data.color,
       target_per_week: parsed.data.target_per_week,
     })
@@ -96,8 +98,12 @@ export async function deleteHabit(id: string): Promise<ActionResult> {
   return { ok: true }
 }
 
-/** Mark / unmark a habit as done on a given day (the client's local date). */
-export async function toggleHabitLog(habitId: string, date: string, done: boolean): Promise<ActionResult> {
+/**
+ * Mark / unmark a habit as done on a given day (the client's local date).
+ * `mini`: the small version was done — still counts for the streak.
+ * Marking an already-checked day again switches between mini and full.
+ */
+export async function toggleHabitLog(habitId: string, date: string, done: boolean, mini = false): Promise<ActionResult> {
   const { t } = await getActionT()
   if (!z.uuid().safeParse(habitId).success) return { ok: false, error: t.validation.invalidInput }
   if (!isISODate(date)) return { ok: false, error: t.validation.invalidDate }
@@ -109,11 +115,13 @@ export async function toggleHabitLog(habitId: string, date: string, done: boolea
 
   const { user, supabase } = await authed()
 
-  const { error } = done
-    ? await supabase
-        .from("habit_logs")
-        .upsert({ habit_id: habitId, log_date: date }, { onConflict: "habit_id,log_date", ignoreDuplicates: true })
+  let { error } = done
+    ? await supabase.from("habit_logs").insert({ habit_id: habitId, log_date: date, is_mini: mini })
     : await supabase.from("habit_logs").delete().eq("habit_id", habitId).eq("log_date", date)
+  // already checked in that day → switch between mini and full
+  if (error?.code === "23505") {
+    ;({ error } = await supabase.from("habit_logs").update({ is_mini: mini }).eq("habit_id", habitId).eq("log_date", date))
+  }
   if (error) return { ok: false, error: error.message }
 
   await invalidatePublicProfile(supabase, user.id)

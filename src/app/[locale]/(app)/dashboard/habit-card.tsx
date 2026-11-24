@@ -38,20 +38,23 @@ import { HabitFormDialog } from "./habit-form-dialog"
 type Props = {
   habit: Habit
   done: ReadonlySet<ISODate>
+  /** days done in the mini version */
+  mini?: ReadonlySet<ISODate>
   today: ISODate
-  onToggle: (habitId: string, date: ISODate, done: boolean) => void
+  onToggle: (habitId: string, date: ISODate, done: boolean, mini?: boolean) => void
   /** drag handle rendered next to the menu (from the sortable wrapper) */
   dragHandle?: ReactNode
   todayNote?: string
 }
 
-export function HabitCard({ habit, done, today, onToggle, dragHandle, todayNote }: Props) {
+export function HabitCard({ habit, done, mini, today, onToggle, dragHandle, todayNote }: Props) {
   const { locale, t } = useI18n()
   const color = habitColor(habit.color)
   const target = habit.target_per_week
   const streak = habitStreak(done, today, target)
   const thisWeek = countInWeek(done, weekStart(today))
   const doneToday = done.has(today)
+  const miniToday = doneToday && Boolean(mini?.has(today))
   const createdOn = habit.created_at.slice(0, 10)
   const week = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6))
 
@@ -81,14 +84,18 @@ export function HabitCard({ habit, done, today, onToggle, dragHandle, todayNote 
         <button
           type="button"
           onClick={() => {
-            if (!doneToday) setBursts((n) => n + 1)
-            onToggle(habit.id, today, !doneToday)
+            if (!doneToday || miniToday) setBursts((n) => n + 1)
+            // mini → full upgrade; otherwise toggle
+            onToggle(habit.id, today, miniToday ? true : !doneToday)
           }}
-          aria-pressed={doneToday}
-          aria-label={doneToday ? t.habit.markUndone(habit.name) : t.habit.markDone(habit.name)}
+          aria-pressed={doneToday && !miniToday}
+          aria-label={doneToday && !miniToday ? t.habit.markUndone(habit.name) : t.habit.markDone(habit.name)}
+          title={miniToday ? t.habit.miniDoneHint : undefined}
           className={cn(
             "relative flex size-11 shrink-0 items-center justify-center rounded-full border-2 transition active:scale-90",
-            doneToday ? cn(color.dot, "border-transparent text-white") : "border-muted-foreground/30 hover:border-muted-foreground/60"
+            doneToday
+              ? cn(color.dot, "border-transparent text-white", miniToday && "opacity-55")
+              : "border-muted-foreground/30 hover:border-muted-foreground/60"
           )}
         >
           <CheckIcon
@@ -112,6 +119,29 @@ export function HabitCard({ habit, done, today, onToggle, dragHandle, todayNote 
             </h3>
           </div>
           {habit.description && <p className="mt-0.5 truncate text-sm text-muted-foreground">{habit.description}</p>}
+          {habit.mini_label && !doneToday && (
+            <button
+              type="button"
+              onClick={() => {
+                setBursts((n) => n + 1)
+                onToggle(habit.id, today, true, true)
+              }}
+              aria-label={t.habit.markMini(habit.name, habit.mini_label)}
+              className={cn(
+                "mt-1.5 inline-flex max-w-full items-center gap-1 rounded-full border border-dashed px-2 py-0.5 text-xs transition",
+                "text-muted-foreground hover:border-solid hover:text-foreground"
+              )}
+            >
+              <span className={cn("size-1.5 shrink-0 rounded-full", color.dot)} />
+              <span className="truncate">{t.habit.miniDo(habit.mini_label)}</span>
+            </button>
+          )}
+          {miniToday && (
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              <span className={cn("mr-1 rounded-full px-1.5 py-0.5 font-medium", color.soft, color.text)}>{t.habit.miniDone}</span>
+              {t.habit.miniDoneHint}
+            </p>
+          )}
           <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
             <span className={cn("inline-flex items-center gap-1 font-medium", streak.current > 0 && color.text)}>
               <FlameIcon className={cn("size-3.5", streak.current === 0 ? "text-muted-foreground/60" : "text-orange-500")} />
@@ -186,6 +216,7 @@ export function HabitCard({ habit, done, today, onToggle, dragHandle, todayNote 
       <div className="mt-4 grid grid-cols-7 gap-1.5">
         {week.map((date) => {
           const isDone = done.has(date)
+          const isMini = isDone && Boolean(mini?.has(date))
           const isFrozen = !isDone && Boolean(streak.frozen?.has(date))
           const beforeCreated = date < createdOn
           return (
@@ -198,7 +229,9 @@ export function HabitCard({ habit, done, today, onToggle, dragHandle, todayNote 
               aria-label={
                 isFrozen
                   ? t.habit.frozenDay(formatDay(locale, date, { weekday: "long", month: "short", day: "numeric" }))
-                  : t.habit.dayStatus(formatDay(locale, date, { weekday: "long", month: "short", day: "numeric" }), isDone)
+                  : isMini
+                    ? t.habit.miniDayStatus(formatDay(locale, date, { weekday: "long", month: "short", day: "numeric" }))
+                    : t.habit.dayStatus(formatDay(locale, date, { weekday: "long", month: "short", day: "numeric" }), isDone)
               }
               className="group flex flex-col items-center gap-1 disabled:opacity-40"
             >
@@ -208,7 +241,7 @@ export function HabitCard({ habit, done, today, onToggle, dragHandle, todayNote 
               <span
                 className={cn(
                   "flex h-6 w-full items-center justify-center rounded-md transition group-enabled:group-hover:opacity-80",
-                  isDone ? color.dot : isFrozen ? "bg-sky-500/15 text-sky-600 dark:text-sky-400" : "bg-muted",
+                  isDone ? cn(color.dot, isMini && "opacity-45") : isFrozen ? "bg-sky-500/15 text-sky-600 dark:text-sky-400" : "bg-muted",
                   date === today && "ring-2 ring-foreground/20 ring-offset-1 ring-offset-background"
                 )}
               >

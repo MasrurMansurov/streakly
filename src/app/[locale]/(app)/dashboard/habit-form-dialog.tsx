@@ -43,6 +43,7 @@ export function HabitFormDialog({ open, onOpenChange, habit }: Props) {
     values: {
       name: habit?.name ?? "",
       description: habit?.description ?? "",
+      mini_label: habit?.mini_label ?? "",
       color: (habit?.color as HabitColor) ?? "emerald",
       target_per_week: habit?.target_per_week ?? 7,
     },
@@ -95,6 +96,23 @@ export function HabitFormDialog({ open, onOpenChange, habit }: Props) {
               {...form.register("description")}
             />
             {errors.description && <p className="text-xs text-destructive">{validationMessage(t, errors.description.message)}</p>}
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="habit-mini">
+              {t.habitForm.mini} <span className="font-normal text-muted-foreground">{t.habitForm.optional}</span>
+            </Label>
+            <Input
+              id="habit-mini"
+              placeholder={t.habitForm.miniPlaceholder}
+              aria-invalid={!!errors.mini_label}
+              aria-describedby="habit-mini-hint"
+              {...form.register("mini_label")}
+            />
+            <p id="habit-mini-hint" className="text-xs text-muted-foreground">
+              {t.habitForm.miniHint}
+            </p>
+            {errors.mini_label && <p className="text-xs text-destructive">{validationMessage(t, errors.mini_label.message)}</p>}
           </div>
 
           <div className="grid gap-2">

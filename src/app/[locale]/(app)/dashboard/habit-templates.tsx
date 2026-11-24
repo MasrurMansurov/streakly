@@ -33,6 +33,7 @@ export function HabitTemplates() {
       const res = await createHabit({
         name: item.name,
         description: item.description,
+        mini_label: item.mini,
         color: tpl.color,
         target_per_week: tpl.target,
       })
