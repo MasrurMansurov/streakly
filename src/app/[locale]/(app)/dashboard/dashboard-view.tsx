@@ -3,6 +3,7 @@
 import {
   CircleCheckBigIcon,
   CircleCheckIcon,
+  CloudOffIcon,
   FlameIcon,
   PlusIcon,
   SproutIcon,
@@ -14,6 +15,7 @@ import { useEffect, useMemo, useOptimistic, useRef, useState, useTransition } fr
 import { toast } from "sonner"
 
 import { reorderHabits, toggleHabitLog } from "@/app/actions/habits"
+import { applyQueue, enqueue, loadQueue, saveQueue, type QueuedToggle } from "@/lib/offline-queue"
 import { AchievementBadge } from "@/components/achievement-badge"
 import { Achievements } from "@/components/achievements"
 import { ConfettiBurst } from "@/components/confetti-burst"
@@ -86,7 +88,62 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
   }
 
   // optimistic check-ins: UI updates instantly, server confirms in the background
-  const [optimisticLogs, applyToggle] = useOptimistic(logs, (state: HabitLog[], t: Toggle) =>
+  // offline check-ins: queued on the device, shown right away, sent when the connection is back
+  const queueKey = `streakly:offline:${profile?.username ?? "me"}`
+  const [queue, setQueue] = useState<QueuedToggle[]>([])
+  const [online, setOnline] = useState(true)
+  const flushing = useRef(false)
+  const updateQueue = (fn: (q: QueuedToggle[]) => QueuedToggle[]) =>
+    setQueue((q) => {
+      const next = fn(q)
+      saveQueue(queueKey, next)
+      return next
+    })
+
+  useEffect(() => {
+    // read device-only state after hydration (the server can't know it)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setQueue(loadQueue(queueKey))
+    setOnline(navigator.onLine)
+    const on = () => setOnline(true)
+    const off = () => setOnline(false)
+    window.addEventListener("online", on)
+    window.addEventListener("offline", off)
+    return () => {
+      window.removeEventListener("online", on)
+      window.removeEventListener("offline", off)
+    }
+  }, [queueKey])
+
+  useEffect(() => {
+    if (!online || queue.length === 0 || flushing.current) return
+    flushing.current = true
+    const pending = [...queue]
+    void (async () => {
+      let sent = 0
+      try {
+        for (const item of pending) {
+          const res = await toggleHabitLog(item.habitId, item.date, item.done)
+          if (!res.ok) toast.error(res.error)
+          updateQueue((q) => q.filter((x) => x !== item && !(x.habitId === item.habitId && x.date === item.date && x.done === item.done)))
+          sent++
+        }
+      } catch {
+        // still no connection — keep the rest for the next "online" event
+      } finally {
+        flushing.current = false
+        if (sent) toast.success(t.offline.synced(sent))
+      }
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [online, queue.length])
+
+  const baseLogs = useMemo(
+    () => applyQueue(logs, queue, (q) => ({ habit_id: q.habitId, log_date: q.date })),
+    [logs, queue]
+  )
+
+  const [optimisticLogs, applyToggle] = useOptimistic(baseLogs, (state: HabitLog[], t: Toggle) =>
     t.done
       ? [...state, { habit_id: t.habitId, log_date: t.date }]
       : state.filter((l) => !(l.habit_id === t.habitId && l.log_date === t.date))
@@ -113,10 +170,16 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
       const stillDue = habits.filter((h) => h.id !== habitId && isDueToday(byHabit.get(h.id)!, today, h.target_per_week))
       if (stillDue.length === 0) setCelebration((n) => n + 1)
     }
+    if (!navigator.onLine) return void updateQueue((q) => enqueue(q, { habitId, date, done }))
     startTransition(async () => {
       applyToggle({ habitId, date, done })
-      const res = await toggleHabitLog(habitId, date, done)
-      if (!res.ok) toast.error(res.error)
+      try {
+        const res = await toggleHabitLog(habitId, date, done)
+        if (!res.ok) toast.error(res.error)
+      } catch {
+        // the request never reached the server: keep it for later
+        updateQueue((q) => enqueue(q, { habitId, date, done }))
+      }
     })
   }
 
@@ -225,6 +288,16 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
             <Stat index={2} icon={TrendingUpIcon} tone="sky" label={t.dashboard.statCompletion} value={`${Math.round(rate30 * 100)}%`} />
             <Stat index={3} icon={CircleCheckBigIcon} tone="violet" label={t.dashboard.statCheckIns} value={String(totalCheckIns)} />
           </div>
+
+          {(!online || queue.length > 0) && (
+            <p
+              role="status"
+              className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-200"
+            >
+              <CloudOffIcon className="size-4 shrink-0" />
+              {online ? t.offline.syncing(queue.length) : t.offline.offline(queue.length)}
+            </p>
+          )}
 
           <SortableHabits
             habits={habits}

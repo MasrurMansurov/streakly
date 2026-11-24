@@ -4,6 +4,7 @@ import { ArchiveIcon, ExternalLinkIcon, LayoutDashboardIcon, LogOutIcon, Setting
 
 import { signOut } from "@/app/actions/auth"
 import { Link } from "@/components/link"
+import { clearOfflinePages } from "@/components/sw-register"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useI18n } from "@/i18n/client"
 import { Button } from "@/components/ui/button"
@@ -66,7 +67,7 @@ export function UserMenu({ email, username, displayName, isPublic, avatarUrl }: 
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => signOut()}>
+        <DropdownMenuItem onClick={async () => { await clearOfflinePages(); await signOut() }}>
           <LogOutIcon /> {t.nav.signOut}
         </DropdownMenuItem>
       </DropdownMenuContent>

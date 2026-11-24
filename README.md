@@ -45,7 +45,7 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 - **Timezone-aware:** "today" is computed in the user's own timezone, not the server's
 - **Daily reminders (Web Push):** pick a time; a notification arrives only if habits are still due today. Supabase `pg_cron` calls an Edge Function every 15 min; VAPID keys and the cron token live in Supabase Vault
 - **English & Russian:** `/en/…` and `/ru/…` URLs (language picked from the browser, switcher in the header), proper Russian plurals via `Intl.PluralRules`, localized dates, validation messages and push notifications
-- **Installable (PWA):** add to the home screen and open full-screen, with app icons and theme colors
+- **Installable & offline (PWA):** add to the home screen; a service worker caches static assets and the last copy of each page, so the app opens without a connection. Check-ins made offline are queued on the device, shown immediately and synced when you're back online; cached pages are cleared on sign-out
 - **Brand & type:** custom logo (a flame with a check mark cut in — streak + habit done), Unbounded for headings, Onest for text; both with full Cyrillic
 - **One icon style & motion:** thin line icons on soft tinted tiles everywhere, medal-style achievement badges drawn in CSS, staggered entrance, check-in confetti — all CSS, disabled for `prefers-reduced-motion`
 - Dark mode, responsive layout, accessible controls

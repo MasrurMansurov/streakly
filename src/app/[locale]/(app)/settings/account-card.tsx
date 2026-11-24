@@ -5,6 +5,7 @@ import { useState, useTransition } from "react"
 import { toast } from "sonner"
 
 import { deleteMyAccount, exportMyData } from "@/app/actions/account"
+import { clearOfflinePages } from "@/components/sw-register"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -43,6 +44,7 @@ export function AccountCard({ username }: { username: string }) {
     startDelete(async () => {
       const res = await deleteMyAccount(confirm)
       if (!res.ok) return void toast.error(res.error)
+      await clearOfflinePages()
       window.location.assign(localizePath(locale, "/")) // full reload: drop all signed-in state
 
     })

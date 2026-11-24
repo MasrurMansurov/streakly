@@ -290,6 +290,12 @@ export const en = {
       checkins_500: { name: "Unstoppable", description: "Make 500 check-ins" },
     } as Record<string, { name: string; description: string }>,
   },
+  offline: {
+    offline: (n: number) =>
+      n === 0 ? "You're offline. Check-ins will be saved on this device and sent when you're back online." : `You're offline · ${n} ${p(n, "check-in", "check-ins")} saved on this device, will be sent automatically.`,
+    syncing: (n: number) => `Back online — sending ${n} ${p(n, "check-in", "check-ins")}…`,
+    synced: (n: number) => `${n} offline ${p(n, "check-in", "check-ins")} synced`,
+  },
   pacts: {
     title: "Pacts",
     subtitle: "Shared streaks: a day counts only when you both check in.",

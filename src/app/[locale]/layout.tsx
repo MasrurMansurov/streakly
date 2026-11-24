@@ -1,5 +1,7 @@
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
+
+import { ServiceWorkerRegister } from "@/components/sw-register"
 import type { Metadata, Viewport } from "next"
 import { Geist_Mono, Onest, Unbounded } from "next/font/google"
 import { notFound } from "next/navigation"
@@ -62,6 +64,7 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[lo
             <TimezoneSync />
           </ThemeProvider>
         </I18nProvider>
+        <ServiceWorkerRegister />
         <Analytics />
         <SpeedInsights />
       </body>
