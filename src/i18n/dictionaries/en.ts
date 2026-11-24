@@ -286,6 +286,25 @@ export const en = {
       checkins_500: { name: "Unstoppable", description: "Make 500 check-ins" },
     } as Record<string, { name: string; description: string }>,
   },
+  insights: {
+    title: "Insights",
+    subtitle: "Patterns Streakly found in your last 12 weeks",
+    empty: "Keep checking in — after a few weeks Streakly will show which habits help each other and where you slip.",
+    kinds: { pair: "Habits that go together", weekday: "Weak spot", recovery: "Never miss twice" },
+    pair: (a: string, b: string, w: number, wo: number) =>
+      `On days you do “${a}”, you also do “${b}” ${w}% of the time — vs ${wo}% when you skip it.`,
+    pairTip: "Stack them: do one right after the other.",
+    withLabel: "with",
+    withoutLabel: "without",
+    weekday: (h: string, d: number, rate: number, others: number) =>
+      `“${h}” slips on ${["Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays", "Sundays"][d]}: ${rate}% vs ${others}% on other days.`,
+    weekdayShort: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    otherDays: "other days",
+    weekdayTip: "Plan a smaller version or a different time for that day.",
+    recovery: (rate: number) => `After a missed day you're back the very next day ${rate}% of the time.`,
+    recoveryGood: "Great — one miss rarely turns into two. That's what keeps streaks long.",
+    recoveryTip: "Rule of thumb: never miss twice in a row. A tiny version still counts.",
+  },
   legal: {
     nav: "Legal",
     privacy: "Privacy",

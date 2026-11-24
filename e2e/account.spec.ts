@@ -44,3 +44,10 @@ test("dashboard shows the weekly review", async ({ page }) => {
   await expect(card.getByRole("img", { name: /^Last 8 weeks: / })).toBeVisible()
   await expect(card.getByText(/vs\. last week|same as last week|first week/)).toBeVisible()
 })
+
+test("dashboard shows insights found in the history", async ({ page }) => {
+  await signIn(page, "demo@streakly.dev", "streakly-demo")
+  const card = page.locator("[data-slot=card]", { has: page.locator("[data-slot=card-title]", { hasText: "Insights" }) })
+  await expect(card).toBeVisible()
+  await expect(card.getByText(/slips on|go together|back the very next day/).first()).toBeVisible()
+})
