@@ -299,7 +299,7 @@ export const en = {
     bothDone: "You both did it today!",
     invite: "Pact",
     inviteTitle: (name: string) => `Start a pact with ${name}`,
-    inviteText: "Pick the habit you commit to. Your friend picks theirs; your shared streak grows only on days you both check in.",
+    inviteText: "Pick the habit you commit to. Your friend picks theirs; your shared streak grows only on days you both check in. With reminders on, each of you gets a push when the other checks in.",
     yourHabit: "Your habit",
     noHabits: "Create a habit first.",
     send: "Send invite",

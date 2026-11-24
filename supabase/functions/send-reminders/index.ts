@@ -4,6 +4,7 @@
 // Called by:
 //   - pg_cron every 15 min      → { action: "send" }            auth: x-cron-token (Vault secret)
 //   - the app ("Send test")     → { action: "test" }            auth: the user's JWT
+//   - the app (pact check-in)   → { action: "pact", habitId }   auth: the user's JWT
 //   - setup / diagnostics       → { action: "setup" | "selftest" | "send", dryRun? }  auth: x-cron-token
 //
 // Secrets live in Supabase Vault and are read over the built-in DB connection,
@@ -123,6 +124,10 @@ const TEXT = {
     many: (n: number, names: string) => `${n} habits left today: ${names}`,
     testTitle: "Streakly",
     testBody: "Reminders are on. See you tonight! 🔥",
+    pactTurnTitle: "Your pact partner checked in",
+    pactTurn: (name: string, habit: string) => `${name} is done with “${habit}”. Your turn — keep your shared streak going!`,
+    pactBothTitle: "You both did it today",
+    pactBoth: (name: string) => `${name} checked in too — your shared streak grows.`,
   },
   ru: {
     title: "Не прерывайте серию 🔥",
@@ -131,6 +136,10 @@ const TEXT = {
       `На сегодня ${ruPlural(n, "осталась", "осталось", "осталось")} ${n} ${ruPlural(n, "привычка", "привычки", "привычек")}: ${names}`,
     testTitle: "Streakly",
     testBody: "Напоминания включены. До вечера! 🔥",
+    pactTurnTitle: "Партнёр по пакту отметился",
+    pactTurn: (name: string, habit: string) => `${name}: «${habit}» — готово. Ваша очередь, чтобы сохранить общую серию!`,
+    pactBothTitle: "Сегодня вы оба справились",
+    pactBoth: (name: string) => `${name} — отметка есть. Общая серия растёт!`,
   },
 } satisfies Record<Locale, unknown>
 
@@ -175,6 +184,59 @@ async function runReminders(dryRun: boolean) {
   return { candidates: candidates.length, results }
 }
 
+/**
+ * The caller just checked in `habitId`. For each active pact built on it, tell the
+ * partner (once per their local day): "your turn" or "you both did it".
+ */
+async function runPactNudge(userId: string, habitId: string) {
+  // the caller must own a recent check-in of this habit — no nudges out of thin air
+  const [recent] = await sql`
+    select 1 from public.habit_logs
+    where habit_id = ${habitId} and user_id = ${userId} and log_date >= current_date - 1`
+  if (!recent) return { pacts: 0, results: [] }
+
+  const pacts = await sql<{ id: string; partner_is_inviter: boolean; partner_id: string; partner_habit_id: string; my_habit: string; my_name: string }[]>`
+    select p.id,
+           p.invitee_id = ${userId} as partner_is_inviter,
+           case when p.inviter_id = ${userId} then p.invitee_id else p.inviter_id end as partner_id,
+           case when p.inviter_id = ${userId} then p.invitee_habit_id else p.inviter_habit_id end as partner_habit_id,
+           h.name as my_habit,
+           coalesce(me.display_name, me.username) as my_name
+    from public.pacts p
+    join public.habits h on h.id = ${habitId}
+    join public.profiles me on me.id = ${userId}
+    where p.status = 'active'
+      and ((p.inviter_id = ${userId} and p.inviter_habit_id = ${habitId})
+        or (p.invitee_id = ${userId} and p.invitee_habit_id = ${habitId}))`
+
+  const results = []
+  for (const p of pacts) {
+    const [rs] = await sql<{ enabled: boolean; locale: string; local_date: string }[]>`
+      select enabled, locale, ((now() at time zone timezone)::date)::text as local_date
+      from public.reminder_settings where user_id = ${p.partner_id}`
+    if (!rs?.enabled) continue
+
+    // claim the partner's day for this pact so repeated check-ins never spam
+    const claimed = p.partner_is_inviter
+      ? await sql`update public.pacts set inviter_nudged_on = ${rs.local_date}::date
+                  where id = ${p.id} and (inviter_nudged_on is null or inviter_nudged_on < ${rs.local_date}::date) returning id`
+      : await sql`update public.pacts set invitee_nudged_on = ${rs.local_date}::date
+                  where id = ${p.id} and (invitee_nudged_on is null or invitee_nudged_on < ${rs.local_date}::date) returning id`
+    if (claimed.length === 0) continue
+
+    const [partnerDone] = await sql`
+      select 1 from public.habit_logs where habit_id = ${p.partner_habit_id} and log_date = ${rs.local_date}::date`
+    const locale = asLocale(rs.locale)
+    const t = TEXT[locale]
+    const payload: Payload = partnerDone
+      ? { title: t.pactBothTitle, body: t.pactBoth(p.my_name), url: `/${locale}/dashboard`, tag: `pact-${p.id}` }
+      : { title: t.pactTurnTitle, body: t.pactTurn(p.my_name, p.my_habit), url: `/${locale}/dashboard`, tag: `pact-${p.id}` }
+    const subs = await sql<Sub[]>`select id, endpoint, p256dh, auth from public.push_subscriptions where user_id = ${p.partner_id}`
+    results.push({ pact: p.id.slice(0, 8), both: Boolean(partnerDone), ...(await push(subs, payload)) })
+  }
+  return { pacts: pacts.length, results }
+}
+
 /** Encrypts a payload for a throwaway subscription without sending it. */
 async function selfTest() {
   const keys = await vapidKeys()
@@ -197,7 +259,8 @@ async function selfTest() {
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "POST only" }, 405)
-  const { action, dryRun } = await req.json().catch(() => ({}))
+  const body = await req.json().catch(() => ({}))
+  const { action, dryRun } = body
 
   try {
     if (action === "test") {
@@ -209,6 +272,14 @@ Deno.serve(async (req) => {
       const locale = asLocale(settings?.locale)
       const t = TEXT[locale]
       return json(await push(subs, { title: t.testTitle, body: t.testBody, url: `/${locale}/dashboard`, tag: "test" }))
+    }
+
+    if (action === "pact") {
+      const userId = await userIdFromJwt(req)
+      if (!userId) return json({ error: "unauthorized" }, 401)
+      const { habitId } = body
+      if (typeof habitId !== "string" || !/^[0-9a-f-]{36}$/i.test(habitId)) return json({ error: "bad habitId" }, 400)
+      return json(await runPactNudge(userId, habitId))
     }
 
     if (!(await isCron(req))) return json({ error: "unauthorized" }, 401)

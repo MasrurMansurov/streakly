@@ -1,5 +1,7 @@
 "use server"
 
+import { after } from "next/server"
+
 import { refresh, updateTag } from "next/cache"
 import { z } from "zod"
 
@@ -96,6 +98,7 @@ export async function deleteHabit(id: string): Promise<ActionResult> {
 /** Mark / unmark a habit as done on a given day (the client's local date). */
 export async function toggleHabitLog(habitId: string, date: string, done: boolean): Promise<ActionResult> {
   const { t } = await getActionT()
+  if (!z.uuid().safeParse(habitId).success) return { ok: false, error: t.validation.invalidInput }
   if (!isISODate(date)) return { ok: false, error: t.validation.invalidDate }
 
   // The client sends its local date. Allow any timezone (UTC−12…UTC+14),
@@ -113,6 +116,20 @@ export async function toggleHabitLog(habitId: string, date: string, done: boolea
   if (error) return { ok: false, error: error.message }
 
   await invalidatePublicProfile(supabase, user.id)
+  if (done && date >= addDays(todayIn("UTC"), -1)) {
+    // after the response: if this habit is part of a pact, nudge the partner
+    after(async () => {
+      const { data: pact } = await supabase
+        .from("pacts")
+        .select("id")
+        .eq("status", "active")
+        .or(`inviter_habit_id.eq.${habitId},invitee_habit_id.eq.${habitId}`)
+        .limit(1)
+      if (!pact?.length) return
+      const { error } = await supabase.functions.invoke("send-reminders", { body: { action: "pact", habitId } })
+      if (error) console.error("pact nudge failed", error)
+    })
+  }
   refresh()
   return { ok: true }
 }
