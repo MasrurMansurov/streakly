@@ -2,6 +2,8 @@
 
 import {
   CircleCheckBigIcon,
+  ChartNoAxesColumnIcon,
+  ChevronRightIcon,
   CircleCheckIcon,
   CloudOffIcon,
   TreePalmIcon,
@@ -20,31 +22,26 @@ import { toast } from "sonner"
 import { reorderHabits, toggleHabitLog } from "@/app/actions/habits"
 import { applyQueue, enqueue, loadQueue, saveQueue, type QueuedToggle } from "@/lib/offline-queue"
 import { AchievementBadge } from "@/components/achievement-badge"
-import { Achievements } from "@/components/achievements"
 import { ConfettiBurst } from "@/components/confetti-burst"
 import { IconTile, type IconTone } from "@/components/icon-tile"
-import { Heatmap } from "@/components/heatmap"
 import { HabitTemplates } from "./habit-templates"
-import { InsightsCard } from "./insights-card"
 import { PactsCard } from "./pacts-card"
 import { ShareDialog } from "./share-dialog"
 import type { Pact } from "@/lib/pacts"
 import type { Pause, Repair } from "@/lib/data"
-import { WeeklyReview } from "./weekly-review"
 import { findInsights } from "@/lib/insights"
 import { weeklyReview } from "@/lib/review"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import type { Habit, HabitLog } from "@/lib/data"
 import { Link } from "@/components/link"
 import { formatDay } from "@/i18n"
 import { useI18n } from "@/i18n/client"
-import { addDays, type ISODate } from "@/lib/dates"
+import type { ISODate } from "@/lib/dates"
 import { newlyEarned, type Achievement } from "@/lib/achievements"
 import { bridgesFor, completionRate, habitStreak, isDueToday } from "@/lib/streaks"
 
-import { ActivityChart } from "./activity-chart"
 import { HabitCard } from "./habit-card"
 import { HabitFormDialog } from "./habit-form-dialog"
 import { SortableHabits } from "./sortable-habits"
@@ -279,11 +276,6 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
   )
   const totalCheckIns = [...perDay.values()].reduce((a, b) => a + b, 0)
 
-  const chartData = Array.from({ length: 30 }, (_, i) => {
-    const date = addDays(today, i - 29)
-    return { date, label: formatDay(locale, date), done: perDay.get(date) ?? 0 }
-  })
-
   const name = profile?.display_name || profile?.username
 
   return (
@@ -405,41 +397,19 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
               habits={habits.map((h) => ({ id: h.id, name: h.name, color: h.color }))}
             />
           )}
-          <WeeklyReview review={review} />
-          <InsightsCard insights={insights} />
-
-          <div className="grid gap-4 lg:grid-cols-5">
-            <Card className="lg:col-span-3">
-              <CardHeader>
-                <CardTitle>{t.dashboard.activity}</CardTitle>
-                <CardDescription>{t.dashboard.activitySub}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Heatmap counts={perDay} max={habits.length} today={today} locale={locale} />
-              </CardContent>
-            </Card>
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle>{t.dashboard.last30}</CardTitle>
-                <CardDescription>{t.dashboard.last30Sub}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ActivityChart data={chartData} max={habits.length} label={t.dashboard.completed} />
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>{t.achievements.title}</CardTitle>
-              <CardDescription>
-                {t.achievements.subtitle(achievements.filter((a) => a.earned).length, achievements.length)}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Achievements achievements={achievements} locale={locale} />
-            </CardContent>
-          </Card>
+          <Link
+            href="/progress"
+            className="group flex items-center gap-4 rounded-xl border bg-card p-4 transition hover:shadow-md"
+          >
+            <IconTile icon={ChartNoAxesColumnIcon} tone="sky" />
+            <div className="min-w-0 flex-1">
+              <div className="font-medium">{t.progress.teaserTitle}</div>
+              <div className="truncate text-sm text-muted-foreground">
+                {review.rate === null ? t.progress.teaserEmpty : t.progress.teaser(Math.round(review.rate * 100), insights.length)}
+              </div>
+            </div>
+            <ChevronRightIcon className="size-5 text-muted-foreground transition group-hover:translate-x-0.5" />
+          </Link>
 
           {archivedCount > 0 && (
             <p className="-mt-4 text-center text-sm">

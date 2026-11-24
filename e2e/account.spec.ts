@@ -39,6 +39,7 @@ test("account deletion needs the exact username", async ({ page }) => {
 
 test("dashboard shows the weekly review", async ({ page }) => {
   await signIn(page, "demo@streakly.dev", "streakly-demo")
+  await page.goto("/progress")
   const card = page.locator("[data-slot=card]", { has: page.locator("[data-slot=card-title]", { hasText: /^This week$/ }) })
   await expect(card).toBeVisible()
   await expect(card.getByRole("img", { name: /^Last 8 weeks: / })).toBeVisible()
@@ -47,6 +48,7 @@ test("dashboard shows the weekly review", async ({ page }) => {
 
 test("dashboard shows insights found in the history", async ({ page }) => {
   await signIn(page, "demo@streakly.dev", "streakly-demo")
+  await page.goto("/progress")
   const card = page.locator("[data-slot=card]", { has: page.locator("[data-slot=card-title]", { hasText: "Insights" }) })
   await expect(card).toBeVisible()
   await expect(card.getByText(/slips on|go together|back the very next day/).first()).toBeVisible()

@@ -13,6 +13,7 @@ const serverAction = (page: Page) =>
 
 test("dashboard shows earned and locked achievements", async ({ page }) => {
   await signIn(page, "demo@streakly.dev", "streakly-demo")
+  await page.goto("/progress")
   await expect(page.getByText("Achievements", { exact: true })).toBeVisible()
   await expect(page.getByText(/\d of 6 unlocked/)).toBeVisible()
   await expect(page.getByRole("listitem", { name: /One week: Unlocked/ })).toBeVisible()

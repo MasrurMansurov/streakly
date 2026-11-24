@@ -17,7 +17,7 @@ export default defineConfig({
   },
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },
-    { name: "mobile", use: { ...devices["Pixel 7"] }, testMatch: /public\.spec\.ts/, grepInvert: /installable/ },
+    { name: "mobile", use: { ...devices["Pixel 7"] }, testMatch: /(public|nav)\.spec\.ts/, grepInvert: /installable/ },
   ],
   webServer: externalBaseURL
     ? undefined

@@ -1,5 +1,6 @@
 import { Suspense } from "react"
 
+import { HeaderNav, TabBar } from "@/components/app-nav"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { Link } from "@/components/link"
 import { Logo } from "@/components/logo"
@@ -13,9 +14,18 @@ import { createClient } from "@/lib/supabase/server"
 
 export function SiteHeader() {
   return (
+    <>
     <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4">
-        <Logo />
+        <div className="flex items-center gap-6">
+          <Logo />
+          {/* main sections for signed-in people (reads the session + URL) */}
+          <Suspense fallback={null}>
+            <SignedIn>
+              <HeaderNav />
+            </SignedIn>
+          </Suspense>
+        </div>
         <div className="flex items-center gap-1">
           {/* reads the current URL (usePathname) → keep it out of the static shell */}
           <Suspense fallback={<div className="h-8 w-12" />}>
@@ -29,7 +39,18 @@ export function SiteHeader() {
         </div>
       </div>
     </header>
+    {/* outside the header: its backdrop-filter would trap a fixed element */}
+    <Suspense fallback={null}>
+      <SignedIn>
+        <TabBar />
+      </SignedIn>
+    </Suspense>
+    </>
   )
+}
+
+async function SignedIn({ children }: { children: React.ReactNode }) {
+  return (await getCurrentUser()) ? children : null
 }
 
 async function UserArea() {

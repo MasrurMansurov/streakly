@@ -160,7 +160,7 @@ export function HabitCard({ habit, done, mini, paused, repaired, today, onToggle
               {t.habit.miniDoneHint}
             </p>
           )}
-          <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs whitespace-nowrap text-muted-foreground">
             <span className={cn("inline-flex items-center gap-1 font-medium", streak.current > 0 && color.text)}>
               <FlameIcon className={cn("size-3.5", streak.current === 0 ? "text-muted-foreground/60" : "text-orange-500")} />
               {t.habit.streak(streak.current, streak.unit)}
@@ -231,18 +231,17 @@ export function HabitCard({ habit, done, mini, paused, repaired, today, onToggle
       </div>
 
       {repair ? (
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-sky-500/30 bg-sky-500/5 px-3 py-2">
-          <div className="min-w-0">
-            <p className="text-sm font-medium">{t.repair.offer(repair.streak)}</p>
-            <p className="text-xs text-muted-foreground">{t.repair.hint}</p>
-          </div>
+        <div className="mt-3 flex items-center gap-2 rounded-lg bg-sky-500/10 py-1.5 pr-1.5 pl-3 text-sm" title={t.repair.hint}>
+          <WrenchIcon className="size-3.5 shrink-0 text-sky-600 dark:text-sky-400" aria-hidden />
+          <span className="min-w-0 flex-1 truncate">{t.repair.offer(repair.streak)}</span>
           <Button
             size="sm"
-            variant="outline"
+            variant="ghost"
+            className="h-7 shrink-0 text-sky-700 hover:bg-sky-500/15 dark:text-sky-300"
             disabled={pending}
             onClick={() => run(() => repairStreak(habit.id, repair.day), t.repair.done)}
           >
-            <WrenchIcon /> {t.repair.button}
+            {t.repair.button}
           </Button>
         </div>
       ) : recentlyBroken && !doneToday ? (

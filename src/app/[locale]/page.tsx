@@ -1,4 +1,13 @@
-import { CalendarCheck2Icon, FlameIcon, LockKeyholeIcon, Share2Icon, type LucideIcon } from "lucide-react"
+import {
+  CalendarCheck2Icon,
+  FlameIcon,
+  HandshakeIcon,
+  LightbulbIcon,
+  LockKeyholeIcon,
+  SnowflakeIcon,
+  TrophyIcon,
+  type LucideIcon,
+} from "lucide-react"
 
 import { Link } from "@/components/link"
 import { LogoMark } from "@/components/logo"
@@ -8,7 +17,7 @@ import { Button } from "@/components/ui/button"
 import { getT } from "@/i18n/server"
 import { cn } from "@/lib/utils"
 
-const FEATURE_ICONS: LucideIcon[] = [CalendarCheck2Icon, FlameIcon, Share2Icon, LockKeyholeIcon]
+const FEATURE_ICONS: LucideIcon[] = [CalendarCheck2Icon, SnowflakeIcon, HandshakeIcon, LightbulbIcon, TrophyIcon, LockKeyholeIcon]
 
 // decorative heatmap preview, deterministic so the page is fully static
 const PREVIEW = Array.from({ length: 7 * 18 }, (_, i) => ((i * 37 + (i % 7) * 11) % 9) % 5)
@@ -77,7 +86,7 @@ export default async function Home() {
         </section>
 
         <section id="features" className="border-t">
-          <div className="mx-auto grid max-w-5xl gap-x-10 gap-y-12 px-4 py-20 sm:grid-cols-2">
+          <div className="mx-auto grid max-w-5xl gap-x-10 gap-y-12 px-4 py-20 sm:grid-cols-2 lg:grid-cols-3">
             {t.landing.features.map(({ title, text }, i) => {
               const Icon = FEATURE_ICONS[i]
               return (

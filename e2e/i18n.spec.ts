@@ -31,7 +31,7 @@ test.describe("Russian browser", () => {
     await page.getByLabel("Пароль").fill("streakly-demo")
     await page.getByRole("button", { name: "Войти", exact: true }).last().click()
     await expect(page).toHaveURL(/\/ru\/dashboard$/)
-    await expect(page.getByText("Выполнение за 30 дней")).toBeVisible()
+    await expect(page.getByText("За 30 дней")).toBeVisible()
     // streaks like "15 дней", "3 дня", "1 день"
     await expect(page.getByText(/\d+ (день|дня|дней)/).first()).toBeVisible()
   })

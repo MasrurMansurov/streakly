@@ -182,3 +182,13 @@
     50% { filter: drop-shadow(0 6px 10px rgb(0 0 0 / 0.2)) brightness(1.08); }
   }
 }
+
+/* room for the phone tab bar (shown only to signed-in people, below md) */
+body:has([data-tabbar]) {
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+}
+@media (min-width: 48rem) {
+  body:has([data-tabbar]) {
+    padding-bottom: 0;
+  }
+}
