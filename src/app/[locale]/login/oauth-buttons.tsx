@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { useI18n } from "@/i18n/client"
 import { createClient } from "@/lib/supabase/client"
 
-type Provider = "github" | "google"
+import type { OAuthProvider as Provider } from "@/lib/auth-providers"
 
 const PROVIDERS: Record<Provider, { label: string; icon: React.ReactNode }> = {
   github: {
@@ -31,22 +31,21 @@ const PROVIDERS: Record<Provider, { label: string; icon: React.ReactNode }> = {
   },
 }
 
-/** Providers enabled via NEXT_PUBLIC_AUTH_PROVIDERS="github,google" (must also be enabled in Supabase). */
-export const ENABLED_PROVIDERS = (process.env.NEXT_PUBLIC_AUTH_PROVIDERS ?? "")
-  .split(",")
-  .map((p) => p.trim())
-  .filter((p): p is Provider => p in PROVIDERS)
-
-export function OAuthButtons() {
+/** "Continue with Google / GitHub" — only for providers enabled in Supabase. */
+export function OAuthButtons({ providers }: { providers: Provider[] }) {
   const [pending, setPending] = useState<Provider | null>(null)
   const { locale, t } = useI18n()
-  if (ENABLED_PROVIDERS.length === 0) return null
+  if (providers.length === 0) return null
 
   const signIn = async (provider: Provider) => {
     setPending(provider)
     const { error } = await createClient().auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${window.location.origin}/auth/callback?next=/${locale}/dashboard` },
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=/${locale}/dashboard`,
+        // let people pick which Google account to use
+        queryParams: provider === "google" ? { prompt: "select_account" } : undefined,
+      },
     })
     if (error) {
       toast.error(error.message)
@@ -58,7 +57,7 @@ export function OAuthButtons() {
   return (
     <div className="grid gap-3">
       <div className="grid gap-2">
-        {ENABLED_PROVIDERS.map((p) => (
+        {providers.map((p) => (
           <Button key={p} type="button" variant="outline" disabled={pending !== null} onClick={() => signIn(p)}>
             {PROVIDERS[p].icon}
             {pending === p ? t.auth.redirecting : t.auth.continueWith(PROVIDERS[p].label)}

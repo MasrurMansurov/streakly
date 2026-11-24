@@ -69,3 +69,9 @@ test("service worker and reminder function are reachable", async ({ request }) =
   })
   expect(res.status()).toBe(401)
 })
+
+test("cancelled OAuth sign-in comes back with a clear message", async ({ page }) => {
+  await page.goto("/auth/callback?error=access_denied&error_description=User+cancelled")
+  await expect(page).toHaveURL(/\/login\?error=access_denied$/)
+  await expect(page.getByRole("alert").filter({ hasText: "Sign-in was cancelled or denied" })).toBeVisible()
+})

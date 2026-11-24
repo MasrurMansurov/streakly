@@ -22,6 +22,7 @@ test("vacation mode pauses streaks and can be ended early", async ({ page }) => 
     await page.goto("/dashboard")
     await expect(page.getByRole("status").filter({ hasText: /Vacation until .* streaks are paused/ })).toBeVisible()
     await expect(page.getByRole("button", { name: /: vacation$/ })).toBeVisible() // today in the 7-day strip
+    await expect(page.getByRole("heading", { level: 1, name: "You're on vacation — rest up" })).toBeVisible()
 
     await page.goto("/settings")
     saved = serverAction(page)

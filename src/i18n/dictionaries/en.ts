@@ -352,6 +352,7 @@ export const en = {
   },
   vacation: {
     title: "Vacation mode",
+    heading: "You're on vacation — rest up",
     description: "Going away or ill? Pause everything: streaks don't break and reminders stay quiet. Up to 30 days.",
     until: "Until",
     start: "Start vacation",

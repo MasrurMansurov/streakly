@@ -216,7 +216,8 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
   }
 
   const doneToday = habits.filter((h) => byHabit.get(h.id)?.has(today)).length
-  const leftNow = habits.filter((h) => isDueToday(byHabit.get(h.id)!, today, h.target_per_week)).length
+  // nothing is "due" on vacation
+  const leftNow = activePause ? 0 : habits.filter((h) => isDueToday(byHabit.get(h.id)!, today, h.target_per_week)).length
 
   // "N left today" on the installed app's icon
   useEffect(() => {
@@ -291,6 +292,8 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
           <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
             {habits.length === 0 ? (
               t.dashboard.welcome(name)
+            ) : activePause && leftToday > 0 ? (
+              t.vacation.heading
             ) : leftToday === 0 ? (
               <>
                 {t.dashboard.allDone}

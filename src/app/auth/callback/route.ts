@@ -16,5 +16,8 @@ export async function GET(request: NextRequest) {
     if (!error) return NextResponse.redirect(`${origin}${next}`)
   }
 
-  return NextResponse.redirect(`${origin}/login?error=auth`)
+  // the provider said no (e.g. the person cancelled on Google's screen)
+  const providerError = searchParams.get("error")
+  const reason = providerError && /^[a-z_]{1,40}$/.test(providerError) ? providerError : "auth"
+  return NextResponse.redirect(`${origin}/login?error=${reason}`)
 }

@@ -20,12 +20,14 @@ import { validationMessage } from "@/i18n"
 import { useI18n } from "@/i18n/client"
 import { authSchema, type AuthInput } from "@/lib/validation"
 
+import type { OAuthProvider } from "@/lib/auth-providers"
+
 import { OAuthButtons } from "./oauth-buttons"
 
 type Mode = "signin" | "signup"
 
 
-export function LoginForm() {
+export function LoginForm({ providers }: { providers: OAuthProvider[] }) {
   const { t } = useI18n()
   const [mode, setMode] = useState<Mode>("signin")
   const [sentTo, setSentTo] = useState<string | null>(null)
@@ -79,7 +81,7 @@ export function LoginForm() {
           <LinkErrorNotice />
         </Suspense>
 
-        <OAuthButtons />
+        <OAuthButtons providers={providers} />
 
         <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)}>
           <TabsList className="w-full">
