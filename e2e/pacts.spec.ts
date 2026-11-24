@@ -16,6 +16,12 @@ async function signedIn(browser: Browser, user: { email: string; password: strin
 const serverAction = (page: Page) =>
   page.waitForResponse((r) => r.request().method() === "POST" && "next-action" in r.request().headers())
 
+// 1×1 PNG
+const PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+  "base64"
+)
+
 const pactsCard = (page: Page) =>
   page.locator("[data-slot=card]", { has: page.locator("[data-slot=card-title]", { hasText: "Pacts" }) })
 
@@ -64,6 +70,32 @@ test("two friends start a pact, see each other's check-ins, then end it", async 
       .filter({ hasNot: demo.getByRole("listitem") }) // the inner rows, not the whole pact
       .filter({ hasText: "E2E Tester" })
     await expect(partnerRow.getByText("done today")).toBeVisible()
+
+    // tester shares a proof; demo sees it only after checking in today themselves
+    await tester.reload()
+    await pactsCard(tester).getByRole("button", { name: "Add proof" }).click()
+    await tester.getByLabel("Take or choose a photo").setInputFiles({ name: "glass.png", mimeType: "image/png", buffer: PNG })
+    await expect(tester.getByRole("dialog").locator("img")).toBeVisible() // compressed preview
+    await tester.getByRole("dialog").getByLabel("Note", { exact: true }).fill("8 glasses by 6 pm")
+    const shared = serverAction(tester)
+    await tester.getByRole("button", { name: "Share with partner" }).click()
+    await shared
+    await expect(tester.getByText("Proof shared")).toBeVisible()
+
+    await demo.reload()
+    const demoCheckIn = demo.getByRole("button", { name: 'Mark "Read 10 pages" as done today' })
+    if (await demoCheckIn.isVisible()) {
+      await expect(pactsCard(demo).getByText("Check in to see their proof")).toBeVisible()
+      await expect(pactsCard(demo).getByText("8 glasses by 6 pm")).toHaveCount(0)
+      const checked = serverAction(demo)
+      await demoCheckIn.click()
+      await checked
+      await demo.reload()
+    }
+    await expect(pactsCard(demo).getByText("8 glasses by 6 pm")).toBeVisible()
+    const photo = pactsCard(demo).getByRole("button", { name: "Open photo" }).locator("img")
+    await expect(photo).toBeVisible()
+    await expect.poll(() => photo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0) // signed URL loads
   } finally {
     // clean up so the tester account is back to "no habits, follows nobody"
     await tester.goto("/dashboard")

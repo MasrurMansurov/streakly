@@ -205,6 +205,12 @@ export type Database = {
         }
         Relationships: []
       }
+      pact_proofs: {
+        Row: { created_at: string; day: string; note: string | null; pact_id: string; photo_path: string | null; user_id: string }
+        Insert: { created_at?: string; day: string; note?: string | null; pact_id: string; photo_path?: string | null; user_id?: string }
+        Update: { created_at?: string; day?: string; note?: string | null; pact_id?: string; photo_path?: string | null; user_id?: string }
+        Relationships: []
+      }
       pauses: {
         Row: { created_at: string; end_date: string; id: string; start_date: string; user_id: string }
         Insert: { created_at?: string; end_date: string; id?: string; start_date: string; user_id?: string }
@@ -358,6 +364,10 @@ export type Database = {
           title: string
           username: string
         }[]
+      }
+      pacts_with_partner_proof: {
+        Args: { p_day: string }
+        Returns: string[]
       }
       my_pacts: {
         Args: never

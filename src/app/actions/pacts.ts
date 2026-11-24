@@ -54,6 +54,11 @@ export async function leavePact(pactId: string): Promise<ActionResult> {
   if (!id.safeParse(pactId).success) return { ok: false, error: t.validation.invalidInput }
   if (!user) return { ok: false, error: t.validation.notSignedIn }
 
+  // my proof photos go right away (the partner's are cleaned up by the daily job)
+  const folder = `${pactId}/${user.id}`
+  const { data: files } = await supabase.storage.from("proofs").list(folder)
+  if (files?.length) await supabase.storage.from("proofs").remove(files.map((f) => `${folder}/${f.name}`))
+
   const { error } = await supabase.from("pacts").delete().eq("id", pactId)
   if (error) return { ok: false, error: error.message }
   refresh()

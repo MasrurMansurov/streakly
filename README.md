@@ -66,7 +66,7 @@ research review of retention mechanics (Duolingo, Strava, Wordle…) and habit-f
 | Coming back should be cheap | Streak **freezes** (2/month), **repair** a missed day, **vacation mode**, a gentle note instead of "you broke it", a "welcome back" on return | Seeing a broken streak lowers continuation; repairability softens it. Rewarding the return after a miss was the best of 54 programs in a 61k-person megastudy |
 | Do it when you remember | **One-tap check-in from the notification**, app-icon badge, **mini versions** ("at least 1 page") | Friction at the moment of intent is where habits die |
 | Tie habits to a moment | **If-then plans** ("After my morning coffee → read") | Implementation intentions: d = 0.65 across 94 tests |
-| Comparison beats support | **Pacts** (a shared streak that grows only when both check in), a **leaderboard** with ranks | In RCTs, competition and peer comparison outperform "supportive" designs |
+| Comparison beats support | **Challenges** with standings and a soft stake, **pacts** (a shared streak that grows only when both check in), a **leaderboard** with ranks | In RCTs, competition and peer comparison outperform "supportive" designs |
 | Show people their own patterns | **Insights**: habits that go together, weak weekdays, "never miss twice" rate | Self-monitoring works best when it's specific and actionable |
 
 ## Features
@@ -92,6 +92,8 @@ research review of retention mechanics (Duolingo, Strava, Wordle…) and habit-f
 ### Social
 - **Find people** by name or @username and follow public profiles; a 7-day feed of their check-ins.
 - **Pacts** — invite someone you follow: each commits one habit, the duo streak grows only on days you *both* check in, and your partner gets a push ("your turn" / "you both did it").
+- **Proof & a shared moment** — attach a photo or a note to a pact check-in. Your partner's proof for the day **unlocks only after you've checked in yourself** (BeReal-style), enforced by RLS on the table and on the private Storage bucket. Photos are compressed in the browser and kept for 30 days.
+- **Challenges** — a 7/14/30-day duel or group of 2–6 people you follow: everyone commits a habit, one point per day, live standings, an optional soft stake ("loser buys coffee"), results and a rematch.
 - **Leaderboard** of the last 30 days (score = check-ins + 2 × active days) with ranks from Newcomer to Legend.
 - **Share cards** — a 1080×1080 PNG for the week, month or "My year in habits", shared via the Web Share API, downloaded, or copied as a Wordle-style emoji grid.
 - **Public profile** at `/u/<username>` (opt-in) with a generated link preview.
@@ -147,7 +149,7 @@ src/
     ├── ranks.ts offline-queue.ts csv.ts dates.ts …                             ┘
     └── supabase/               # server, browser, proxy and public clients + generated types
 supabase/
-├── migrations/                 # schema, RLS policies, functions, triggers, cron (20 migrations)
+├── migrations/                 # schema, RLS policies, functions, triggers, cron (23 migrations)
 └── functions/send-reminders/   # Web Push: daily reminders, pact nudges, test pushes
 public/sw.js                    # service worker: push, notification actions, offline cache
 ```
@@ -163,6 +165,8 @@ auth.users ─1:1─ profiles (username, display_name, bio, avatar_url, is_publi
                    ├─1:n─ pauses (start_date, end_date)                    vacation mode, ≤ 30 days
                    ├─n:m─ follows (follower_id, following_id)
                    ├─n:m─ pacts (inviter/invitee + their habits, status)  one per pair
+                   │        └─1:n─ pact_proofs (day, note, photo_path)      partner sees after own check-in
+                   ├─n:m─ challenges ─ challenge_members (habit, status)   2–6 people, stake, dates
                    ├─1:1─ reminder_settings (time, timezone, locale, enabled)
                    └─1:n─ push_subscriptions (endpoint, keys)
 ```
@@ -180,7 +184,7 @@ auth.users ─1:1─ profiles (username, display_name, bio, avatar_url, is_publi
 Security is enforced in Postgres, not in the UI:
 - **RLS on every table.** Owners have full access; anyone may *read* rows of profiles that opted into `is_public`. A trigger checks that a log belongs to a habit of the same user.
 - **Column-level grants** where an update must be narrow (e.g. only the invitee can accept a pact; logs can only switch mini ↔ full; pauses can only end earlier — enforced by a trigger, so vacation can't cover the past).
-- **`security definer` only when needed, and minimal:** `my_pacts()` reveals a partner's dates for the one habit in the pact, only to the other participant; `follow_counts()` returns two numbers; `delete_my_account()` deletes only `auth.uid()`. Aggregates like `leaderboard()` and `achievement_stats()` are `security invoker`, so RLS applies.
+- **`security definer` only when needed, and minimal:** `my_pacts()` and `my_challenges()` reveal other members' dates only for the one habit they committed, only to fellow members; `follow_counts()` returns two numbers; `delete_my_account()` deletes only `auth.uid()`. Aggregates like `leaderboard()` and `achievement_stats()` are `security invoker`, so RLS applies.
 - **Inputs that reach PostgREST filters are validated** (UUIDs) or reduced to a safe character set (people search).
 - **Secrets** (VAPID keys, the cron token) live in Supabase Vault; nothing sensitive is in env vars or the repo.
 - Usernames are generated from the OAuth name, never from the email. Data export and account deletion are one click in Settings.
@@ -230,10 +234,9 @@ Vercel deploys `main` automatically. Functions run in `fra1` (see `vercel.json`)
 
 ## Roadmap
 
-Done in the latest rounds — research-backed retention features: one-tap check-ins from notifications, mini versions, streak repair & vacation mode, if-then plans, share cards and "My year in habits", Google sign-in, the Progress page and phone tab bar.
+Done in the latest rounds — research-backed retention features: one-tap check-ins from notifications, mini versions, streak repair & vacation mode, if-then plans, share cards and "My year in habits", Google sign-in, the Progress page and phone tab bar; challenges with soft stakes, and proof with a shared daily moment in pacts.
 
 Next:
-- [ ] **Pacts 2.0** — weekly duels and groups of 2–6, photo/note proof, soft stakes ("loser buys coffee"), a shared daily moment
 - [ ] **Habit strength** (a short automaticity check) and **graduating** a habit around day 66
 - [ ] One-tap **mood & energy**, so Insights can show "habit → how I feel"
 - [ ] An **AI weekly letter** grounded in your own insights

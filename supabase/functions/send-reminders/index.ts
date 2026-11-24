@@ -5,6 +5,7 @@
 //   - pg_cron every 15 min      → { action: "send" }            auth: x-cron-token (Vault secret)
 //   - the app ("Send test")     → { action: "test" }            auth: the user's JWT
 //   - the app (pact check-in)   → { action: "pact", habitId }   auth: the user's JWT
+//   - pg_cron daily             → { action: "cleanup" }         auth: x-cron-token
 //   - setup / diagnostics       → { action: "setup" | "selftest" | "send", dryRun? }  auth: x-cron-token
 //
 // Secrets live in Supabase Vault and are read over the built-in DB connection,
@@ -302,6 +303,31 @@ async function runPactNudge(userId: string, habitId: string) {
   return { pacts: pacts.length, results }
 }
 
+/**
+ * Pact proof photos are kept for 30 days, and removed as soon as their pact is
+ * gone. Storage objects can only be deleted through the Storage API.
+ */
+async function cleanupProofs() {
+  const rows = await sql<{ name: string }[]>`
+    select o.name from storage.objects o
+    where o.bucket_id = 'proofs'
+      and (o.created_at < now() - interval '30 days'
+           or not exists (select 1 from public.pacts p where p.id::text = split_part(o.name, '/', 1)))
+    limit 500`
+  if (rows.length === 0) return { removed: 0 }
+  const res = await fetch(`${Deno.env.get("SUPABASE_URL")}/storage/v1/object/proofs`, {
+    method: "DELETE",
+    headers: {
+      authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+      apikey: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ prefixes: rows.map((r) => r.name) }),
+  })
+  if (!res.ok) throw new Error(`storage delete failed: ${res.status}`)
+  return { removed: rows.length }
+}
+
 /** Encrypts a payload for a throwaway subscription without sending it. */
 async function selfTest() {
   const keys = await vapidKeys()
@@ -352,6 +378,7 @@ Deno.serve(async (req) => {
     if (action === "setup") return json({ publicKey: (await vapidKeys(true)).publicKey })
     if (action === "selftest") return json(await selfTest())
     if (action === "send") return json(await runReminders(Boolean(dryRun)))
+    if (action === "cleanup") return json(await cleanupProofs())
     return json({ error: "unknown action" }, 400)
   } catch (e) {
     console.error(e)

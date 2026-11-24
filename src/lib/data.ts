@@ -5,7 +5,7 @@ import { cookies } from "next/headers"
 import { connection } from "next/server"
 import { redirect } from "next/navigation"
 
-import type { Pact } from "./pacts"
+import type { Pact, PactProof } from "./pacts"
 import { buildChallenges, type Challenge } from "./challenges"
 import { periodRange, type SharePeriod, type ShareHabit } from "./share"
 import { bridgesFor } from "./streaks"
@@ -337,19 +337,44 @@ export async function getFollowInfo(profileId: string) {
 
 /** The viewer's pacts (pending and active) with partner details. */
 export async function getPacts(): Promise<Pact[]> {
-  await requireUser()
-  const supabase = await createClient()
-  const { data, error } = await supabase.rpc("my_pacts")
+  const user = await requireUser()
+  const [{ today }, supabase] = await Promise.all([getToday(), createClient()])
+  const [{ data, error }, { data: proofs }, { data: lockedIds }] = await Promise.all([
+    supabase.rpc("my_pacts"),
+    // RLS returns my proofs and the partner's only if I've checked in that day
+    supabase.from("pact_proofs").select("pact_id, user_id, note, photo_path").eq("day", today),
+    supabase.rpc("pacts_with_partner_proof", { p_day: today }),
+  ])
   if (error) throw new Error(error.message)
-  return (data ?? []).map((r) => ({
-    id: r.id,
-    status: r.status === "active" ? "active" : "pending",
-    iInvited: r.i_invited,
-    partner: { username: r.partner_username, name: r.partner_name, avatarUrl: r.partner_avatar },
-    myHabit: r.my_habit_id && r.my_habit_name ? { id: r.my_habit_id, name: r.my_habit_name } : null,
-    partnerHabit: r.partner_habit_name ? { name: r.partner_habit_name, color: r.partner_habit_color ?? "emerald" } : null,
-    partnerDates: (r.partner_dates ?? []) as ISODate[],
-  }))
+
+  // short-lived links for the private photos we're allowed to see
+  const paths = (proofs ?? []).flatMap((p) => (p.photo_path ? [p.photo_path] : []))
+  const signed = paths.length ? (await supabase.storage.from("proofs").createSignedUrls(paths, 60 * 60)).data ?? [] : []
+  const urlOf = new Map(signed.flatMap((s) => (s.path && s.signedUrl ? [[s.path, s.signedUrl] as const] : [])))
+  const toProof = (p: { note: string | null; photo_path: string | null }): PactProof => ({
+    note: p.note,
+    photoUrl: p.photo_path ? (urlOf.get(p.photo_path) ?? null) : null,
+  })
+  const partnerHasProof = new Set(lockedIds ?? [])
+
+  return (data ?? []).map((r) => {
+    const mine = proofs?.find((p) => p.pact_id === r.id && p.user_id === user.id)
+    const theirs = proofs?.find((p) => p.pact_id === r.id && p.user_id !== user.id)
+    return {
+      id: r.id,
+      status: r.status === "active" ? "active" : "pending",
+      iInvited: r.i_invited,
+      partner: { username: r.partner_username, name: r.partner_name, avatarUrl: r.partner_avatar },
+      myHabit: r.my_habit_id && r.my_habit_name ? { id: r.my_habit_id, name: r.my_habit_name } : null,
+      partnerHabit: r.partner_habit_name ? { name: r.partner_habit_name, color: r.partner_habit_color ?? "emerald" } : null,
+      partnerDates: (r.partner_dates ?? []) as ISODate[],
+      proofs: {
+        mine: mine ? toProof(mine) : null,
+        partner: theirs ? toProof(theirs) : null,
+        partnerLocked: !theirs && partnerHasProof.has(r.id),
+      },
+    }
+  })
 }
 
 /** The viewer's active habits, for pickers. */

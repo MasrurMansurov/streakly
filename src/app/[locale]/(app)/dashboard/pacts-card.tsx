@@ -1,6 +1,6 @@
 "use client"
 
-import { CheckIcon, CircleIcon, FlameIcon, HandshakeIcon, XIcon } from "lucide-react"
+import { CameraIcon, CheckIcon, CircleIcon, FlameIcon, HandshakeIcon, LockIcon, XIcon } from "lucide-react"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 
@@ -14,6 +14,8 @@ import { useI18n } from "@/i18n/client"
 import type { ISODate } from "@/lib/dates"
 import { habitColor } from "@/lib/habit-colors"
 import { duoStreak, type Pact } from "@/lib/pacts"
+
+import { ProofDialog } from "./proof-dialog"
 import { cn } from "@/lib/utils"
 
 type Props = { pacts: Pact[]; byHabit: Map<string, Set<ISODate>>; today: ISODate; habits: HabitChoice[] }
@@ -135,6 +137,7 @@ function ActivePact({ pact, mine, today }: { pact: Pact; mine: Set<ISODate> | un
           </li>
         ))}
       </ul>
+      <Proofs pact={pact} meToday={s.meToday} />
       <p
         className={cn(
           "rounded-md px-2.5 py-1.5 text-xs",
@@ -187,6 +190,55 @@ function ReceivedInvite({
           {t.pacts.decline}
         </Button>
       </div>
+    </div>
+  )
+}
+
+/** Today's proofs: mine (add/edit once I've checked in) and the partner's — locked until I check in. */
+function Proofs({ pact, meToday }: { pact: Pact; meToday: boolean }) {
+  const { t } = useI18n()
+  const [editing, setEditing] = useState(false)
+  const [viewing, setViewing] = useState<string | null>(null)
+  const p = pact.proofs
+  if (!p) return null
+  const partner = p.partner
+  if (!meToday && !partner && !p.partnerLocked) return null
+
+  return (
+    <div className="grid gap-2">
+      {partner ? (
+        <div className="flex items-center gap-3 rounded-lg border p-2">
+          {partner.photoUrl && (
+            <button type="button" onClick={() => setViewing(partner.photoUrl)} aria-label={t.proof.open} className="shrink-0 overflow-hidden rounded-md">
+              {/* eslint-disable-next-line @next/next/no-img-element -- short-lived signed URL */}
+              <img src={partner.photoUrl} alt="" className="size-12 object-cover" />
+            </button>
+          )}
+          <div className="min-w-0 text-sm">
+            <div className="text-xs text-muted-foreground">{t.proof.partnerProof(pact.partner.name)}</div>
+            {partner.note && <div className="line-clamp-2">{partner.note}</div>}
+          </div>
+        </div>
+      ) : p.partnerLocked ? (
+        <div className="flex items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground">
+          <LockIcon className="size-3.5 shrink-0" /> {t.proof.locked}
+        </div>
+      ) : null}
+
+      {meToday && (
+        <Button size="sm" variant="outline" className="w-fit" onClick={() => setEditing(true)}>
+          <CameraIcon /> {p.mine ? t.proof.edit : t.proof.add}
+        </Button>
+      )}
+
+      {editing && <ProofDialog open={editing} onOpenChange={setEditing} pactId={pact.id} current={p.mine} />}
+      <Dialog open={viewing !== null} onOpenChange={(o) => !o && setViewing(null)}>
+        <DialogContent className="p-2 sm:max-w-xl">
+          <DialogTitle className="sr-only">{t.proof.partnerProof(pact.partner.name)}</DialogTitle>
+          {/* eslint-disable-next-line @next/next/no-img-element -- short-lived signed URL */}
+          {viewing && <img src={viewing} alt="" className="w-full rounded-lg" />}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -7,7 +7,7 @@ export type LegalDoc = {
   sections: { heading: string; paragraphs?: string[]; items?: string[] }[]
 }
 
-export const LEGAL_UPDATED = "2026-11-24"
+export const LEGAL_UPDATED = "2026-11-25"
 export const CONTACT_URL = "https://github.com/MasrurMansurov/streakly/issues"
 
 const privacy: Record<Locale, LegalDoc> = {
@@ -23,6 +23,7 @@ const privacy: Record<Locale, LegalDoc> = {
           "Account: your email address and a securely hashed password, or your basic GitHub/Google profile (name, email, avatar) if you sign in with them.",
           "Profile: username, display name, bio, profile photo and whether your profile is public.",
           "Your activity: habits, check-ins, notes on check-ins and the people you follow.",
+          "Pacts and challenges: who you invite, which habit you commit and your check-in days for it. Proof photos and notes you add to a pact check-in.",
           "Reminders: the time, time zone and language you choose, and the push subscription your browser creates when you turn reminders on.",
           "Usage statistics: anonymous page views and performance metrics (Vercel Web Analytics and Speed Insights). They use no cookies and don't identify you.",
         ],
@@ -41,6 +42,7 @@ const privacy: Record<Locale, LegalDoc> = {
         heading: "What other people can see",
         paragraphs: [
           "By default your profile is private. If you make it public, anyone with the link can see your name, photo, bio, active habits, streaks, activity heatmap and earned achievements. Notes, archived habits and your email are never public.",
+          "In a pact or a challenge, the other members see your name, photo and your check-in days for the one habit you committed — even if your profile is private. A proof photo or note is visible only to your pact partner, and only after they've checked in that day themselves.",
         ],
       },
       {
@@ -63,6 +65,7 @@ const privacy: Record<Locale, LegalDoc> = {
         heading: "How long we keep it",
         paragraphs: [
           "We keep your data while your account exists. When you delete your account, your profile, habits, check-ins, notes, follows, reminders and photo are deleted immediately; copies may remain in hosting providers' backups for a short time before they are overwritten.",
+          "Proof photos in pacts are kept for 30 days, and removed sooner when the pact ends.",
         ],
       },
       {
@@ -99,6 +102,7 @@ const privacy: Record<Locale, LegalDoc> = {
           "Аккаунт: email и надёжно захешированный пароль либо базовый профиль GitHub/Google (имя, email, аватар), если вы входите через них.",
           "Профиль: имя пользователя, отображаемое имя, описание, фото и настройка публичности.",
           "Ваша активность: привычки, отметки, заметки к отметкам и люди, на которых вы подписаны.",
+          "Пакты и челленджи: кого вы приглашаете, какую привычку выбрали и дни отметок по ней. Фото и заметки-доказательства, которые вы прикладываете к отметке в пакте.",
           "Напоминания: выбранные время, часовой пояс и язык, а также push-подписка, которую создаёт браузер при включении напоминаний.",
           "Статистика использования: анонимные просмотры страниц и показатели скорости (Vercel Web Analytics и Speed Insights). Они не используют cookie и не определяют вас лично.",
         ],
@@ -117,6 +121,7 @@ const privacy: Record<Locale, LegalDoc> = {
         heading: "Что видят другие",
         paragraphs: [
           "По умолчанию профиль закрыт. Если сделать его публичным, любой со ссылкой увидит имя, фото, описание, активные привычки, серии, карту активности и полученные достижения. Заметки, архивные привычки и email никогда не публикуются.",
+          "В пакте или челлендже другие участники видят ваше имя, фото и дни отметок по одной выбранной привычке — даже если профиль закрыт. Фото или заметку-доказательство видит только партнёр по пакту, и только после того, как сам отметится в этот день.",
         ],
       },
       {
@@ -139,6 +144,7 @@ const privacy: Record<Locale, LegalDoc> = {
         heading: "Сколько мы храним данные",
         paragraphs: [
           "Пока существует ваш аккаунт. При удалении аккаунта профиль, привычки, отметки, заметки, подписки, напоминания и фото удаляются сразу; копии могут недолго оставаться в резервных копиях хостинг-провайдеров, пока не будут перезаписаны.",
+          "Фото-доказательства в пактах хранятся 30 дней и удаляются раньше, если пакт завершён.",
         ],
       },
       {
