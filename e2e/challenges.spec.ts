@@ -64,12 +64,16 @@ test("a weekly challenge with a stake: invite, join, standings", async ({ browse
     await expect(testerRow.getByText(/^1\/7$/)).toBeVisible()
     await expect(testerRow.getByLabel("done today")).toBeVisible()
   } finally {
+    // delete every challenge the tester owns (also leftovers of earlier failed runs)
     await tester.goto("/friends")
-    const del = challengesCard(tester).getByRole("button", { name: "Delete" })
-    if (await del.isVisible()) {
-      await del.click()
-      await tester.getByRole("dialog").getByRole("button", { name: "Delete" }).click()
-      await expect(challengesCard(tester).getByText("Steps duel")).toHaveCount(0)
+    await expect(challengesCard(tester)).toBeVisible()
+    const del = challengesCard(tester).getByRole("button", { name: "Delete", exact: true })
+    for (let n = await del.count(); n > 0; n = await del.count()) {
+      await del.first().click()
+      const done = serverAction(tester)
+      await tester.getByRole("dialog").getByRole("button", { name: "Delete", exact: true }).click()
+      await done
+      await expect(del).toHaveCount(n - 1)
     }
     await tester.goto("/dashboard")
     const habit = tester.locator("[data-slot=card]", { has: tester.locator("h3", { hasText: "Walk 20 minutes" }) })
