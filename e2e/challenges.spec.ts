@@ -42,14 +42,20 @@ test("a weekly challenge with a stake: invite, join, standings", async ({ browse
 
     // demo is invited on the Today screen and joins with one of their habits
     await demo.reload()
-    const invite = challengesCard(demo)
-    await expect(invite.getByText("E2E Tester invited you")).toBeVisible()
+    // demo may have other invites (real people use the demo account) — use the tester's one
+    const invite = challengesCard(demo).getByRole("listitem").filter({ hasText: "E2E Tester invited you" })
+    await expect(invite).toBeVisible()
     await invite.getByRole("radio", { name: "Read 10 pages" }).click()
     saved = serverAction(demo)
     await invite.getByRole("button", { name: "Join" }).click()
     await saved
     await expect(demo.getByText("You're in — good luck!")).toBeVisible()
-    await expect(challengesCard(demo).getByRole("list", { name: "Steps duel" }).getByRole("listitem")).toHaveCount(2)
+    const standings = challengesCard(demo)
+      .getByRole("listitem")
+      .filter({ has: demo.getByRole("list", { name: "Steps duel" }) })
+      .filter({ hasText: "E2E Tester" })
+      .getByRole("list", { name: "Steps duel" })
+    await expect(standings.getByRole("listitem")).toHaveCount(2)
 
     // tester checks in → a point and a tick in the standings
     await tester.goto("/dashboard")
@@ -57,10 +63,7 @@ test("a weekly challenge with a stake: invite, join, standings", async ({ browse
     await tester.getByRole("button", { name: 'Mark "Walk 20 minutes" as done today' }).click()
     await saved
     await demo.reload()
-    const testerRow = challengesCard(demo)
-      .getByRole("list", { name: "Steps duel" })
-      .getByRole("listitem")
-      .filter({ hasText: "E2E Tester" })
+    const testerRow = standings.getByRole("listitem").filter({ hasText: "E2E Tester" })
     await expect(testerRow.getByText(/^1\/7$/)).toBeVisible()
     await expect(testerRow.getByLabel("done today")).toBeVisible()
   } finally {

@@ -96,6 +96,7 @@ research review of retention mechanics (Duolingo, Strava, Wordle…) and habit-f
 - **Challenges** — a 7/14/30-day duel or group of 2–6 people you follow: everyone commits a habit, one point per day, live standings, an optional soft stake ("loser buys coffee"), results and a rematch.
 - **Leaderboard** of the last 30 days (score = check-ins + 2 × active days) with ranks from Newcomer to Legend.
 - **Share cards** — a 1080×1080 PNG for the week, month or "My year in habits", shared via the Web Share API, downloaded, or copied as a Wordle-style emoji grid.
+- **Profile look, Discord-style** — a banner (8 gradients or your own image), an accent colour, an avatar frame (ring, gradient, glow), status and pronouns, a showcase of up to 3 earned badges, a pinned habit with its streak, and up to 3 links — edited with a live preview. Checked in Postgres: preset keys only, https links only, badges you've actually earned, a pinned habit that's yours.
 - **Public profile** at `/u/<username>` (opt-in) with a generated link preview.
 
 ### Reminders, PWA & offline
@@ -149,7 +150,7 @@ src/
     ├── ranks.ts offline-queue.ts csv.ts dates.ts …                             ┘
     └── supabase/               # server, browser, proxy and public clients + generated types
 supabase/
-├── migrations/                 # schema, RLS policies, functions, triggers, cron (23 migrations)
+├── migrations/                 # schema, RLS policies, functions, triggers, cron (24 migrations)
 └── functions/send-reminders/   # Web Push: daily reminders, pact nudges, test pushes
 public/sw.js                    # service worker: push, notification actions, offline cache
 ```
@@ -157,7 +158,9 @@ public/sw.js                    # service worker: push, notification actions, of
 ### Data model
 
 ```
-auth.users ─1:1─ profiles (username, display_name, bio, avatar_url, is_public)
+auth.users ─1:1─ profiles (username, display_name, bio, avatar_url, is_public,
+                           banner, banner_url, accent, avatar_frame, status, pronouns,
+                           links[], showcase[], featured_habit_id)
                    ├─1:n─ habits (name, color, target_per_week, cue, mini_label, position, archived_at)
                    │        ├─1:n─ habit_logs   (log_date, is_mini)        unique(habit_id, log_date)
                    │        │        └─1:1─ habit_notes (note)

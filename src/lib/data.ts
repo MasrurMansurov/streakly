@@ -8,7 +8,8 @@ import { redirect } from "next/navigation"
 import type { Pact, PactProof } from "./pacts"
 import { buildChallenges, type Challenge } from "./challenges"
 import { periodRange, type SharePeriod, type ShareHabit } from "./share"
-import { bridgesFor } from "./streaks"
+import { bridgesFor, habitStreak } from "./streaks"
+import { evaluateAchievements } from "./achievements"
 import { addDays, DEFAULT_TIMEZONE, isValidTimezone, TIMEZONE_COOKIE, todayIn, type ISODate } from "./dates"
 import { createClient, createPublicClient } from "./supabase/server"
 import type { AchievementStats } from "./achievements"
@@ -146,7 +147,9 @@ export async function getPublicProfile(username: string) {
   const supabase = createPublicClient()
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, username, display_name, bio, avatar_url, created_at")
+    .select(
+      "id, username, display_name, bio, avatar_url, created_at, banner, banner_url, accent, avatar_frame, status, pronouns, links, showcase, featured_habit_id"
+    )
     .eq("username", username)
     .maybeSingle()
   if (!profile) return null
@@ -286,7 +289,7 @@ export async function getFriendsData() {
 
   // RLS hides profiles that went private, so they simply drop out
   const [{ data: profiles }, { data: logs }] = await Promise.all([
-    supabase.from("profiles").select("id, username, display_name, avatar_url").in("id", ids),
+    supabase.from("profiles").select("id, username, display_name, avatar_url, status").in("id", ids),
     supabase
       .from("habit_logs")
       .select("log_date, created_at, user_id, habits(name, color)")
@@ -299,7 +302,7 @@ export async function getFriendsData() {
   const byId = new Map((profiles ?? []).map((p) => [p.id, p]))
   const people = ids.flatMap((id) => {
     const p = byId.get(id)
-    return p ? [{ id: p.id, username: p.username, name: p.display_name || p.username, avatarUrl: p.avatar_url }] : []
+    return p ? [{ id: p.id, username: p.username, name: p.display_name || p.username, avatarUrl: p.avatar_url, status: p.status }] : []
   })
   const feed: FeedItem[] = (logs ?? []).flatMap((l) => {
     const p = byId.get(l.user_id)
@@ -509,4 +512,31 @@ export async function getChallenges(): Promise<Challenge[]> {
   const { data, error } = await supabase.rpc("my_challenges", { p_today: today })
   if (error) throw new Error(error.message)
   return buildChallenges(data ?? [], today)
+}
+
+/** For "Profile look" in Settings: earned badges and habits with their current streak. */
+export async function getAppearanceData() {
+  const user = await requireUser()
+  const [{ today }, supabase] = await Promise.all([getToday(), createClient()])
+  const since = addDays(today, -400)
+  const [stats, { data: habits }, logs, { repairs, pauses }] = await Promise.all([
+    achievementStats(supabase, user.id),
+    supabase.from("habits").select("id, name, color, target_per_week").eq("user_id", user.id).is("archived_at", null).order("position"),
+    fetchAllLogs((from, to) =>
+      supabase.from("habit_logs").select("habit_id, log_date").eq("user_id", user.id).gte("log_date", since).order("log_date").range(from, to)
+    ),
+    bridgesData(supabase, user.id, since),
+  ])
+  const byHabit = new Map<string, Set<ISODate>>()
+  for (const l of logs) byHabit.set(l.habit_id, (byHabit.get(l.habit_id) ?? new Set()).add(l.log_date as ISODate))
+  return {
+    userId: user.id,
+    earned: evaluateAchievements(stats).filter((a) => a.earned).map((a) => a.id),
+    habits: (habits ?? []).map((h) => ({
+      id: h.id,
+      name: h.name,
+      color: h.color,
+      streak: habitStreak(byHabit.get(h.id) ?? new Set(), today, h.target_per_week, bridgesFor(h.id, repairs, pauses)),
+    })),
+  }
 }

@@ -170,7 +170,7 @@ async function Friends() {
                 </Avatar>
                 <Link href={`/u/${p.username}`} className="min-w-0 flex-1 hover:underline">
                   <div className="truncate font-medium">{p.name}</div>
-                  <div className="truncate text-xs text-muted-foreground">@{p.username}</div>
+                  <div className="truncate text-xs text-muted-foreground">{p.status ? p.status : `@${p.username}`}</div>
                 </Link>
                 <PactInviteButton inviteeId={p.id} name={p.name} habits={myHabits} inPact={inPact.has(p.username)} />
                 <FollowButton profileId={p.id} name={p.name} following signedIn />

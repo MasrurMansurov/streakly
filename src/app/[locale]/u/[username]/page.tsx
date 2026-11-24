@@ -6,8 +6,8 @@ import { Suspense } from "react"
 import { Achievements } from "@/components/achievements"
 import { Heatmap } from "@/components/heatmap"
 import { SiteFooter } from "@/components/site-footer"
+import { ProfileHeader } from "@/components/profile-header"
 import { SiteHeader } from "@/components/site-header"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { FollowButton } from "@/components/follow-button"
@@ -15,7 +15,7 @@ import { getFollowInfo, getPublicProfile, getToday } from "@/lib/data"
 import { formatDay } from "@/i18n"
 import { getT } from "@/i18n/server"
 import { addDays, type ISODate } from "@/lib/dates"
-import { evaluateAchievements } from "@/lib/achievements"
+import { evaluateAchievements, type AchievementId } from "@/lib/achievements"
 import { habitColor } from "@/lib/habit-colors"
 import { bridgesFor, habitStreak, longestStreak } from "@/lib/streaks"
 import { cn } from "@/lib/utils"
@@ -74,27 +74,44 @@ async function PublicProfile({ params }: Props) {
     habitStreak(byHabit.get(h.id)!, today, h.target_per_week, bridgesFor(h.id, data.repairs, data.pauses))
   )
   const best = Math.max(0, ...habits.map((h) => longestStreak(byHabit.get(h.id)!)))
+  const featuredIndex = habits.findIndex((h) => h.id === profile.featured_habit_id)
 
   return (
     <div className="grid gap-8">
-      <div className="flex flex-wrap items-center gap-4">
-        <Avatar className="size-16">
-          {profile.avatar_url && <AvatarImage src={profile.avatar_url} alt="" />}
-          <AvatarFallback className="text-lg">{name.slice(0, 2).toUpperCase()}</AvatarFallback>
-        </Avatar>
-        <div className="min-w-0">
-          <h1 className="truncate text-2xl font-semibold tracking-tight">{name}</h1>
-          <p className="text-sm text-muted-foreground">
-            @{profile.username} ·{" "}
-            {t.publicProfile.since(formatDay(locale, profile.created_at.slice(0, 10), { month: "long", year: "numeric" }))}
-          </p>
-          {profile.bio && <p className="mt-1 text-sm">{profile.bio}</p>}
-        </div>
-        {/* per-viewer (reads the session) → streams in separately from the cached profile */}
-        <Suspense fallback={<Skeleton className="ml-auto h-12 w-36" />}>
-          <FollowArea profileId={profile.id} name={name} />
-        </Suspense>
-      </div>
+      <ProfileHeader
+        look={{
+          name,
+          username: profile.username,
+          avatarUrl: profile.avatar_url,
+          bio: profile.bio,
+          status: profile.status,
+          pronouns: profile.pronouns,
+          banner: profile.banner,
+          bannerUrl: profile.banner_url,
+          accent: profile.accent,
+          avatarFrame: profile.avatar_frame,
+          links: profile.links,
+          // only badges that are actually earned
+          showcase: profile.showcase
+            .filter((id) => earned.some((a) => a.id === id))
+            .map((id) => ({ id: id as AchievementId, name: t.achievements.items[id as AchievementId].name })),
+          featured: featuredIndex >= 0
+            ? {
+                name: habits[featuredIndex].name,
+                color: habits[featuredIndex].color,
+                streak: t.habit.streak(streaks[featuredIndex].current, streaks[featuredIndex].unit),
+              }
+            : null,
+        }}
+        subtitle={t.publicProfile.since(formatDay(locale, profile.created_at.slice(0, 10), { month: "long", year: "numeric" }))}
+        labels={{ featured: t.appearance.featured, links: t.appearance.linksLabel }}
+        action={
+          // per-viewer (reads the session) → streams in separately from the cached profile
+          <Suspense fallback={<Skeleton className="h-9 w-28" />}>
+            <FollowArea profileId={profile.id} name={name} />
+          </Suspense>
+        }
+      />
 
       <div className="grid grid-cols-3 gap-3">
         <Card className="gap-1 p-4">

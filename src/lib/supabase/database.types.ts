@@ -219,6 +219,15 @@ export type Database = {
       }
       profiles: {
         Row: {
+          accent: string
+          avatar_frame: string
+          banner: string
+          banner_url: string | null
+          featured_habit_id: string | null
+          links: string[]
+          pronouns: string | null
+          showcase: string[]
+          status: string | null
           avatar_url: string | null
           bio: string | null
           created_at: string
@@ -228,6 +237,15 @@ export type Database = {
           username: string
         }
         Insert: {
+          accent?: string
+          avatar_frame?: string
+          banner?: string
+          banner_url?: string | null
+          featured_habit_id?: string | null
+          links?: string[]
+          pronouns?: string | null
+          showcase?: string[]
+          status?: string | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
@@ -237,6 +255,15 @@ export type Database = {
           username: string
         }
         Update: {
+          accent?: string
+          avatar_frame?: string
+          banner?: string
+          banner_url?: string | null
+          featured_habit_id?: string | null
+          links?: string[]
+          pronouns?: string | null
+          showcase?: string[]
+          status?: string | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string

@@ -5,9 +5,10 @@ import { Suspense } from "react"
 import { getT } from "@/i18n/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { getActivePause, getMyProfile, getReminderSettings } from "@/lib/data"
+import { getActivePause, getAppearanceData, getMyProfile, getReminderSettings } from "@/lib/data"
 
 import { AccountCard } from "./account-card"
+import { AppearanceCard } from "./appearance-card"
 import { AvatarUploader } from "./avatar-uploader"
 import { ProfileForm } from "./profile-form"
 import { RemindersCard } from "./reminders-card"
@@ -33,7 +34,13 @@ export default async function SettingsPage() {
 }
 
 async function Settings() {
-  const [profile, reminders, vacation, { t }] = await Promise.all([getMyProfile(), getReminderSettings(), getActivePause(), getT()])
+  const [profile, reminders, vacation, look, { t }] = await Promise.all([
+    getMyProfile(),
+    getReminderSettings(),
+    getActivePause(),
+    getAppearanceData(),
+    getT(),
+  ])
   return (
     <div className="grid gap-6">
       <Card>
@@ -49,6 +56,12 @@ async function Settings() {
           />
         </CardContent>
       </Card>
+      <AppearanceCard
+        userId={look.userId}
+        profile={profile}
+        earned={look.earned}
+        habits={look.habits.map((h) => ({ ...h, streak: t.habit.streak(h.streak.current, h.streak.unit) }))}
+      />
       <RemindersCard initial={reminders} />
       <VacationCard today={vacation.today} pause={"id" in vacation ? vacation : null} />
       <ProfileForm profile={profile} />
