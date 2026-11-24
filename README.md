@@ -32,6 +32,11 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 - **Habit page** with a 12-month heatmap, monthly chart and weekday breakdown; **archive** with restore and undo
 - **Notes on check-ins** — private, owner-only (kept out of the world-readable logs table)
 - **Friends** — follow public profiles; a 7-day feed of their check-ins. Follow lists are visible only to the two people involved
+- **Pacts (shared streaks)** — invite a friend: each commits one habit and the duo streak grows only on days you *both* check in; see whether your partner is done today. A security-definer function reveals the partner's dates only for that one habit and only to the other participant
+- **Insights** — patterns found in your own last 12 weeks: habits that go together ("on days you run, you read 85% vs 40%"), a daily habit's weak weekday, and your "never miss twice" recovery rate — computed locally, no third-party services
+- **Weekly review** — this week vs. the same days last week, an 8-week trend, the habit on a roll and the one falling behind
+- **Starter templates** — one tap adds a ready-made habit on the empty dashboard
+- **Your data** — export everything to CSV, or delete the account (cascades through every table, avatar files included)
 - **Achievements** — badges for 7/30/100-day streaks and 1/100/500 check-ins, with progress bars and an unlock toast; all-time stats are computed in Postgres (gaps-and-islands window query)
 - **Profile photo** upload to Supabase Storage (per-user folder, size/type limits enforced by the bucket and RLS)
 - **Public profile** at `/u/<username>`, opt-in; archived habits stay private, with a generated OG image for link previews
@@ -41,7 +46,7 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 - **English & Russian:** `/en/…` and `/ru/…` URLs (language picked from the browser, switcher in the header), proper Russian plurals via `Intl.PluralRules`, localized dates, validation messages and push notifications
 - **Installable (PWA):** add to the home screen and open full-screen, with app icons and theme colors
 - **Brand & type:** custom logo (a flame with a check mark cut in — streak + habit done), Unbounded for headings, Onest for text; both with full Cyrillic
-- **One icon style & motion:** thin line icons on soft tinted tiles everywhere, medal-style achievement badges drawn in CSS, staggered entrance, check-in confetti, floating hero icons — all CSS, disabled for `prefers-reduced-motion`
+- **One icon style & motion:** thin line icons on soft tinted tiles everywhere, medal-style achievement badges drawn in CSS, staggered entrance, check-in confetti — all CSS, disabled for `prefers-reduced-motion`
 - Dark mode, responsive layout, accessible controls
 
 ## Tech stack
