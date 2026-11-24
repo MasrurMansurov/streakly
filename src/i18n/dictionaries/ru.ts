@@ -373,6 +373,27 @@ export const ru: Dictionary = {
     alreadyOn: "Режим отпуска уже включён",
     dayStatus: (day: string) => `${day}: отпуск`,
   },
+  share: {
+    button: "Поделиться",
+    title: "Поделиться прогрессом",
+    description: "Карточка с серией и отметками — выложите её или отправьте другу.",
+    periods: { week: "Неделя", month: "Месяц", year: "Год" },
+    heading: { week: "Моя неделя", month: (month: string) => `Мой ${month}`, year: (year: string) => `Мой ${year} в привычках` },
+    checkins: "отметок",
+    activeDaysShort: "активных дней",
+    activeDays: (total: number) => `активных дней из ${total}`,
+    streak: (unit: "day" | "week") => (unit === "day" ? "дней подряд" : "недель подряд"),
+    longestRun: (n: number) => `Самая длинная серия: ${n} ${p(n, "день", "дня", "дней")}`,
+    topHabit: (name: string, n: number) => `Главная привычка: ${name} — ${n}`,
+    empty: "В этом периоде пока нет отметок",
+    share: "Поделиться",
+    download: "Скачать PNG",
+    copy: "Скопировать текст",
+    copied: "Скопировано — вставьте куда угодно",
+    alt: (period: string) => `Карточка прогресса Streakly: ${period}`,
+    text: (heading: string, grid: string, checkins: number, streak: string) =>
+      `Streakly · ${heading}\n${grid}\n🔥 ${streak} · ${checkins} ${p(checkins, "отметка", "отметки", "отметок")}`,
+  },
   offline: {
     offline: (n: number) =>
       n === 0

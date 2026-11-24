@@ -6,6 +6,8 @@ import { connection } from "next/server"
 import { redirect } from "next/navigation"
 
 import type { Pact } from "./pacts"
+import { periodRange, type SharePeriod, type ShareHabit } from "./share"
+import { bridgesFor } from "./streaks"
 import { addDays, DEFAULT_TIMEZONE, isValidTimezone, TIMEZONE_COOKIE, todayIn, type ISODate } from "./dates"
 import { createClient, createPublicClient } from "./supabase/server"
 import type { AchievementStats } from "./achievements"
@@ -432,4 +434,44 @@ export async function getActivePause(): Promise<(Pause & { today: ISODate }) | {
     .limit(1)
     .maybeSingle()
   return data ? { ...(data as Pause), today } : { today }
+}
+
+/** Everything the share card needs for the signed-in user (null when signed out). */
+export async function getShareData(period: SharePeriod) {
+  const user = await getCurrentUser()
+  if (!user) return null
+  const [{ today }, supabase] = await Promise.all([getToday(), createClient()])
+  const { start } = periodRange(period, today)
+  const since = [start, addDays(today, -400)].sort()[0] as ISODate
+
+  const [{ data: profile }, { data: habits }, logs, { repairs, pauses }] = await Promise.all([
+    supabase.from("profiles").select("username, display_name").eq("id", user.id).single(),
+    supabase
+      .from("habits")
+      .select("id, name, color, target_per_week")
+      .eq("user_id", user.id)
+      .is("archived_at", null)
+      .order("position"),
+    fetchAllLogs((from, to) =>
+      supabase
+        .from("habit_logs")
+        .select("habit_id, log_date")
+        .eq("user_id", user.id)
+        .gte("log_date", since)
+        .order("log_date")
+        .range(from, to)
+    ),
+    bridgesData(supabase, user.id, since),
+  ])
+  const byHabit = new Map<string, Set<ISODate>>()
+  for (const l of logs) byHabit.set(l.habit_id, (byHabit.get(l.habit_id) ?? new Set()).add(l.log_date as ISODate))
+  const shareHabits: ShareHabit[] = (habits ?? []).map((h) => ({
+    id: h.id,
+    name: h.name,
+    color: h.color,
+    target: h.target_per_week,
+    done: byHabit.get(h.id) ?? new Set(),
+    bridges: bridgesFor(h.id, repairs, pauses),
+  }))
+  return { today, name: profile?.display_name || `@${profile?.username ?? "me"}`, habits: shareHabits }
 }

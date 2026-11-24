@@ -7,6 +7,7 @@ import {
   TreePalmIcon,
   FlameIcon,
   PlusIcon,
+  Share2Icon,
   SproutIcon,
   TargetIcon,
   TrendingUpIcon,
@@ -26,6 +27,7 @@ import { Heatmap } from "@/components/heatmap"
 import { HabitTemplates } from "./habit-templates"
 import { InsightsCard } from "./insights-card"
 import { PactsCard } from "./pacts-card"
+import { ShareDialog } from "./share-dialog"
 import type { Pact } from "@/lib/pacts"
 import type { Pause, Repair } from "@/lib/data"
 import { WeeklyReview } from "./weekly-review"
@@ -66,6 +68,7 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
   const { locale, t } = useI18n()
   const router = useRouter()
   const [createOpen, setCreateOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
 
   // celebrate achievements unlocked by a check-in (the server re-renders with new stats)
   const previous = useRef(achievements)
@@ -315,10 +318,18 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
             )}
           </h1>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <PlusIcon /> {t.dashboard.newHabit}
-        </Button>
+        <div className="flex gap-2">
+          {habits.length > 0 && (
+            <Button variant="outline" onClick={() => setShareOpen(true)}>
+              <Share2Icon /> {t.share.button}
+            </Button>
+          )}
+          <Button onClick={() => setCreateOpen(true)}>
+            <PlusIcon /> {t.dashboard.newHabit}
+          </Button>
+        </div>
       </div>
+      <ShareDialog open={shareOpen} onOpenChange={setShareOpen} />
 
       {habits.length === 0 ? (
         <Card className="gap-6 border-dashed px-4 py-10 sm:px-8">

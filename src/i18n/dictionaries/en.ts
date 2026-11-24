@@ -370,6 +370,27 @@ export const en = {
     alreadyOn: "Vacation mode is already on",
     dayStatus: (day: string) => `${day}: vacation`,
   },
+  share: {
+    button: "Share",
+    title: "Share your progress",
+    description: "A card with your streak and check-ins — post it or send it to a friend.",
+    periods: { week: "Week", month: "Month", year: "Year" },
+    heading: { week: "My week", month: (month: string) => `My ${month}`, year: (year: string) => `My ${year} in habits` },
+    checkins: "check-ins",
+    activeDaysShort: "active days",
+    activeDays: (total: number) => `active days of ${total}`,
+    streak: (unit: "day" | "week"): string => (unit === "day" ? "day streak" : "week streak"),
+    longestRun: (n: number) => `Longest run: ${n} ${p(n, "day", "days")}`,
+    topHabit: (name: string, n: number) => `Top habit: ${name} — ${n}`,
+    empty: "No check-ins yet in this period",
+    share: "Share",
+    download: "Download PNG",
+    copy: "Copy text",
+    copied: "Copied — paste it anywhere",
+    alt: (period: string) => `Streakly progress card: ${period}`,
+    text: (heading: string, grid: string, checkins: number, streak: string) =>
+      `Streakly · ${heading}\n${grid}\n🔥 ${streak} · ${checkins} ${p(checkins, "check-in", "check-ins")}`,
+  },
   offline: {
     offline: (n: number) =>
       n === 0 ? "You're offline. Check-ins will be saved on this device and sent when you're back online." : `You're offline · ${n} ${p(n, "check-in", "check-ins")} saved on this device, will be sent automatically.`,
