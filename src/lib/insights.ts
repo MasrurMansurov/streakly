@@ -1,7 +1,15 @@
 import { addDays, weekdayMon0, type ISODate } from "./dates"
 import type { Target } from "./streaks"
 
-export type InsightHabit = { id: string; name: string; target: Target; createdOn: ISODate; done: ReadonlySet<ISODate> }
+export type InsightHabit = {
+  id: string
+  name: string
+  target: Target
+  createdOn: ISODate
+  done: ReadonlySet<ISODate>
+  /** has an if-then plan (cue) */
+  hasPlan?: boolean
+}
 
 export type Insight =
   /** doing `a` goes with doing `b` far more often */
@@ -10,6 +18,8 @@ export type Insight =
   | { kind: "weekday"; habit: string; weekday: number; rate: number; others: number }
   /** how often a missed day is followed by a check-in ("never miss twice") */
   | { kind: "recovery"; rate: number; slips: number }
+  /** a habit that struggles and has no if-then plan yet */
+  | { kind: "plan"; habitId: string; habit: string; rate: number }
 
 export const INSIGHT_WINDOW = 84 // 12 weeks
 const MIN_SUPPORT = 6 // days on each side of a comparison
@@ -89,11 +99,31 @@ function recovery(habits: InsightHabit[], today: ISODate): Extract<Insight, { ki
   return slips >= 5 ? { kind: "recovery", rate: recovered / slips, slips } : null
 }
 
+/** The weakest habit (under 60% of its target over the last 4 weeks) that has no if-then plan. */
+function needsPlan(habits: InsightHabit[], today: ISODate): Extract<Insight, { kind: "plan" }> | null {
+  let found: Extract<Insight, { kind: "plan" }> | null = null
+  for (const h of habits) {
+    if (h.hasPlan || h.createdOn > addDays(today, -14)) continue
+    let days = 0
+    let hits = 0
+    for (let i = 1; i <= 28; i++) {
+      const d = addDays(today, -i)
+      if (d < h.createdOn) break
+      days++
+      if (h.done.has(d)) hits++
+    }
+    const rate = Math.min(1, hits / ((days * h.target) / 7))
+    if (rate < 0.6 && (!found || rate < found.rate)) found = { kind: "plan", habitId: h.id, habit: h.name, rate }
+  }
+  return found
+}
+
 /** Up to `limit` patterns found in the last 12 weeks, most useful first. */
 export function findInsights(habits: InsightHabit[], today: ISODate, limit = 3): Insight[] {
   const p = pairs(habits, today)
   const w = weakWeekday(habits, today)
   const r = recovery(habits, today)
-  const out: Insight[] = [...p.slice(0, 1), ...(w ? [w] : []), ...(r ? [r] : []), ...p.slice(1)]
+  const plan = needsPlan(habits, today)
+  const out: Insight[] = [...p.slice(0, 1), ...(plan ? [plan] : []), ...(w ? [w] : []), ...(r ? [r] : []), ...p.slice(1)]
   return out.slice(0, limit)
 }

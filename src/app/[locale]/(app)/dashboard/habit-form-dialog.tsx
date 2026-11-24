@@ -44,6 +44,7 @@ export function HabitFormDialog({ open, onOpenChange, habit }: Props) {
       name: habit?.name ?? "",
       description: habit?.description ?? "",
       mini_label: habit?.mini_label ?? "",
+      cue: habit?.cue ?? "",
       color: (habit?.color as HabitColor) ?? "emerald",
       target_per_week: habit?.target_per_week ?? 7,
     },
@@ -96,6 +97,35 @@ export function HabitFormDialog({ open, onOpenChange, habit }: Props) {
               {...form.register("description")}
             />
             {errors.description && <p className="text-xs text-destructive">{validationMessage(t, errors.description.message)}</p>}
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="habit-cue">
+              {t.habitForm.cue} <span className="font-normal text-muted-foreground">{t.habitForm.optional}</span>
+            </Label>
+            <Input
+              id="habit-cue"
+              placeholder={t.habitForm.cuePlaceholder}
+              aria-invalid={!!errors.cue}
+              aria-describedby="habit-cue-hint"
+              {...form.register("cue")}
+            />
+            <div className="flex flex-wrap gap-1.5">
+              {t.habitForm.cueSuggestions.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => form.setValue("cue", s, { shouldDirty: true, shouldValidate: true })}
+                  className="rounded-full border px-2.5 py-0.5 text-xs text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+            <p id="habit-cue-hint" className="text-xs text-muted-foreground">
+              {t.habitForm.cueHint}
+            </p>
+            {errors.cue && <p className="text-xs text-destructive">{validationMessage(t, errors.cue.message)}</p>}
           </div>
 
           <div className="grid gap-2">

@@ -1,6 +1,7 @@
-import { CalendarX2Icon, LinkIcon, RotateCcwIcon, LightbulbIcon, type LucideIcon } from "lucide-react"
+import { CalendarX2Icon, ClockArrowUpIcon, LinkIcon, RotateCcwIcon, LightbulbIcon, type LucideIcon } from "lucide-react"
 
 import { IconTile, type IconTone } from "@/components/icon-tile"
+import { Link } from "@/components/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useI18n } from "@/i18n/client"
 import type { Insight } from "@/lib/insights"
@@ -12,6 +13,7 @@ const LOOK: Record<Insight["kind"], { icon: LucideIcon; tone: IconTone }> = {
   pair: { icon: LinkIcon, tone: "violet" },
   weekday: { icon: CalendarX2Icon, tone: "amber" },
   recovery: { icon: RotateCcwIcon, tone: "emerald" },
+  plan: { icon: ClockArrowUpIcon, tone: "sky" },
 }
 
 /** Two labelled bars: "with" vs "without". */
@@ -71,6 +73,20 @@ export function InsightsCard({ insights }: { insights: Insight[] }) {
                       <p className="text-sm leading-relaxed">{x.weekday(i.habit, i.weekday, pct(i.rate), pct(i.others))}</p>
                       <Compare a={i.others} b={i.rate} labelA={x.otherDays} labelB={x.weekdayShort[i.weekday]} tone="bg-amber-500" />
                       <p className="text-xs text-muted-foreground">{x.weekdayTip}</p>
+                    </>
+                  )}
+                  {i.kind === "plan" && (
+                    <>
+                      <p className="text-sm leading-relaxed">{x.plan(i.habit, pct(i.rate))}</p>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden>
+                        <span className="block h-full rounded-full bg-sky-500" style={{ width: `${pct(i.rate)}%` }} />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {x.planTip}{" "}
+                        <Link href={`/habits/${i.habitId}`} className="font-medium text-foreground underline underline-offset-4">
+                          {x.planCta}
+                        </Link>
+                      </p>
                     </>
                   )}
                   {i.kind === "recovery" && (

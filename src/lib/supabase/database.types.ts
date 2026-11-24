@@ -109,6 +109,7 @@ export type Database = {
       }
       habits: {
         Row: {
+          cue: string | null
           mini_label: string | null
           archived_at: string | null
           color: string
@@ -122,6 +123,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cue?: string | null
           mini_label?: string | null
           archived_at?: string | null
           color?: string
@@ -135,6 +137,7 @@ export type Database = {
           user_id?: string
         }
         Update: {
+          cue?: string | null
           mini_label?: string | null
           archived_at?: string | null
           color?: string

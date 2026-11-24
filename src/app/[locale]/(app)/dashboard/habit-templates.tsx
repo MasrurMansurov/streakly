@@ -34,6 +34,7 @@ export function HabitTemplates() {
         name: item.name,
         description: item.description,
         mini_label: item.mini,
+        cue: item.cue,
         color: tpl.color,
         target_per_week: tpl.target,
       })

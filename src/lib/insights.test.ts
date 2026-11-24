@@ -42,6 +42,12 @@ describe("findInsights", () => {
     expect(r).toMatchObject({ kind: "recovery", rate: 1 })
   })
 
+  it("suggests an if-then plan for a struggling habit without one", () => {
+    const gym = habit("Gym", past((_, i) => i % 4 === 0)) // ~25%
+    expect(findInsights([gym], today)).toContainEqual(expect.objectContaining({ kind: "plan", habit: "Gym" }))
+    expect(findInsights([{ ...gym, hasPlan: true }], today).some((x) => x.kind === "plan")).toBe(false)
+  })
+
   it("stays quiet without enough data", () => {
     const fresh = { ...habit("New", past((_, i) => i < 4)), createdOn: addDays(today, -4) }
     expect(findInsights([fresh], today)).toEqual([])

@@ -107,8 +107,8 @@ async function push(subs: Sub[], payload: Payload) {
  * with the daily streak that ends yesterday (consecutive dates d where d + rank = today).
  */
 async function dueHabits(userId: string, localDate: string) {
-  return await sql<{ id: string; name: string; streak: number }[]>`
-    select h.id, h.name,
+  return await sql<{ id: string; name: string; streak: number; cue: string | null }[]>`
+    select h.id, h.name, h.cue,
       case when h.target_per_week >= 7 then (
         select count(*)::int from (
           select l.log_date, row_number() over (order by l.log_date desc) as rn
@@ -149,6 +149,7 @@ const TEXT = {
     risk: (name: string, n: number) => `“${name}” — ${n} days in a row. One check-in today keeps it going.`,
     checkIn: (name: string) => `✓ ${name}`,
     done: "Done:",
+    cue: (cue: string, name: string) => `${cue} → time for “${name}”.`,
     pactTurnTitle: "Your pact partner checked in",
     pactTurn: (name: string, habit: string) => `${name} is done with “${habit}”. Your turn — keep your shared streak going!`,
     pactBothTitle: "You both did it today",
@@ -165,6 +166,7 @@ const TEXT = {
     risk: (name: string, n: number) => `«${name}» — ${n} ${ruPlural(n, "день", "дня", "дней")} подряд. Одна отметка сегодня — и серия продолжится.`,
     checkIn: (name: string) => `✓ ${name}`,
     done: "Отмечено:",
+    cue: (cue: string, name: string) => `${cue} → пора: «${name}».`,
     pactTurnTitle: "Партнёр по пакту отметился",
     pactTurn: (name: string, habit: string) => `${name}: «${habit}» — готово. Ваша очередь, чтобы сохранить общую серию!`,
     pactBothTitle: "Сегодня вы оба справились",
@@ -180,7 +182,7 @@ const short = (s: string, n = 28) => (s.length > n ? `${s.slice(0, n - 1)}…` :
  * The daily reminder. If a streak of 3+ days is at stake, lead with it ("at risk");
  * the most important habit gets a one-tap check-in button.
  */
-function message(habits: { id: string; name: string; streak: number }[], locale: Locale): Payload {
+function message(habits: { id: string; name: string; streak: number; cue?: string | null }[], locale: Locale): Payload {
   const t = TEXT[locale]
   const names = habits.map((h) => h.name)
   const top = [...habits].sort((a, b) => b.streak - a.streak)[0]
@@ -188,7 +190,14 @@ function message(habits: { id: string; name: string; streak: number }[], locale:
   const atRisk = top && top.streak >= 3
   return {
     title: atRisk ? t.riskTitle(top.streak) : t.title,
-    body: atRisk ? t.risk(top.name, top.streak) : names.length === 1 ? t.one(names[0]) : t.many(names.length, list),
+    // the if-then plan is the strongest cue we have — use it when there is one
+    body: atRisk
+      ? t.risk(top.name, top.streak)
+      : top?.cue
+        ? t.cue(top.cue, top.name)
+        : names.length === 1
+          ? t.one(names[0])
+          : t.many(names.length, list),
     url: top ? `/${locale}/dashboard#habit-${top.id}` : `/${locale}/dashboard`,
     tag: "daily-reminder",
     actions: top ? [{ action: "checkin", title: short(t.checkIn(top.name)) }] : [],

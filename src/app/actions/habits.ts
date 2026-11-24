@@ -42,6 +42,7 @@ export async function createHabit(input: HabitInput): Promise<ActionResult> {
     name: parsed.data.name,
     description: parsed.data.description || null,
     mini_label: parsed.data.mini_label || null,
+    cue: parsed.data.cue || null,
     color: parsed.data.color,
     target_per_week: parsed.data.target_per_week,
     position: count ?? 0,
@@ -64,6 +65,7 @@ export async function updateHabit(id: string, input: HabitInput): Promise<Action
       name: parsed.data.name,
       description: parsed.data.description || null,
       mini_label: parsed.data.mini_label || null,
+      cue: parsed.data.cue || null,
       color: parsed.data.color,
       target_per_week: parsed.data.target_per_week,
     })

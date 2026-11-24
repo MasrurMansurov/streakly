@@ -1,6 +1,6 @@
 "use client"
 
-import { ArchiveIcon, CheckIcon, FlameIcon, SnowflakeIcon, TreePalmIcon, WrenchIcon, MessageSquarePlusIcon, StickyNoteIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import { ArchiveIcon, CheckIcon, ClockArrowUpIcon, FlameIcon, SnowflakeIcon, TreePalmIcon, WrenchIcon, MessageSquarePlusIcon, StickyNoteIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import { useState, useTransition, type ReactNode, useMemo } from "react"
 import { toast } from "sonner"
 
@@ -130,6 +130,12 @@ export function HabitCard({ habit, done, mini, paused, repaired, today, onToggle
               </Link>
             </h3>
           </div>
+          {habit.cue && (
+            <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground" title={t.habit.planTitle}>
+              <ClockArrowUpIcon className={cn("size-3.5 shrink-0", color.text)} aria-hidden />
+              <span className="truncate">{t.habit.when(habit.cue)}</span>
+            </p>
+          )}
           {habit.description && <p className="mt-0.5 truncate text-sm text-muted-foreground">{habit.description}</p>}
           {habit.mini_label && !doneToday && (
             <button

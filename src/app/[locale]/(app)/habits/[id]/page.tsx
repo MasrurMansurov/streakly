@@ -1,5 +1,6 @@
 import {
   ArrowLeftIcon,
+  ClockArrowUpIcon,
   CalendarDaysIcon,
   FlameIcon,
   StickyNoteIcon,
@@ -98,6 +99,11 @@ async function HabitDetail({ params }: Props) {
             {target < 7 ? t.habit.timesWeek(target) : t.habit.everyDay} ·{" "}
             {t.habitPage.since(formatDay(locale, createdOn, { month: "long", day: "numeric", year: "numeric" }))}
           </p>
+          {habit.cue && (
+            <p className="flex items-center gap-1.5 text-sm text-muted-foreground" title={t.habit.planTitle}>
+              <ClockArrowUpIcon className={cn("size-4", color.text)} aria-hidden /> {t.habit.when(habit.cue)}
+            </p>
+          )}
           {habit.description && <p className="text-sm">{habit.description}</p>}
         </div>
         <HabitActions habit={habit} archived={Boolean(habit.archived_at)} />

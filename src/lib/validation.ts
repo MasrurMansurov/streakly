@@ -14,6 +14,8 @@ export type AuthInput = z.infer<typeof authSchema>
 export const habitSchema = z.object({
   name: z.string().trim().min(1, "nameRequired").max(60, "nameMax"),
   description: z.string().trim().max(200, "descriptionMax").optional().or(z.literal("")),
+  /** if-then plan: the moment that triggers the habit, e.g. "After my morning coffee" */
+  cue: z.string().trim().max(80, "cueMax").optional().or(z.literal("")),
   /** smaller version that still keeps the streak, e.g. "1 page" */
   mini_label: z.string().trim().max(60, "miniMax").optional().or(z.literal("")),
   color: z.enum(HABIT_COLOR_NAMES),

@@ -268,6 +268,7 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
           target: h.target_per_week,
           createdOn: h.created_at.slice(0, 10) as ISODate,
           done: byHabit.get(h.id)!,
+          hasPlan: Boolean(h.cue),
         })),
         today
       ),
