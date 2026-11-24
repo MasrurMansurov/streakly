@@ -15,7 +15,7 @@ import type { Database } from "./database.types"
 const PROTECTED_PREFIXES = ["/dashboard", "/settings", "/archive", "/habits", "/friends"]
 const AUTH_PAGES = ["/login"]
 /** Paths that are not localized pages (route handlers, metadata files). */
-const UNLOCALIZED_PREFIXES = ["/auth/", "/icon", "/apple-icon", "/manifest", "/robots.txt", "/sitemap.xml"]
+const UNLOCALIZED_PREFIXES = ["/auth/", "/api/", "/icon", "/apple-icon", "/manifest", "/robots.txt", "/sitemap.xml"]
 
 const ONE_YEAR = 60 * 60 * 24 * 365
 

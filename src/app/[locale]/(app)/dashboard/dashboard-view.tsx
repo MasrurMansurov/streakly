@@ -11,6 +11,7 @@ import {
   TrendingUpIcon,
   type LucideIcon,
 } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useOptimistic, useRef, useState, useTransition } from "react"
 import { toast } from "sonner"
 
@@ -59,6 +60,7 @@ type Toggle = { habitId: string; date: ISODate; done: boolean }
 
 export function DashboardView({ habits: serverHabits, logs, today, profile, archivedCount, todayNotes, achievements, pacts }: Props) {
   const { locale, t } = useI18n()
+  const router = useRouter()
   const [createOpen, setCreateOpen] = useState(false)
 
   // celebrate achievements unlocked by a check-in (the server re-renders with new stats)
@@ -184,6 +186,24 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
   }
 
   const doneToday = habits.filter((h) => byHabit.get(h.id)?.has(today)).length
+  const leftNow = habits.filter((h) => isDueToday(byHabit.get(h.id)!, today, h.target_per_week)).length
+
+  // "N left today" on the installed app's icon
+  useEffect(() => {
+    const nav = navigator as Navigator & { setAppBadge?: (n: number) => Promise<void>; clearAppBadge?: () => Promise<void> }
+    if (!nav.setAppBadge) return
+    void (leftNow > 0 ? nav.setAppBadge(leftNow) : nav.clearAppBadge?.())?.catch(() => {})
+  }, [leftNow])
+
+  // a check-in from a notification button → fetch fresh data
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return
+    const onMessage = (e: MessageEvent) => {
+      if (e.data?.type === "checked-in") router.refresh()
+    }
+    navigator.serviceWorker.addEventListener("message", onMessage)
+    return () => navigator.serviceWorker.removeEventListener("message", onMessage)
+  }, [router])
   // weekly habits whose target is already met aren't "left" for today
   const leftToday = habits.filter((h) => isDueToday(byHabit.get(h.id)!, today, h.target_per_week)).length
   const best = habits

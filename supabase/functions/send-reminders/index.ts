@@ -61,7 +61,18 @@ async function vapidKeys(create = false) {
 }
 
 type Sub = { id: string; endpoint: string; p256dh: string; auth: string }
-type Payload = { title: string; body: string; url: string; tag: string }
+type Payload = {
+  title: string
+  body: string
+  url: string
+  tag: string
+  /** one-tap check-in button (where the browser supports notification actions) */
+  actions?: { action: "checkin"; title: string }[]
+  habitId?: string
+  doneText?: string
+  /** habits still due today → app-icon badge */
+  due?: number
+}
 
 /** Sends to every subscription; removes ones the push service says are gone. */
 async function push(subs: Sub[], payload: Payload) {
@@ -91,10 +102,20 @@ async function push(subs: Sub[], payload: Payload) {
   return { sent, removed, errors }
 }
 
-/** Habits still due today for a user (not done today, weekly target not reached). */
+/**
+ * Habits still due today for a user (not done today, weekly target not reached),
+ * with the daily streak that ends yesterday (consecutive dates d where d + rank = today).
+ */
 async function dueHabits(userId: string, localDate: string) {
-  return await sql<{ name: string }[]>`
-    select h.name
+  return await sql<{ id: string; name: string; streak: number }[]>`
+    select h.id, h.name,
+      case when h.target_per_week >= 7 then (
+        select count(*)::int from (
+          select l.log_date, row_number() over (order by l.log_date desc) as rn
+          from public.habit_logs l
+          where l.habit_id = h.id and l.log_date < ${localDate}::date and l.log_date >= ${localDate}::date - 400
+        ) x where x.log_date + x.rn::int = ${localDate}::date
+      ) else 0 end as streak
     from public.habits h
     where h.user_id = ${userId}
       and h.archived_at is null
@@ -124,6 +145,10 @@ const TEXT = {
     many: (n: number, names: string) => `${n} habits left today: ${names}`,
     testTitle: "Streakly",
     testBody: "Reminders are on. See you tonight! 🔥",
+    riskTitle: (n: number) => `Your ${n}-day streak is at risk`,
+    risk: (name: string, n: number) => `“${name}” — ${n} days in a row. One check-in today keeps it going.`,
+    checkIn: (name: string) => `✓ ${name}`,
+    done: "Done:",
     pactTurnTitle: "Your pact partner checked in",
     pactTurn: (name: string, habit: string) => `${name} is done with “${habit}”. Your turn — keep your shared streak going!`,
     pactBothTitle: "You both did it today",
@@ -136,6 +161,10 @@ const TEXT = {
       `На сегодня ${ruPlural(n, "осталась", "осталось", "осталось")} ${n} ${ruPlural(n, "привычка", "привычки", "привычек")}: ${names}`,
     testTitle: "Streakly",
     testBody: "Напоминания включены. До вечера! 🔥",
+    riskTitle: (n: number) => `Серия ${n} ${ruPlural(n, "день", "дня", "дней")} под угрозой`,
+    risk: (name: string, n: number) => `«${name}» — ${n} ${ruPlural(n, "день", "дня", "дней")} подряд. Одна отметка сегодня — и серия продолжится.`,
+    checkIn: (name: string) => `✓ ${name}`,
+    done: "Отмечено:",
     pactTurnTitle: "Партнёр по пакту отметился",
     pactTurn: (name: string, habit: string) => `${name}: «${habit}» — готово. Ваша очередь, чтобы сохранить общую серию!`,
     pactBothTitle: "Сегодня вы оба справились",
@@ -145,11 +174,28 @@ const TEXT = {
 
 const asLocale = (value: unknown): Locale => (value === "ru" ? "ru" : "en")
 
-function message(names: string[], locale: Locale): Payload {
+const short = (s: string, n = 28) => (s.length > n ? `${s.slice(0, n - 1)}…` : s)
+
+/**
+ * The daily reminder. If a streak of 3+ days is at stake, lead with it ("at risk");
+ * the most important habit gets a one-tap check-in button.
+ */
+function message(habits: { id: string; name: string; streak: number }[], locale: Locale): Payload {
   const t = TEXT[locale]
+  const names = habits.map((h) => h.name)
+  const top = [...habits].sort((a, b) => b.streak - a.streak)[0]
   const list = `${names.slice(0, 3).join(", ")}${names.length > 3 ? "…" : ""}`
-  const body = names.length === 1 ? t.one(names[0]) : t.many(names.length, list)
-  return { title: t.title, body, url: `/${locale}/dashboard`, tag: "daily-reminder" }
+  const atRisk = top && top.streak >= 3
+  return {
+    title: atRisk ? t.riskTitle(top.streak) : t.title,
+    body: atRisk ? t.risk(top.name, top.streak) : names.length === 1 ? t.one(names[0]) : t.many(names.length, list),
+    url: top ? `/${locale}/dashboard#habit-${top.id}` : `/${locale}/dashboard`,
+    tag: "daily-reminder",
+    actions: top ? [{ action: "checkin", title: short(t.checkIn(top.name)) }] : [],
+    habitId: top?.id,
+    doneText: t.done,
+    due: habits.length,
+  }
 }
 
 /** Users whose local reminder time passed in the last 2 hours and who weren't reminded today. */
@@ -166,9 +212,9 @@ async function runReminders(dryRun: boolean) {
 
   const results = []
   for (const c of candidates) {
-    const names = (await dueHabits(c.user_id, c.local_date)).map((h) => h.name)
+    const due = await dueHabits(c.user_id, c.local_date)
     if (dryRun) {
-      results.push({ user: c.user_id.slice(0, 8), due: names.length })
+      results.push({ user: c.user_id.slice(0, 8), due: due.length, risk: Math.max(0, ...due.map((h) => h.streak)) })
       continue
     }
     // claim the day atomically, so overlapping runs never double-send
@@ -177,9 +223,9 @@ async function runReminders(dryRun: boolean) {
       where user_id = ${c.user_id}
         and (last_reminded_on is null or last_reminded_on < ${c.local_date}::date)
       returning user_id`
-    if (claimed.length === 0 || names.length === 0) continue
+    if (claimed.length === 0 || due.length === 0) continue
     const subs = await sql<Sub[]>`select id, endpoint, p256dh, auth from public.push_subscriptions where user_id = ${c.user_id}`
-    results.push({ user: c.user_id.slice(0, 8), due: names.length, ...(await push(subs, message(names, asLocale(c.locale)))) })
+    results.push({ user: c.user_id.slice(0, 8), due: due.length, ...(await push(subs, message(due, asLocale(c.locale)))) })
   }
   return { candidates: candidates.length, results }
 }
@@ -247,7 +293,7 @@ async function selfTest() {
   const auth = crypto.getRandomValues(new Uint8Array(16))
   const details = webpush.generateRequestDetails(
     { endpoint: "https://fcm.googleapis.com/fcm/send/selftest", keys: { p256dh, auth: btoa(String.fromCharCode(...auth)).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_") } },
-    JSON.stringify(message(["Self-test"], "en")),
+    JSON.stringify(message([{ id: "00000000-0000-0000-0000-000000000000", name: "Self-test", streak: 5 }], "en")),
     { vapidDetails: { subject: SITE_URL, publicKey: keys.publicKey, privateKey: keys.privateKey } }
   )
   return {

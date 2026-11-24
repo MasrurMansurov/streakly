@@ -70,7 +70,13 @@ export function HabitCard({ habit, done, today, onToggle, dragHandle, todayNote 
     })
 
   return (
-    <Card className={cn("gap-0 p-4 transition-all duration-300 hover:shadow-md", doneToday && color.soft)}>
+    <Card
+      id={`habit-${habit.id}`}
+      className={cn(
+        "scroll-mt-24 gap-0 p-4 transition-all duration-300 hover:shadow-md target:ring-2 target:ring-emerald-500/50",
+        doneToday && color.soft
+      )}
+    >
       <div className="flex items-start gap-3">
         <button
           type="button"

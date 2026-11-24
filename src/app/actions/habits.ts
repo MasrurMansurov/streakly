@@ -9,6 +9,7 @@ import { getCurrentUser } from "@/lib/data"
 import { addDays, isISODate, todayIn } from "@/lib/dates"
 import { validationMessage } from "@/i18n"
 import { getActionT } from "@/i18n/server"
+import { nudgePactPartner } from "@/lib/pact-nudge"
 import { createClient } from "@/lib/supabase/server"
 import { habitSchema, type ActionResult, type HabitInput } from "@/lib/validation"
 
@@ -118,17 +119,7 @@ export async function toggleHabitLog(habitId: string, date: string, done: boolea
   await invalidatePublicProfile(supabase, user.id)
   if (done && date >= addDays(todayIn("UTC"), -1)) {
     // after the response: if this habit is part of a pact, nudge the partner
-    after(async () => {
-      const { data: pact } = await supabase
-        .from("pacts")
-        .select("id")
-        .eq("status", "active")
-        .or(`inviter_habit_id.eq.${habitId},invitee_habit_id.eq.${habitId}`)
-        .limit(1)
-      if (!pact?.length) return
-      const { error } = await supabase.functions.invoke("send-reminders", { body: { action: "pact", habitId } })
-      if (error) console.error("pact nudge failed", error)
-    })
+    after(() => nudgePactPartner(supabase, habitId))
   }
   refresh()
   return { ok: true }
