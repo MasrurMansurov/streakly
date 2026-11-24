@@ -36,3 +36,11 @@ test("account deletion needs the exact username", async ({ page }) => {
   await dialog.getByRole("button", { name: "Cancel" }).click()
   await expect(dialog).toHaveCount(0)
 })
+
+test("dashboard shows the weekly review", async ({ page }) => {
+  await signIn(page, "demo@streakly.dev", "streakly-demo")
+  const card = page.locator("[data-slot=card]", { has: page.locator("[data-slot=card-title]", { hasText: /^This week$/ }) })
+  await expect(card).toBeVisible()
+  await expect(card.getByRole("img", { name: /^Last 8 weeks: / })).toBeVisible()
+  await expect(card.getByText(/vs\. last week|same as last week|first week/)).toBeVisible()
+})

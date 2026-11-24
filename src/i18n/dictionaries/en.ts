@@ -286,6 +286,16 @@ export const en = {
       checkins_500: { name: "Unstoppable", description: "Make 500 check-ins" },
     } as Record<string, { name: string; description: string }>,
   },
+  review: {
+    title: "This week",
+    subtitle: "Check-ins done so far vs. what your goals expect",
+    vsLastWeek: (d: number) => (d === 0 ? "same as last week" : `${d > 0 ? "+" : ""}${d}% vs. last week`),
+    noComparison: "first week — keep going",
+    chartLabel: (values: string) => `Last 8 weeks: ${values}`,
+    onARoll: "On a roll",
+    needsAttention: "Needs attention",
+    empty: "Check in a few times to see your week here.",
+  },
   account: {
     dataTitle: "Your data",
     dataSub: "Download everything you've logged, or delete your account.",

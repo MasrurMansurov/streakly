@@ -20,6 +20,8 @@ import { ConfettiBurst } from "@/components/confetti-burst"
 import { IconTile, type IconTone } from "@/components/icon-tile"
 import { Heatmap } from "@/components/heatmap"
 import { HabitTemplates } from "./habit-templates"
+import { WeeklyReview } from "./weekly-review"
+import { weeklyReview } from "@/lib/review"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -124,6 +126,20 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
     ? habits.reduce((s, h) => s + completionRate(byHabit.get(h.id)!, today, 30, h.created_at.slice(0, 10), h.target_per_week), 0) /
       habits.length
     : 0
+  const review = useMemo(
+    () =>
+      weeklyReview(
+        habits.map((h) => ({
+          id: h.id,
+          name: h.name,
+          target: h.target_per_week,
+          createdOn: h.created_at.slice(0, 10) as ISODate,
+          done: byHabit.get(h.id)!,
+        })),
+        today
+      ),
+    [habits, byHabit, today]
+  )
   const totalCheckIns = [...perDay.values()].reduce((a, b) => a + b, 0)
 
   const chartData = Array.from({ length: 30 }, (_, i) => {
@@ -205,6 +221,8 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
               />
             )}
           />
+
+          <WeeklyReview review={review} />
 
           <div className="grid gap-4 lg:grid-cols-5">
             <Card className="lg:col-span-3">
