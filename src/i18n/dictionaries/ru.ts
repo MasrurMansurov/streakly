@@ -108,6 +108,10 @@ export const ru: Dictionary = {
     actions: "Действия с привычкой",
     markDone: (name: string) => `Отметить «${name}» как выполненную сегодня`,
     markUndone: (name: string) => `Снять отметку с «${name}» за сегодня`,
+    frozenDay: (day: string) => `${day}: пропуск, покрыт заморозкой серии`,
+    freezes: (used: number, total: number) => `${used}/${total}`,
+    freezesHint: (left: number) =>
+      `Заморозка серии: один пропущенный день не обрывает серию — до 2 раз в месяц. В этом месяце осталось: ${left}. Два пропуска подряд всё равно обрывают.`,
     dayStatus: (day: string, done: boolean) => `${day}: ${done ? "выполнено" : "не выполнено"}`,
     best: "Рекорд",
     thisWeek: (done: number, target: number) => `${done}/${target} на этой неделе`,

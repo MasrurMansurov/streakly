@@ -79,13 +79,84 @@ export function longestWeeklyStreak(done: ReadonlySet<ISODate>, target: Target):
   return best
 }
 
-export type HabitStreak = { current: number; best: number; unit: "day" | "week" }
+/** Streak freezes: single missed days forgiven per calendar month (daily habits only). */
+export const FREEZES_PER_MONTH = 2
 
-/** Streaks in days for daily habits, in weeks for "N× per week" habits. */
+/**
+ * Missed days that don't break a daily streak. Deterministic — nothing is stored:
+ * a missed day is frozen when the day before was done, the day after is done (or is today, still open), and that month still has
+ * a freeze left. Two misses in a row always break the streak ("never miss twice").
+ */
+export function frozenDays(done: ReadonlySet<ISODate>, today: ISODate, perMonth = FREEZES_PER_MONTH): Set<ISODate> {
+  const frozen = new Set<ISODate>()
+  if (done.size === 0 || perMonth <= 0) return frozen
+  const first = [...done].sort()[0]
+  const used = new Map<string, number>()
+  for (let d = addDays(first, 1); d < today; d = addDays(d, 1)) {
+    if (done.has(d)) continue
+    const next = addDays(d, 1)
+    if (!done.has(addDays(d, -1)) || !(done.has(next) || next === today)) continue
+    const month = d.slice(0, 7)
+    if ((used.get(month) ?? 0) >= perMonth) continue
+    used.set(month, (used.get(month) ?? 0) + 1)
+    frozen.add(d)
+  }
+  return frozen
+}
+
+/** Freezes used in the month of `today`. */
+export function freezesUsedThisMonth(frozen: ReadonlySet<ISODate>, today: ISODate): number {
+  return [...frozen].filter((d) => d.startsWith(today.slice(0, 7))).length
+}
+
+/** Current streak where frozen days bridge the gap (but don't add to the count). */
+export function currentStreakWithFreezes(done: ReadonlySet<ISODate>, frozen: ReadonlySet<ISODate>, today: ISODate): number {
+  let day = done.has(today) ? today : addDays(today, -1)
+  let streak = 0
+  while (done.has(day) || frozen.has(day)) {
+    if (done.has(day)) streak++
+    day = addDays(day, -1)
+  }
+  return streak
+}
+
+/** Longest run where frozen days bridge gaps. */
+export function longestStreakWithFreezes(done: ReadonlySet<ISODate>, frozen: ReadonlySet<ISODate>): number {
+  const days = [...new Set([...done, ...frozen])].sort()
+  let best = 0
+  let run = 0
+  let prev: ISODate | null = null
+  for (const d of days) {
+    if (prev === null || diffDays(prev, d) !== 1) run = 0
+    if (done.has(d)) run++
+    best = Math.max(best, run)
+    prev = d
+  }
+  return best
+}
+
+export type HabitStreak = {
+  current: number
+  best: number
+  unit: "day" | "week"
+  /** daily habits: forgiven missed days and how many were used this month */
+  frozen?: Set<ISODate>
+  freezesUsed?: number
+}
+
+/** Streaks in days for daily habits (with freezes), in weeks for "N× per week" habits. */
 export function habitStreak(done: ReadonlySet<ISODate>, today: ISODate, target: Target = DAILY): HabitStreak {
-  return target >= DAILY
-    ? { current: currentStreak(done, today), best: longestStreak(done), unit: "day" }
-    : { current: currentWeeklyStreak(done, today, target), best: longestWeeklyStreak(done, target), unit: "week" }
+  if (target < DAILY) {
+    return { current: currentWeeklyStreak(done, today, target), best: longestWeeklyStreak(done, target), unit: "week" }
+  }
+  const frozen = frozenDays(done, today)
+  return {
+    current: currentStreakWithFreezes(done, frozen, today),
+    best: longestStreakWithFreezes(done, frozen),
+    unit: "day",
+    frozen,
+    freezesUsed: freezesUsedThisMonth(frozen, today),
+  }
 }
 
 export function formatStreak({ current, unit }: Pick<HabitStreak, "current" | "unit">): string {

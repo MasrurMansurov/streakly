@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import { addDays, dateRange, diffDays, isISODate, todayIn, weekdayMon0 } from "./dates"
 import {
+  frozenDays,
   completionRate,
   currentStreak,
   currentWeeklyStreak,
@@ -104,7 +105,7 @@ describe("weekly targets", () => {
 
   it("habitStreak picks days or weeks", () => {
     const done = new Set(["2026-11-24", "2026-11-25"])
-    expect(habitStreak(done, today)).toEqual({ current: 2, best: 2, unit: "day" })
+    expect(habitStreak(done, today)).toMatchObject({ current: 2, best: 2, unit: "day", freezesUsed: 0 })
     expect(habitStreak(done, today, 2).unit).toBe("week")
   })
 
@@ -119,5 +120,30 @@ describe("weekly targets", () => {
     // 3×/week habit, 14 days, 6 check-ins = 100%
     const done = new Set(w("2026-11-12", 0, 2, 4, 6, 8, 10))
     expect(completionRate(done, "2026-11-25", 14, undefined, 3)).toBe(1)
+  })
+})
+
+describe("streak freezes", () => {
+  const today = "2026-11-24"
+  it("a single missed day doesn't break a daily streak", () => {
+    const done = set("2026-11-20", "2026-11-21", "2026-11-23", "2026-11-24") // 22nd missed
+    expect(habitStreak(done, today)).toMatchObject({ current: 4, best: 4, freezesUsed: 1 })
+  })
+  it("yesterday's miss is bridged while today is still open", () => {
+    const done = set("2026-11-21", "2026-11-22") // 23rd missed, today not yet
+    expect(habitStreak(done, today).current).toBe(2)
+  })
+  it("two misses in a row break it", () => {
+    const done = set("2026-11-19", "2026-11-20", "2026-11-23", "2026-11-24")
+    expect(habitStreak(done, today).current).toBe(2)
+  })
+  it("allows at most two freezes per month", () => {
+    const done = set("2026-11-01", "2026-11-03", "2026-11-05", "2026-11-07", "2026-11-08")
+    const frozen = frozenDays(done, today)
+    expect([...frozen].sort()).toEqual(["2026-11-02", "2026-11-04"])
+    expect(habitStreak(done, today).best).toBe(3) // 05, (06 not frozen) → 07, 08 … best run: 01,03,05 = 3
+  })
+  it("weekly habits don't use freezes", () => {
+    expect(habitStreak(set("2026-11-23"), today, 3).frozen).toBeUndefined()
   })
 })

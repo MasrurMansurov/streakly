@@ -106,6 +106,10 @@ export const en = {
     actions: "Habit actions",
     markDone: (name: string) => `Mark "${name}" as done today`,
     markUndone: (name: string) => `Mark "${name}" as not done today`,
+    frozenDay: (day: string) => `${day}: missed, covered by a streak freeze`,
+    freezes: (used: number, total: number) => `${used}/${total}`,
+    freezesHint: (left: number) =>
+      `Streak freezes: one missed day doesn't break your streak, up to 2 times a month. ${left} left this month. Two misses in a row still do.`,
     dayStatus: (day: string, done: boolean) => `${day}: ${done ? "done" : "not done"}`,
     best: "Best",
     thisWeek: (done: number, target: number) => `${done}/${target} this week`,

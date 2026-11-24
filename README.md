@@ -26,6 +26,7 @@ A daily habit tracker with streaks, a GitHub-style activity heatmap and shareabl
 
 - **One-tap check-ins** with optimistic UI (`useOptimistic`), plus a 7-day strip to fix missed days
 - **Streaks:** current and best streak per habit, 30-day completion rate
+- **Streak freezes:** a single missed day doesn't break a daily streak, up to 2× a month per habit (two misses in a row still do). Deterministic — derived from the check-ins, nothing extra stored
 - **Flexible goals:** every day or N× per week (weekly habits keep streaks in weeks)
 - **Activity heatmap** (26 weeks) and a 30-day bar chart (Recharts)
 - **Drag-and-drop ordering** (dnd-kit) — mouse, touch and keyboard, with screen reader announcements

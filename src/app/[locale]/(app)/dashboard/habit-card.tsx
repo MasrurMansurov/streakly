@@ -1,6 +1,6 @@
 "use client"
 
-import { ArchiveIcon, CheckIcon, FlameIcon, MessageSquarePlusIcon, StickyNoteIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import { ArchiveIcon, CheckIcon, FlameIcon, SnowflakeIcon, MessageSquarePlusIcon, StickyNoteIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import { useState, useTransition, type ReactNode } from "react"
 import { toast } from "sonner"
 
@@ -30,7 +30,7 @@ import { formatDay } from "@/i18n"
 import { useI18n } from "@/i18n/client"
 import { addDays, type ISODate } from "@/lib/dates"
 import { habitColor } from "@/lib/habit-colors"
-import { countInWeek, habitStreak, weekStart } from "@/lib/streaks"
+import { countInWeek, FREEZES_PER_MONTH, habitStreak, weekStart } from "@/lib/streaks"
 import { cn } from "@/lib/utils"
 
 import { HabitFormDialog } from "./habit-form-dialog"
@@ -111,6 +111,16 @@ export function HabitCard({ habit, done, today, onToggle, dragHandle, todayNote 
               <FlameIcon className={cn("size-3.5", streak.current === 0 ? "text-muted-foreground/60" : "text-orange-500")} />
               {t.habit.streak(streak.current, streak.unit)}
             </span>
+            {streak.freezesUsed !== undefined && streak.freezesUsed > 0 && (
+              <span
+                className="inline-flex items-center gap-0.5 text-sky-600 dark:text-sky-400"
+                title={t.habit.freezesHint(FREEZES_PER_MONTH - streak.freezesUsed)}
+                aria-label={t.habit.freezesHint(FREEZES_PER_MONTH - streak.freezesUsed)}
+              >
+                <SnowflakeIcon className="size-3.5" />
+                {t.habit.freezes(streak.freezesUsed, FREEZES_PER_MONTH)}
+              </span>
+            )}
             {target < 7 && (
               <span className={cn(thisWeek >= target && "font-medium text-foreground")}>
                 {t.habit.thisWeek(Math.min(thisWeek, target), target)}
@@ -170,6 +180,7 @@ export function HabitCard({ habit, done, today, onToggle, dragHandle, todayNote 
       <div className="mt-4 grid grid-cols-7 gap-1.5">
         {week.map((date) => {
           const isDone = done.has(date)
+          const isFrozen = !isDone && Boolean(streak.frozen?.has(date))
           const beforeCreated = date < createdOn
           return (
             <button
@@ -178,7 +189,11 @@ export function HabitCard({ habit, done, today, onToggle, dragHandle, todayNote 
               disabled={beforeCreated}
               onClick={() => onToggle(habit.id, date, !isDone)}
               aria-pressed={isDone}
-              aria-label={t.habit.dayStatus(formatDay(locale, date, { weekday: "long", month: "short", day: "numeric" }), isDone)}
+              aria-label={
+                isFrozen
+                  ? t.habit.frozenDay(formatDay(locale, date, { weekday: "long", month: "short", day: "numeric" }))
+                  : t.habit.dayStatus(formatDay(locale, date, { weekday: "long", month: "short", day: "numeric" }), isDone)
+              }
               className="group flex flex-col items-center gap-1 disabled:opacity-40"
             >
               <span className="text-[10px] text-muted-foreground uppercase">
@@ -186,11 +201,13 @@ export function HabitCard({ habit, done, today, onToggle, dragHandle, todayNote 
               </span>
               <span
                 className={cn(
-                  "h-6 w-full rounded-md transition group-enabled:group-hover:opacity-80",
-                  isDone ? color.dot : "bg-muted",
+                  "flex h-6 w-full items-center justify-center rounded-md transition group-enabled:group-hover:opacity-80",
+                  isDone ? color.dot : isFrozen ? "bg-sky-500/15 text-sky-600 dark:text-sky-400" : "bg-muted",
                   date === today && "ring-2 ring-foreground/20 ring-offset-1 ring-offset-background"
                 )}
-              />
+              >
+                {isFrozen && <SnowflakeIcon className="size-3.5" aria-hidden />}
+              </span>
             </button>
           )
         })}
