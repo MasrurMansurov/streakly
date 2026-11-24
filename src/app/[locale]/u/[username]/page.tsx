@@ -5,6 +5,7 @@ import { Suspense } from "react"
 
 import { Achievements } from "@/components/achievements"
 import { Heatmap } from "@/components/heatmap"
+import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -42,6 +43,7 @@ export default function PublicProfilePage({ params }: Props) {
           <PublicProfile params={params} />
         </Suspense>
       </main>
+      <SiteFooter />
     </>
   )
 }

@@ -286,6 +286,16 @@ export const en = {
       checkins_500: { name: "Unstoppable", description: "Make 500 check-ins" },
     } as Record<string, { name: string; description: string }>,
   },
+  legal: {
+    nav: "Legal",
+    privacy: "Privacy",
+    terms: "Terms",
+    contact: "Questions about your data or these terms? Write to us via",
+    agree: "By continuing you agree to the",
+    and: "and",
+    termsLink: "Terms of Use",
+    privacyLink: "Privacy Policy",
+  },
   review: {
     title: "This week",
     subtitle: "Check-ins done so far vs. what your goals expect",

@@ -9,7 +9,7 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     // 1. URLs without a language prefix → redirect to /en or /ru
-    "/((?!en(?:/|$)|ru(?:/|$)|auth/|_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!en(?:/|$)|ru(?:/|$)|auth/|robots\\.txt|sitemap\\.xml|_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
     // 2. app pages: auth guard + session refresh
     "/(en|ru)/(dashboard|settings|archive|habits|friends)/:path*",
     // 3. public pages only for signed-in visitors (session refresh, /login → /dashboard).

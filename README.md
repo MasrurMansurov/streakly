@@ -130,3 +130,7 @@ npm run build
 - [x] Reminders (Edge Function + cron)
 - [x] OG image for public profiles
 - [x] Playwright e2e tests
+
+## License
+
+[MIT](LICENSE) © 2026 Masrur Mansurov. The Streakly name and logo identify this project.

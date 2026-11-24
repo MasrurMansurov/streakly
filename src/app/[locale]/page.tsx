@@ -2,6 +2,7 @@ import { CalendarCheck2Icon, FlameIcon, LockKeyholeIcon, Share2Icon, type Lucide
 
 import { Link } from "@/components/link"
 import { LogoMark } from "@/components/logo"
+import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
 import { Button } from "@/components/ui/button"
 import { getT } from "@/i18n/server"
@@ -92,14 +93,7 @@ export default async function Home() {
           </div>
         </section>
       </main>
-      <footer className="border-t py-8">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-2">
-            <LogoMark size={18} /> Streakly
-          </span>
-          <span>{t.landing.footer}</span>
-        </div>
-      </footer>
+      <SiteFooter />
     </>
   )
 }
