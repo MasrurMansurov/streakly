@@ -66,6 +66,37 @@ export async function subscribeThisDevice() {
   return res
 }
 
+export type PushReadiness = "ok" | "ios-install" | "unsupported" | "denied" | "error"
+
+/** Why this browser can't receive pushes (null = it can). No prompts. */
+export function pushBlocker(): Exclude<PushReadiness, "ok" | "error"> | null {
+  if (!pushSupported()) {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    const standalone = window.matchMedia("(display-mode: standalone)").matches
+    return isIOS && !standalone ? "ios-install" : "unsupported"
+  }
+  return Notification.permission === "denied" ? "denied" : null
+}
+
+/**
+ * Make sure this browser gets reminders: ask for permission (call this right
+ * from a click — browsers only allow the prompt then), subscribe the device,
+ * then switch reminders on via `turnOn`.
+ */
+export async function ensurePushOn(turnOn: () => Promise<{ ok: boolean }>): Promise<PushReadiness> {
+  const blocker = pushBlocker()
+  if (blocker) return blocker
+  const permission = Notification.permission === "granted" ? "granted" : await Notification.requestPermission()
+  if (permission !== "granted") return "denied"
+  try {
+    const sub = await subscribeThisDevice()
+    if (!sub.ok) return "error"
+    return (await turnOn()).ok ? "ok" : "error"
+  } catch {
+    return "error"
+  }
+}
+
 /** Stop pushes to this browser: server row, browser subscription and the "wanted" flag. */
 export async function unsubscribeThisDevice() {
   storage.set(localStorage, WANTED_KEY, null)

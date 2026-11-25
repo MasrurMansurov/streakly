@@ -7,6 +7,8 @@ import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 
 import { createHabit, updateHabit } from "@/app/actions/habits"
+import { turnOnReminders } from "@/app/actions/reminders"
+import { browserTimezone } from "@/components/day-rollover"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -23,6 +25,7 @@ import type { Habit } from "@/lib/data"
 import { HABIT_COLOR_NAMES, habitColor, type HabitColor } from "@/lib/habit-colors"
 import { validationMessage } from "@/i18n"
 import { useI18n } from "@/i18n/client"
+import { ensurePushOn, pushBlocker, type PushReadiness } from "@/lib/push-device"
 import { cn } from "@/lib/utils"
 import { habitSchema, type HabitInput } from "@/lib/validation"
 
@@ -36,7 +39,7 @@ type Props = {
 }
 
 export function HabitFormDialog({ open, onOpenChange, habit }: Props) {
-  const { t } = useI18n()
+  const { locale, t } = useI18n()
   const [pending, startTransition] = useTransition()
   const form = useForm<HabitInput>({
     resolver: zodResolver(habitSchema),
@@ -54,6 +57,11 @@ export function HabitFormDialog({ open, onOpenChange, habit }: Props) {
   const remindAt = useWatch({ control: form.control, name: "remind_at" })
 
   const onSubmit = form.handleSubmit((values) => {
+    // a habit with a reminder time must actually be able to reach this device
+    const wantsPush = Boolean(values.remind_at)
+    // browsers only show the permission prompt right after a click: ask now, before any await
+    const permission =
+      wantsPush && pushBlocker() === null && Notification.permission === "default" ? Notification.requestPermission() : null
     startTransition(async () => {
       const res = habit ? await updateHabit(habit.id, values) : await createHabit(values)
       if (!res.ok) {
@@ -63,8 +71,25 @@ export function HabitFormDialog({ open, onOpenChange, habit }: Props) {
       toast.success(habit ? t.habit.updated : t.habit.created)
       form.reset()
       onOpenChange(false)
+      if (!wantsPush) return
+      await permission?.catch(() => null)
+      const ready = await ensurePushOn(() => turnOnReminders({ timezone: browserTimezone(), locale }))
+      notifyPush(ready, values.remind_at ?? "")
     })
   })
+
+  const notifyPush = (ready: PushReadiness, time: string) => {
+    if (ready === "ok") return void toast.success(t.habitForm.pushOn(time))
+    const why =
+      ready === "ios-install"
+        ? t.reminders.iosInstall
+        : ready === "unsupported"
+          ? t.reminders.unsupported
+          : ready === "denied"
+            ? t.reminders.denied
+            : t.habitForm.pushFailed
+    toast.warning(t.habitForm.pushNotReady, { description: why, duration: 12_000 })
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

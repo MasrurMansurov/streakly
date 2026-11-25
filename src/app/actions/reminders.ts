@@ -56,6 +56,36 @@ export async function saveReminderSettings(input: z.infer<typeof settingsSchema>
   return { ok: true }
 }
 
+const turnOnSchema = z.object({
+  timezone: z.string().max(64).refine(isValidTimezone),
+  locale: z.enum(locales).optional(),
+})
+
+/**
+ * Switch reminders on (keeping the daily time if one was set). Used when a
+ * habit gets its own reminder time: without the master switch and a device,
+ * that reminder would silently never arrive.
+ */
+export async function turnOnReminders(input: z.infer<typeof turnOnSchema>): Promise<ActionResult> {
+  const parsed = turnOnSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, error: (await getActionT()).t.validation.invalidInput }
+
+  const { user, supabase } = await authed()
+  const { data: existing } = await supabase.from("reminder_settings").select("enabled").eq("user_id", user.id).maybeSingle()
+  const locale = parsed.data.locale ?? (await getActionLocale())
+  const { error } = existing
+    ? await supabase
+        .from("reminder_settings")
+        .update({ enabled: true, timezone: parsed.data.timezone, locale, updated_at: new Date().toISOString() })
+        .eq("user_id", user.id)
+    : await supabase
+        .from("reminder_settings")
+        .insert({ user_id: user.id, enabled: true, timezone: parsed.data.timezone, locale })
+  if (error) return { ok: false, error: error.message }
+  refresh()
+  return { ok: true }
+}
+
 /**
  * Move the reminders' timezone to the device's current one (called on app
  * open by <TimezoneSync />). Reminders and the UI then agree on "today".
