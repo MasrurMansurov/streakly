@@ -192,7 +192,7 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
             </span>
             {streak.freezesUsed !== undefined && streak.freezesUsed > 0 && (
               <span
-                className="inline-flex items-center gap-0.5 text-sky-600 dark:text-sky-400"
+                className="inline-flex items-center gap-0.5 text-sky-700 dark:text-sky-400"
                 title={t.habit.freezesHint(FREEZES_PER_MONTH - streak.freezesUsed)}
                 aria-label={t.habit.freezesHint(FREEZES_PER_MONTH - streak.freezesUsed)}
               >
@@ -289,7 +289,7 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
 
       {!habit.graduated_at && graduationState.ready && (
         <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg bg-emerald-500/10 py-2 pr-2 pl-3 text-sm">
-          <GraduationCapIcon className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <GraduationCapIcon className="size-4 shrink-0 text-emerald-700 dark:text-emerald-400" />
           <span className="min-w-0 flex-1">{t.strength.ready(habit.name)}</span>
           <Button size="sm" disabled={pending} onClick={() => run(() => setGraduated(habit.id, true), t.strength.graduated)}>
             {t.strength.graduate}
@@ -299,7 +299,7 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
 
       {repair ? (
         <div className="mt-3 flex items-center gap-2 rounded-lg bg-sky-500/10 py-1.5 pr-1.5 pl-3 text-sm" title={t.repair.hint}>
-          <WrenchIcon className="size-3.5 shrink-0 text-sky-600 dark:text-sky-400" aria-hidden />
+          <WrenchIcon className="size-3.5 shrink-0 text-sky-700 dark:text-sky-400" aria-hidden />
           <span className="min-w-0 flex-1 truncate">{t.repair.offer(repair.streak)}</span>
           <Button
             size="sm"
@@ -333,7 +333,8 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
               disabled={beforeCreated}
               onClick={() => onToggle(habit.id, date, !isDone)}
               aria-pressed={isDone}
-              aria-label={
+              // starts with the visible weekday ("Th — Thursday, Nov 19: done"): WCAG 2.5.3 label in name
+              aria-label={`${formatDay(locale, date, { weekday: "short" }).slice(0, 2)} — ${
                 isPaused
                   ? t.vacation.dayStatus[pauseReasons?.get(date) ?? "vacation"](formatDay(locale, date, { weekday: "long", month: "short", day: "numeric" }))
                   : isRepaired
@@ -343,7 +344,7 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
                   : isMini
                     ? t.habit.miniDayStatus(formatDay(locale, date, { weekday: "long", month: "short", day: "numeric" }))
                     : t.habit.dayStatus(formatDay(locale, date, { weekday: "long", month: "short", day: "numeric" }), isDone)
-              }
+              }`}
               className="group flex flex-col items-center gap-1 disabled:opacity-40"
             >
               <span className="text-[10px] text-muted-foreground uppercase">
@@ -355,13 +356,15 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
                   isDone
                     ? cn(color.dot, isMini && "opacity-45")
                     : isPaused
-                      ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                      ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
                       : isFrozen || isRepaired
-                        ? "bg-sky-500/15 text-sky-600 dark:text-sky-400"
+                        ? "bg-sky-500/15 text-sky-700 dark:text-sky-400"
                         : "bg-muted",
                   date === today && "ring-2 ring-foreground/20 ring-offset-1 ring-offset-background"
                 )}
               >
+                {/* not only color: done days carry a check mark */}
+                {isDone && <CheckIcon className="size-3.5 text-white" aria-hidden />}
                 {isFrozen && <SnowflakeIcon className="size-3.5" aria-hidden />}
                 {isRepaired && <WrenchIcon className="size-3.5" aria-hidden />}
                 {isPaused && <TreePalmIcon className="size-3.5" aria-hidden />}

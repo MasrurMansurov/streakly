@@ -4,12 +4,12 @@
  */
 export const RANKS = [
   { key: "newcomer", min: 0, text: "text-zinc-500 dark:text-zinc-400", dot: "bg-zinc-400" },
-  { key: "apprentice", min: 20, text: "text-emerald-600 dark:text-emerald-400", dot: "bg-emerald-500" },
-  { key: "practitioner", min: 50, text: "text-teal-600 dark:text-teal-400", dot: "bg-teal-500" },
-  { key: "expert", min: 90, text: "text-sky-600 dark:text-sky-400", dot: "bg-sky-500" },
-  { key: "master", min: 140, text: "text-violet-600 dark:text-violet-400", dot: "bg-violet-500" },
-  { key: "grandmaster", min: 200, text: "text-orange-600 dark:text-orange-400", dot: "bg-orange-500" },
-  { key: "legend", min: 280, text: "text-rose-600 dark:text-rose-400", dot: "bg-rose-500" },
+  { key: "apprentice", min: 20, text: "text-emerald-700 dark:text-emerald-400", dot: "bg-emerald-500" },
+  { key: "practitioner", min: 50, text: "text-teal-700 dark:text-teal-400", dot: "bg-teal-500" },
+  { key: "expert", min: 90, text: "text-sky-700 dark:text-sky-400", dot: "bg-sky-500" },
+  { key: "master", min: 140, text: "text-violet-700 dark:text-violet-400", dot: "bg-violet-500" },
+  { key: "grandmaster", min: 200, text: "text-orange-700 dark:text-orange-400", dot: "bg-orange-500" },
+  { key: "legend", min: 280, text: "text-rose-700 dark:text-rose-400", dot: "bg-rose-500" },
 ] as const
 
 export type Rank = (typeof RANKS)[number]

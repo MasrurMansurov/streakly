@@ -4,7 +4,7 @@ import type { ReactNode } from "react"
 import { AchievementBadge } from "@/components/achievement-badge"
 import type { AchievementId } from "@/lib/achievements"
 import { habitColor } from "@/lib/habit-colors"
-import { ACCENTS, asAccent, asBanner, asFrame, BANNERS, linkLabel } from "@/lib/profile-style"
+import { ACCENTS, asAccent, asBanner, asFrame, BANNERS, linkLabel, readableTextOn } from "@/lib/profile-style"
 import { cn } from "@/lib/utils"
 
 export type ProfileLook = {
@@ -70,8 +70,8 @@ export function ProfileHeader({ look, subtitle, labels, action, compact }: Props
               <img src={look.avatarUrl} alt="" className="size-full rounded-full object-cover" />
             ) : (
               <span
-                className="flex size-full items-center justify-center rounded-full text-xl font-semibold text-white"
-                style={{ background: accent }}
+                className="flex size-full items-center justify-center rounded-full text-xl font-bold"
+                style={{ background: accent, color: readableTextOn(accent) }}
               >
                 {initials}
               </span>

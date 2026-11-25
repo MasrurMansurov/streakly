@@ -60,10 +60,12 @@
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  /* 0.51 (not shadcn's 0.556): ≥ 4.5:1 also on muted and tinted backgrounds (WCAG AA) */
+  --muted-foreground: oklch(0.51 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
+  /* red-700, not 600: 4.5:1 also on its own 10% tint (destructive buttons) */
+  --destructive: oklch(0.505 0.213 27.518);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
@@ -190,5 +192,51 @@ body:has([data-tabbar]) {
 @media (min-width: 48rem) {
   body:has([data-tabbar]) {
     padding-bottom: 0;
+  }
+}
+
+/*
+ * Touch targets (P3 audit): on touch screens every control is at least 44×44px
+ * (Apple HIG / WCAG 2.5.5); with a mouse the compact sizes stay. Inline text
+ * links are unaffected (min-height doesn't apply to inline boxes). Switches
+ * keep their look and get a larger invisible hit area instead.
+ */
+@media (pointer: coarse) {
+  :where(
+      button:not([role="switch"]),
+      [role="button"],
+      [role="radio"],
+      [role="tab"],
+      [role="menuitem"],
+      [role="option"],
+      a[href],
+      input:not([type="checkbox"], [type="radio"], [type="hidden"], [type="range"]),
+      select,
+      textarea
+    ) {
+    min-height: 44px;
+  }
+  :where(button:not([role="switch"]), [role="radio"], a[data-slot="button"]) {
+    min-width: 44px;
+  }
+  :where([data-slot="switch"]) {
+    position: relative;
+  }
+  :where([data-slot="switch"])::after {
+    content: "";
+    position: absolute;
+    inset: -13px -6px;
+  }
+}
+
+/* "Reduce motion" (P3 audit): no animations or smooth transitions; the confetti checks it too */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

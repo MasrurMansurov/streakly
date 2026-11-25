@@ -32,9 +32,11 @@ export function LanguageSwitcher() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="ghost" size="sm" aria-label={t.nav.language} className="gap-1 px-2" />}>
-        <LanguagesIcon />
-        <span className="text-xs font-medium uppercase">{locale}</span>
+      {/* the name comes from the content — "Language: EN" — so it includes the visible "EN" (WCAG 2.5.3) */}
+      <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="gap-1 px-2" />}>
+        <LanguagesIcon aria-hidden />
+        <span className="sr-only">{t.nav.language}: </span>
+        <span className="text-xs font-medium">{locale.toUpperCase()}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         {locales.map((l) => (

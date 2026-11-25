@@ -43,7 +43,7 @@ export default async function Home() {
             </span>
             {/* no entrance animation on the hero text: it is the LCP element and must paint immediately */}
             <h1 className="text-4xl leading-[1.08] font-semibold text-balance sm:text-5xl">
-              {t.landing.titleStart} <span className="text-emerald-500">{t.landing.titleAccent}</span>.
+              {t.landing.titleStart} <span className="text-emerald-700 dark:text-emerald-400">{t.landing.titleAccent}</span>.
             </h1>
             <p className="max-w-md text-lg leading-relaxed text-muted-foreground">
               {t.landing.subtitle}
@@ -69,7 +69,7 @@ export default async function Home() {
                 <LogoMark size={20} />
                 {t.landing.previewTitle}
               </span>
-              <span className="inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
+              <span className="inline-flex items-center gap-1 font-medium text-emerald-700 dark:text-emerald-400">
                 <FlameIcon className="size-4" /> {t.landing.previewStreak}
               </span>
             </div>
@@ -91,7 +91,7 @@ export default async function Home() {
               const Icon = FEATURE_ICONS[i]
               return (
                 <div key={title} className="grid gap-3 motion-safe:animate-rise" style={{ animationDelay: `${i * 70}ms` }}>
-                  <span className="flex size-10 items-center justify-center rounded-xl border bg-card text-emerald-600 dark:text-emerald-400">
+                  <span className="flex size-10 items-center justify-center rounded-xl border bg-card text-emerald-700 dark:text-emerald-400">
                     <Icon className="size-5" strokeWidth={1.75} />
                   </span>
                   <h2 className="text-base font-semibold">{title}</h2>

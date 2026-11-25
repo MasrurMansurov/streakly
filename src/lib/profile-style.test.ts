@@ -17,3 +17,13 @@ describe("profile style", () => {
     expect(asAccent("neon")).toBe("emerald")
   })
 })
+
+describe("readableTextOn", () => {
+  // the initials are large bold text (20px, 700) → WCAG AA needs 3:1
+  it("every profile accent gets initials with at least 3:1 contrast", async () => {
+    const { ACCENTS, contrastRatio, readableTextOn } = await import("./profile-style")
+    for (const hex of Object.values(ACCENTS)) {
+      expect(contrastRatio(readableTextOn(hex), hex)).toBeGreaterThanOrEqual(3)
+    }
+  })
+})

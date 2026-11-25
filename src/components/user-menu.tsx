@@ -33,9 +33,11 @@ export function UserMenu({ email, username, displayName, isPublic, avatarUrl }: 
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant="ghost" size="icon" className="rounded-full" aria-label={t.nav.accountMenu} />
+          <Button variant="ghost" size="icon" className="rounded-full" />
         }
       >
+        {/* named by its content: "Account menu" + the visible initials (WCAG 2.5.3) */}
+        <span className="sr-only">{t.nav.accountMenu} </span>
         <Avatar className="size-8">
           {avatarUrl && <AvatarImage src={avatarUrl} alt="" />}
           <AvatarFallback>{name.slice(0, 2).toUpperCase()}</AvatarFallback>

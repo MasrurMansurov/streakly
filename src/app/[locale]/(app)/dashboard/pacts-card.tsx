@@ -131,7 +131,7 @@ function ActivePact({ pact, mine, today }: { pact: Pact; mine: Set<ISODate> | un
             )}
             <span className="font-medium">{r.who}</span>
             <span className="min-w-0 truncate text-muted-foreground">· {r.habit}</span>
-            <span className={cn("ml-auto shrink-0 text-xs", r.done ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground")}>
+            <span className={cn("ml-auto shrink-0 text-xs", r.done ? "text-emerald-700 dark:text-emerald-400" : "text-muted-foreground")}>
               {r.done ? t.pacts.doneToday : t.pacts.notYet}
             </span>
           </li>

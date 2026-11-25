@@ -31,8 +31,8 @@ export function WeeklyReview({ review }: { review: Review }) {
               delta === null || delta === 0
                 ? "text-muted-foreground"
                 : delta > 0
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-rose-600 dark:text-rose-400"
+                  ? "text-emerald-700 dark:text-emerald-400"
+                  : "text-rose-700 dark:text-rose-400"
             )}
           >
             <Trend className="size-3.5" />

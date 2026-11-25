@@ -48,7 +48,7 @@ export async function LegalPage({ kind }: { kind: LegalKind }) {
           ))}
           <p className="rounded-xl border bg-card p-4 text-sm">
             {t.legal.contact}{" "}
-            <a href={CONTACT_URL} target="_blank" rel="noreferrer" className="font-medium text-emerald-600 underline underline-offset-4 dark:text-emerald-400">
+            <a href={CONTACT_URL} target="_blank" rel="noreferrer" className="font-medium text-emerald-700 underline underline-offset-4 dark:text-emerald-400">
               GitHub Issues
             </a>
           </p>

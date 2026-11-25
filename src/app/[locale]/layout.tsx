@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { DayRollover } from "@/components/day-rollover"
 import { ReminderSound } from "@/components/reminder-sound"
 import { TimezoneSync } from "@/components/timezone-sync"
+import { VisualViewportVars } from "@/components/visual-viewport"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { isLocale, locales } from "@/i18n"
@@ -66,6 +67,7 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[lo
             <TimezoneSync />
             <DayRollover />
             <ReminderSound />
+            <VisualViewportVars />
           </ThemeProvider>
         </I18nProvider>
         <ServiceWorkerRegister />

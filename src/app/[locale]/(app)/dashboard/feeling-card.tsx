@@ -1,6 +1,6 @@
 "use client"
 
-import { BatteryMediumIcon, SmileIcon } from "lucide-react"
+import { BatteryMediumIcon, CheckIcon, SmileIcon } from "lucide-react"
 import { useOptimistic, useTransition } from "react"
 import { toast } from "sonner"
 
@@ -49,10 +49,13 @@ export function FeelingCard({ today }: { today: Feeling }) {
               title={name}
               onClick={() => pick(key, level)}
               className={cn(
-                "h-7 rounded-md transition",
+                "flex h-7 items-center justify-center rounded-md transition",
                 on ? colors[i] : value[key] && level < value[key]! ? cn(colors[i], "opacity-35") : "bg-muted hover:bg-muted-foreground/20"
               )}
-            />
+            >
+              {/* not only color: the chosen level carries a check mark */}
+              {on && <CheckIcon className="size-4 text-foreground/80" aria-hidden />}
+            </button>
           )
         })}
       </div>
