@@ -5,14 +5,14 @@ import { cn } from "@/lib/utils"
 
 /** Progress bar colour per badge (full class names so Tailwind picks them up). */
 const BAR: Record<AchievementId, string> = {
-  first_checkin: "bg-emerald-500",
-  streak_7: "bg-amber-500",
-  streak_30: "bg-rose-500",
-  streak_100: "bg-violet-500",
-  checkins_100: "bg-sky-500",
-  checkins_500: "bg-yellow-500",
-  comeback: "bg-teal-500",
-  never_twice: "bg-fuchsia-500",
+  first_checkin: "bg-foreground/60",
+  streak_7: "bg-foreground/60",
+  streak_30: "bg-foreground/60",
+  streak_100: "bg-foreground/60",
+  checkins_100: "bg-foreground/60",
+  checkins_500: "bg-foreground/60",
+  comeback: "bg-foreground/60",
+  never_twice: "bg-foreground/60",
 }
 
 type Props = {

@@ -38,7 +38,7 @@ export function ChallengesCard({ challenges, habits, people }: { challenges: Cha
       <CardHeader className="flex flex-wrap items-start justify-between gap-3">
         <div className="grid gap-1.5">
           <CardTitle className="flex items-center gap-2">
-            <SwordsIcon className="size-4 text-rose-500" /> {t.challenges.title}
+            <SwordsIcon className="size-4 text-muted-foreground" aria-hidden /> {t.challenges.title}
           </CardTitle>
           <CardDescription>{t.challenges.subtitle}</CardDescription>
         </div>

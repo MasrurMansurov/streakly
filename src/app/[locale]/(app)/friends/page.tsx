@@ -1,4 +1,4 @@
-import { CheckCircle2Icon, SearchIcon, TrophyIcon, UsersIcon } from "lucide-react"
+import { SearchIcon, TrophyIcon, UsersIcon } from "lucide-react"
 import type { Metadata } from "next"
 import { Suspense } from "react"
 
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { formatDay, intlLocale, type Dictionary, type Locale } from "@/i18n"
+import { formatDay, intlLocale, type Locale } from "@/i18n"
 import { getT } from "@/i18n/server"
 import { getChallenges, getFriendsData, getMyHabitChoices, getPacts, searchPeople, type FeedItem } from "@/lib/data"
 import { addDays } from "@/lib/dates"
@@ -33,7 +33,7 @@ export default async function FriendsPage({ searchParams }: { searchParams: Prom
           <p className="text-sm text-muted-foreground">{t.friends.subtitle}</p>
         </div>
         <Button variant="outline" size="sm" render={<Link href="/leaderboard" />}>
-          <TrophyIcon className="text-amber-500" /> {t.nav.leaderboard}
+          <TrophyIcon aria-hidden /> {t.nav.leaderboard}
         </Button>
       </div>
 
@@ -183,46 +183,69 @@ async function Friends() {
       {feed.length === 0 ? (
         <p className="text-center text-sm text-muted-foreground">{t.friends.feedEmpty}</p>
       ) : (
-        [...days].map(([date, items]) => (
-          <section key={date} className="grid gap-2">
-            <h2 className="text-sm font-medium text-muted-foreground">{dayLabel(date)}</h2>
-            <Card className="gap-0 py-0">
-              <ul className="divide-y">
-                {items.map((item, i) => (
-                  <FeedRow key={i} item={item} locale={locale} t={t} timeZone={timeZone} />
+        <>
+          {[...days].slice(0, 3).map(([date, items]) => (
+            <FeedDay key={date} label={dayLabel(date)} items={items} locale={locale} timeZone={timeZone} />
+          ))}
+          {days.size > 3 && (
+            <details className="group grid gap-6">
+              <summary className="cursor-pointer list-none text-center text-sm text-muted-foreground hover:text-foreground">
+                {t.friends.olderDays(days.size - 3)}
+              </summary>
+              <div className="mt-6 grid gap-6">
+                {[...days].slice(3).map(([date, items]) => (
+                  <FeedDay key={date} label={dayLabel(date)} items={items} locale={locale} timeZone={timeZone} />
                 ))}
-              </ul>
-            </Card>
-          </section>
-        ))
+              </div>
+            </details>
+          )}
+        </>
       )}
     </div>
   )
 }
 
-function FeedRow({ item, locale, t, timeZone }: { item: FeedItem; locale: Locale; t: Dictionary; timeZone: string }) {
-  const color = habitColor(item.habit.color)
-  const time = new Intl.DateTimeFormat(intlLocale[locale], { hour: "2-digit", minute: "2-digit", timeZone }).format(
-    new Date(item.createdAt)
-  )
+/** One day of the feed: one row per person, their check-ins as small chips. */
+function FeedDay({ label, items, locale, timeZone }: { label: string; items: FeedItem[]; locale: Locale; timeZone: string }) {
+  const byPerson = new Map<string, FeedItem[]>()
+  for (const item of items) byPerson.set(item.person.username, [...(byPerson.get(item.person.username) ?? []), item])
+  const time = (iso: string) =>
+    new Intl.DateTimeFormat(intlLocale[locale], { hour: "2-digit", minute: "2-digit", timeZone }).format(new Date(iso))
   return (
-    <li className="flex items-center gap-3 px-4 py-3">
-      <Avatar className="size-8">
-        {item.person.avatarUrl && <AvatarImage src={item.person.avatarUrl} alt="" />}
-        <AvatarFallback className="text-xs">{item.person.name.slice(0, 2).toUpperCase()}</AvatarFallback>
-      </Avatar>
-      <p className="min-w-0 flex-1 text-sm">
-        <Link href={`/u/${item.person.username}`} className="font-medium hover:underline">
-          {item.person.name}
-        </Link>{" "}
-        <span className="text-muted-foreground">{t.friends.completed}</span>{" "}
-        <span className="inline-flex items-center gap-1 font-medium">
-          <span className={cn("size-2 rounded-full", color.dot)} />
-          {item.habit.name}
-        </span>
-      </p>
-      <CheckCircle2Icon className={cn("size-4 shrink-0", color.text)} />
-      <time className="w-12 shrink-0 text-right text-xs text-muted-foreground tabular-nums">{time}</time>
-    </li>
+    <section className="grid gap-2">
+      <h2 className="text-sm font-medium text-muted-foreground">{label}</h2>
+      <Card className="gap-0 py-0">
+        <ul className="divide-y">
+          {[...byPerson.values()].map((done) => {
+            const person = done[0].person
+            return (
+              <li key={person.username} className="flex items-start gap-3 px-4 py-3">
+                <Avatar className="size-8">
+                  {person.avatarUrl && <AvatarImage src={person.avatarUrl} alt="" />}
+                  <AvatarFallback className="text-xs">{person.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <Link href={`/u/${person.username}`} className="truncate text-sm font-medium hover:underline">
+                      {person.name}
+                    </Link>
+                    {/* newest check-in of the day */}
+                    <time className="shrink-0 text-xs text-muted-foreground">{time(done[0].createdAt)}</time>
+                  </div>
+                  <ul className="mt-1.5 flex flex-wrap gap-1.5">
+                    {done.map((item, i) => (
+                      <li key={i} className="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs">
+                        <span className={cn("size-1.5 rounded-full", habitColor(item.habit.color).dot)} aria-hidden />
+                        {item.habit.name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      </Card>
+    </section>
   )
 }

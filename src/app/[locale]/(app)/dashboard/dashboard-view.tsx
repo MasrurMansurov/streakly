@@ -1,20 +1,14 @@
 "use client"
 
 import {
-  CircleCheckBigIcon,
-  ChartNoAxesColumnIcon,
   ChevronRightIcon,
   GraduationCapIcon,
   CircleCheckIcon,
   CloudOffIcon,
   TreePalmIcon,
-  FlameIcon,
   PlusIcon,
   Share2Icon,
   SproutIcon,
-  TargetIcon,
-  TrendingUpIcon,
-  type LucideIcon,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useOptimistic, useRef, useState, useTransition } from "react"
@@ -25,7 +19,7 @@ import { applyQueue, enqueue, loadQueue, saveQueue, type QueuedToggle } from "@/
 import { canComeBackToday, comebackDays, isQuickComeback } from "@/lib/comeback"
 import { AchievementBadge } from "@/components/achievement-badge"
 import { ConfettiBurst } from "@/components/confetti-burst"
-import { IconTile, type IconTone } from "@/components/icon-tile"
+import { IconTile } from "@/components/icon-tile"
 import { HabitTemplates } from "./habit-templates"
 import { PactsCard } from "./pacts-card"
 import { ShareDialog } from "./share-dialog"
@@ -363,7 +357,7 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
         <div className="flex gap-2">
           {habits.length > 0 && (
             <Button variant="outline" onClick={() => setShareOpen(true)}>
-              <Share2Icon /> {t.share.button}
+              <Share2Icon aria-hidden /> <span className="max-sm:sr-only">{t.share.button}</span>
             </Button>
           )}
           <Button onClick={() => setCreateOpen(true)}>
@@ -389,12 +383,13 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
         </Card>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <Stat index={0} icon={TargetIcon} tone="emerald" label={t.dashboard.statToday} value={`${doneToday}/${habits.length}`} />
-            <Stat index={1} icon={FlameIcon} tone="orange" label={t.dashboard.statBestStreak} value={bestStreak} />
-            <Stat index={2} icon={TrendingUpIcon} tone="sky" label={t.dashboard.statCompletion} value={`${Math.round(rate30 * 100)}%`} />
-            <Stat index={3} icon={CircleCheckBigIcon} tone="violet" label={t.dashboard.statCheckIns} value={String(totalCheckIns)} />
-          </div>
+          {/* one quiet summary line — the habits below are the main thing */}
+          <dl className="grid grid-cols-4 divide-x rounded-xl border bg-card">
+            <Stat label={t.dashboard.statToday} value={`${doneToday}/${habits.length}`} />
+            <Stat label={t.dashboard.statBestStreak} value={bestStreak} />
+            <Stat label={t.dashboard.statCompletion} value={`${Math.round(rate30 * 100)}%`} />
+            <Stat label={t.dashboard.statCheckIns} value={String(totalCheckIns)} />
+          </dl>
 
           {activePause && (
             <p
@@ -420,8 +415,6 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
               {online ? t.offline.syncing(queue.length) : t.offline.offline(queue.length)}
             </p>
           )}
-
-          <FeelingCard today={feelings[today] ?? { mood: null, energy: null }} />
 
           <SortableHabits
             habits={activeHabits}
@@ -474,6 +467,8 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
             </details>
           )}
 
+          <FeelingCard today={feelings[today] ?? { mood: null, energy: null }} />
+
           {pacts.length > 0 && (
             <PactsCard
               pacts={pacts}
@@ -488,16 +483,13 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
 
           <Link
             href="/progress"
-            className="group flex items-center gap-4 rounded-xl border bg-card p-4 transition hover:shadow-md"
+            className="group flex items-center gap-3 rounded-xl border bg-card px-4 py-3 text-sm transition-colors hover:bg-muted/50"
           >
-            <IconTile icon={ChartNoAxesColumnIcon} tone="sky" />
-            <div className="min-w-0 flex-1">
-              <div className="font-medium">{t.progress.teaserTitle}</div>
-              <div className="truncate text-sm text-muted-foreground">
-                {review.rate === null ? t.progress.teaserEmpty : t.progress.teaser(Math.round(review.rate * 100), insights.length)}
-              </div>
-            </div>
-            <ChevronRightIcon className="size-5 text-muted-foreground transition group-hover:translate-x-0.5" />
+            <span className="font-medium">{t.progress.teaserTitle}</span>
+            <span className="min-w-0 flex-1 truncate text-muted-foreground">
+              {review.rate === null ? t.progress.teaserEmpty : t.progress.teaser(Math.round(review.rate * 100), insights.length)}
+            </span>
+            <ChevronRightIcon className="size-4 text-muted-foreground transition group-hover:translate-x-0.5" />
           </Link>
 
           {archivedCount > 0 && (
@@ -524,29 +516,11 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
   )
 }
 
-function Stat({
-  icon,
-  tone,
-  label,
-  value,
-  index = 0,
-}: {
-  icon: LucideIcon
-  tone: IconTone
-  label: string
-  value: string
-  index?: number
-}) {
+function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <Card
-      className="flex-row items-center gap-3 p-4 transition-shadow hover:shadow-md motion-safe:animate-rise"
-      style={{ animationDelay: `${index * 70}ms` }}
-    >
-      <IconTile icon={icon} tone={tone} />
-      <div className="min-w-0">
-        <div className="truncate text-xs text-muted-foreground">{label}</div>
-        <div className="text-2xl font-semibold tabular-nums">{value}</div>
-      </div>
-    </Card>
+    <div className="min-w-0 px-3 py-2.5 sm:px-4 sm:py-3">
+      <dt className="truncate text-xs text-muted-foreground">{label}</dt>
+      <dd className="text-lg font-semibold sm:text-xl">{value}</dd>
+    </div>
   )
 }

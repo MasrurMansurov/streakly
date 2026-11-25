@@ -55,7 +55,10 @@ test.describe("on a phone", () => {
       small.push(
         ...(await page.$$eval("button, [role=radio], [role=tab], input:not([type=hidden]), select, textarea, a[data-slot=button]", (els) =>
           els
+            // visible controls only: skip switches (larger hit area) and visually hidden inputs
+            // (sr-only file inputs are operated through their visible buttons)
             .filter((e) => (e as HTMLElement).offsetParent !== null && e.getAttribute("role") !== "switch")
+            .filter((e) => e.getBoundingClientRect().width > 2)
             .map((e) => ({ e, r: e.getBoundingClientRect() }))
             .filter(({ r }) => r.width < 44 || r.height < 44)
             .map(({ e, r }) => `${(e.getAttribute("aria-label") || e.textContent || e.tagName).trim().slice(0, 30)} ${Math.round(r.width)}×${Math.round(r.height)}`)

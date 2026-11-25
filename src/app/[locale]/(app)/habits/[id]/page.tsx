@@ -246,7 +246,7 @@ function Stat({
       <IconTile icon={icon} tone={tone} />
       <div className="min-w-0">
         <div className="truncate text-xs text-muted-foreground">{label}</div>
-        <div className="text-2xl font-semibold tabular-nums">{value}</div>
+        <div className="text-2xl font-semibold">{value}</div>
       </div>
     </Card>
   )
@@ -296,7 +296,7 @@ function StrengthCard({
       </CardHeader>
       <CardContent className="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-end">
         <div className="grid gap-1">
-          <span className="font-heading text-4xl font-semibold tabular-nums">{value === null ? "—" : `${value}%`}</span>
+          <span className="font-heading text-4xl font-semibold">{value === null ? "—" : `${value}%`}</span>
           <span className="text-xs text-muted-foreground">
             {graduated ? t.strength.graduated : g.ready ? t.strength.readyTitle : t.strength.progress(g.daysLeft)}
           </span>

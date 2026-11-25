@@ -24,7 +24,7 @@ export function WeeklyReview({ review }: { review: Review }) {
       </CardHeader>
       <CardContent className="grid gap-6 md:grid-cols-[auto_1fr_1.2fr] md:items-center">
         <div className="grid gap-1">
-          <span className="font-heading text-4xl font-semibold tabular-nums">{rate === null ? "—" : pct(rate)}</span>
+          <span className="font-heading text-4xl font-semibold">{rate === null ? "—" : pct(rate)}</span>
           <span
             className={cn(
               "inline-flex items-center gap-1 text-xs font-medium",

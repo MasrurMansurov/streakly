@@ -117,17 +117,17 @@ async function PublicProfile({ params }: Props) {
       <div className="grid grid-cols-3 gap-3">
         <Card className="gap-1 p-4">
           <span className="text-xs text-muted-foreground">{t.publicProfile.habits}</span>
-          <span className="text-2xl font-semibold tabular-nums">{habits.length}</span>
+          <span className="text-2xl font-semibold">{habits.length}</span>
         </Card>
         <Card className="gap-1 p-4">
           <span className="text-xs text-muted-foreground">{t.publicProfile.checkIns}</span>
-          <span className="text-2xl font-semibold tabular-nums">{logs.length}</span>
+          <span className="text-2xl font-semibold">{logs.length}</span>
         </Card>
         <Card className="gap-1 p-4">
           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-            <TrophyIcon className="size-3.5 text-amber-500" /> {t.publicProfile.bestStreak}
+            <TrophyIcon className="size-3.5" aria-hidden /> {t.publicProfile.bestStreak}
           </span>
-          <span className="text-2xl font-semibold tabular-nums">{t.dashboard.streakShort(best, "day")}</span>
+          <span className="text-2xl font-semibold">{t.dashboard.streakShort(best, "day")}</span>
         </Card>
       </div>
 

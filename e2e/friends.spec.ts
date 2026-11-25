@@ -33,7 +33,8 @@ test("follow a public profile, see their check-ins, unfollow", async ({ page }) 
 
   await page.goto("/friends")
   await expect(page.getByRole("link", { name: /Demo User/ }).first()).toBeVisible()
-  await expect(page.getByText("completed").first()).toBeVisible()
+  // the feed: one row per person and day, their check-ins as chips
+  await expect(page.locator("main section li li", { hasText: "Read 10 pages" }).first()).toBeVisible()
 
   const undone = serverAction(page)
   await page.getByRole("button", { name: "Following" }).click()

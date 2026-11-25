@@ -2,14 +2,20 @@ import type { LucideIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
+/*
+ * One calm style for every tile: a neutral surface and a quiet line icon.
+ * Tones are kept in the API (call sites say what an icon is about), but they
+ * no longer paint the UI in pastel — color is reserved for habits and state.
+ */
+const NEUTRAL = "bg-muted/70 text-foreground/70 ring-border/60"
 const TONES = {
-  emerald: "bg-emerald-500/10 text-emerald-700 ring-emerald-500/15 dark:text-emerald-400",
-  amber: "bg-amber-500/10 text-amber-700 ring-amber-500/15 dark:text-amber-400",
-  orange: "bg-orange-500/10 text-orange-700 ring-orange-500/15 dark:text-orange-400",
-  sky: "bg-sky-500/10 text-sky-700 ring-sky-500/15 dark:text-sky-400",
-  violet: "bg-violet-500/10 text-violet-700 ring-violet-500/15 dark:text-violet-400",
-  rose: "bg-rose-500/10 text-rose-700 ring-rose-500/15 dark:text-rose-400",
-  muted: "bg-muted text-muted-foreground ring-border",
+  emerald: NEUTRAL,
+  amber: NEUTRAL,
+  orange: NEUTRAL,
+  sky: NEUTRAL,
+  violet: NEUTRAL,
+  rose: NEUTRAL,
+  muted: NEUTRAL,
 } as const
 
 const SIZES = {
@@ -28,7 +34,7 @@ type Props = {
   iconClassName?: string
 }
 
-/** The app's one icon style: a thin line icon on a soft tinted tile. */
+/** The app's one icon style: a thin line icon on a neutral tile. */
 export function IconTile({ icon: Icon, tone = "emerald", size = "md", className, iconClassName }: Props) {
   const s = SIZES[size]
   return (

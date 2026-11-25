@@ -270,9 +270,11 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
       </div>
 
       {doneToday && !habit.graduated_at && diffDays(createdOn, today) >= 7 && strength[0]?.week !== weekStart(today) && (
-        <div className="mt-3 grid gap-2 rounded-lg bg-muted/60 p-3">
-          <span className="text-sm">{t.strength.ask}</span>
-          <div role="radiogroup" aria-label={t.strength.ask} className="grid grid-cols-5 gap-1.5">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-lg bg-muted/50 px-3 py-2">
+          <span className="text-xs text-muted-foreground" title={`1 — ${t.strength.scale[0]} · 5 — ${t.strength.scale[4]}`}>
+            {t.strength.ask}
+          </span>
+          <div role="radiogroup" aria-label={t.strength.ask} className="flex gap-1">
             {t.strength.scale.map((label, i) => (
               <button
                 key={label}
@@ -283,15 +285,11 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
                 aria-label={`${i + 1}: ${label}`}
                 disabled={pending}
                 onClick={() => run(() => rateStrength(habit.id, i + 1), t.strength.thanks)}
-                className="rounded-md border bg-card py-1 text-sm font-medium tabular-nums transition hover:border-foreground/30"
+                className="size-7 rounded-md border bg-card text-xs font-medium tabular-nums transition hover:border-foreground/30"
               >
                 {i + 1}
               </button>
             ))}
-          </div>
-          <div className="flex justify-between text-[11px] text-muted-foreground">
-            <span>{t.strength.scale[0]}</span>
-            <span>{t.strength.scale[4]}</span>
           </div>
         </div>
       )}
@@ -367,7 +365,7 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
                 className={cn(
                   "flex h-6 w-full items-center justify-center rounded-md transition group-enabled:group-hover:opacity-80",
                   isDone
-                    ? cn(color.dot, isMini && "opacity-45")
+                    ? cn(color.soft, color.text, isMini && "opacity-60")
                     : isPaused
                       ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
                       : isFrozen || isRepaired
@@ -377,7 +375,7 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
                 )}
               >
                 {/* not only color: done days carry a check mark */}
-                {isDone && <CheckIcon className="size-3.5 text-white" aria-hidden />}
+                {isDone && <CheckIcon className="size-3.5" strokeWidth={2.5} aria-hidden />}
                 {isFrozen && <SnowflakeIcon className="size-3.5" aria-hidden />}
                 {isRepaired && <WrenchIcon className="size-3.5" aria-hidden />}
                 {isPaused && <TreePalmIcon className="size-3.5" aria-hidden />}

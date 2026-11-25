@@ -40,7 +40,7 @@ export function Logo({ href = "/" }: { href?: string }) {
   return (
     <Link href={href} className="group flex items-center gap-2" aria-label="Streakly">
       <LogoMark size={30} className="transition-transform duration-300 group-hover:-rotate-6" />
-      <span className="font-heading text-[17px] font-semibold tracking-tight lowercase">streakly</span>
+      <span className="font-brand text-[17px] font-semibold tracking-tight lowercase">streakly</span>
     </Link>
   )
 }

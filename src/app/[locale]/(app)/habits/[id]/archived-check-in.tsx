@@ -78,11 +78,11 @@ export function ArchivedCheckIn({ habitId, color, today, createdOn, done }: Prop
                 <span
                   className={cn(
                     "flex h-6 w-full items-center justify-center rounded-md transition group-enabled:group-hover:opacity-80",
-                    isDone ? c.dot : "bg-muted",
+                    isDone ? cn(c.soft, c.text) : "bg-muted",
                     date === today && "ring-2 ring-foreground/20 ring-offset-1 ring-offset-background"
                   )}
                 >
-                  {isDone && <CheckIcon className="size-3.5 text-white" aria-hidden />}
+                  {isDone && <CheckIcon className="size-3.5" strokeWidth={2.5} aria-hidden />}
                 </span>
               </button>
             )

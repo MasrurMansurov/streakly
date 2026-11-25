@@ -59,7 +59,7 @@ export function InsightsCard({ insights }: { insights: Insight[] }) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <LightbulbIcon className="size-4 text-violet-500" /> {x.title}
+          <LightbulbIcon className="size-4 text-muted-foreground" aria-hidden /> {x.title}
         </CardTitle>
         <CardDescription>{x.subtitle}</CardDescription>
       </CardHeader>

@@ -51,8 +51,14 @@ export const ru: Dictionary = {
     subtitle: "Streakly — простой трекер привычек. Отмечайте каждый день, смотрите, как растут серии, и делитесь прогрессом.",
     getStarted: "Начать бесплатно",
     seeFeatures: "Возможности",
-    previewTitle: "Активность",
+    previewTitle: "Сегодня",
     previewStreak: "24 дня подряд",
+    previewLeft: "осталась 1",
+    previewHabits: [
+      { name: "Читать 10 страниц", meta: "16 дней", done: true },
+      { name: "Утренняя пробежка", meta: "2/3 на неделе", done: true },
+      { name: "Без сахара", meta: "23 дня", done: false },
+    ],
     features: [
       { title: "Отметка в одно касание", text: "Прямо из уведомления, без сети, а в тяжёлый день хватит и мини-версии — серия не прервётся." },
       { title: "Серии, которые прощают", text: "Заморозки, восстановление вчерашнего дня и режим отпуска: один пропуск не обнулит месяцы работы." },
@@ -221,6 +227,7 @@ export const ru: Dictionary = {
     byWeekdaySub: "Когда вы обычно это делаете",
   },
   settings: {
+    sections: { profile: "Профиль", look: "Оформление", notifications: "Уведомления", day: "День и паузы", data: "Данные" },
     title: "Настройки",
     subtitle: "Ваш профиль и то, как его видят другие.",
     photo: "Фото",
@@ -326,6 +333,7 @@ export const ru: Dictionary = {
     feedEmpty: "За последние 7 дней у ваших подписок нет отметок.",
     completed: "выполнил(а)",
     today: "Сегодня",
+    olderDays: (n: number) => `Показать ещё ${n} ${p(n, "день", "дня", "дней")}`,
     yesterday: "Вчера",
     cantFollowSelf: "Нельзя подписаться на себя",
     privateProfile: "Этот профиль закрыт",

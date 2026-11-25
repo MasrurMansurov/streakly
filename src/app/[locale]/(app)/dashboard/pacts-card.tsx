@@ -36,7 +36,7 @@ export function PactsCard({ pacts, byHabit, today, habits }: Props) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <HandshakeIcon className="size-4 text-sky-500" /> {t.pacts.title}
+          <HandshakeIcon className="size-4 text-muted-foreground" aria-hidden /> {t.pacts.title}
         </CardTitle>
         <CardDescription>{t.pacts.subtitle}</CardDescription>
       </CardHeader>
@@ -115,7 +115,7 @@ function ActivePact({ pact, mine, today }: { pact: Pact; mine: Set<ISODate> | un
     <>
       <div className="flex items-baseline gap-2">
         <FlameIcon className={cn("size-5 self-center", s.current > 0 ? "text-orange-500" : "text-muted-foreground/50")} />
-        <span className="font-heading text-2xl font-semibold tabular-nums">{s.current}</span>
+        <span className="font-heading text-2xl font-semibold">{s.current}</span>
         <span className="text-sm text-muted-foreground">{t.pacts.duoUnit(s.current)}</span>
         <span className="ml-auto text-xs text-muted-foreground">{t.pacts.best(s.best)}</span>
       </div>
