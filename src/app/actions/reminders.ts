@@ -13,8 +13,8 @@ import type { ActionResult } from "@/lib/validation"
 
 const settingsSchema = z.object({
   enabled: z.boolean(),
-  // the scheduler runs every 15 minutes
-  remindAt: z.string().regex(/^([01]\d|2[0-3]):(00|15|30|45)$/, "timeStep"),
+  // any minute: the scheduler runs every minute
+  remindAt: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "timeInvalid"),
   timezone: z.string().max(64).refine(isValidTimezone, "unknownTimezone"),
   locale: z.enum(locales).optional(),
 })

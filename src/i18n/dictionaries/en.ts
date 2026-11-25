@@ -264,7 +264,7 @@ export const en = {
     expired: "This device's subscription expired. Turn reminders off and on again.",
     noneReceived: "No device received the notification",
     testFailed: (reason: string) => `Couldn't send a test notification (${reason})`,
-    timeStep: "Pick a time in 15-minute steps",
+    timeInvalid: "Enter a time as HH:MM",
     unknownTimezone: "Unknown timezone",
     invalidSubscription: "Invalid push subscription",
   },

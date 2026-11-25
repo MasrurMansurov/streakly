@@ -44,13 +44,6 @@ const PRESETS: { time: string; key: string; icon: LucideIcon; tone: IconTone }[]
 type Support = "checking" | "ok" | "ios-install" | "unsupported" | "denied"
 
 
-/** Round "HH:MM" to the nearest 15 minutes (the scheduler's resolution). */
-function roundTo15(value: string) {
-  const [h, m] = value.split(":").map(Number)
-  const total = (Math.round((h * 60 + m) / 15) * 15) % (24 * 60)
-  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`
-}
-
 /** "today" or "tomorrow", depending on whether the time already passed. */
 function nextDay(time: string): "today" | "tomorrow" {
   const now = new Date()
@@ -131,8 +124,10 @@ export function RemindersCard({ initial }: { initial: ReminderSettings }) {
     })
 
   const changeTime = (value: string) => {
-    const time = roundTo15(value)
-    if (time === remindAt) return setCustomTime(time) // e.g. 20:07 → 20:00 (unchanged)
+    // any minute works: the scheduler runs every minute. Drop seconds if the browser adds them.
+    const time = value.slice(0, 5)
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) return
+    if (time === remindAt) return setCustomTime(time)
     const previous = remindAt
     setRemindAt(time)
     setCustomTime(time)
@@ -227,7 +222,7 @@ export function RemindersCard({ initial }: { initial: ReminderSettings }) {
             <Input
               id="remind-at"
               type="time"
-              step={900}
+              step={60}
               value={customTime}
               onChange={(e) => setCustomTime(e.target.value)}
               onBlur={() => customTime && changeTime(customTime)}

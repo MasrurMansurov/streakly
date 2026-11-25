@@ -267,7 +267,7 @@ export const ru: Dictionary = {
     expired: "Подписка этого устройства устарела. Выключите и снова включите напоминания.",
     noneReceived: "Ни одно устройство не получило уведомление",
     testFailed: (reason: string) => `Не удалось отправить тест (${reason})`,
-    timeStep: "Выберите время с шагом 15 минут",
+    timeInvalid: "Укажите время в формате ЧЧ:ММ",
     unknownTimezone: "Неизвестный часовой пояс",
     invalidSubscription: "Некорректная подписка",
   },

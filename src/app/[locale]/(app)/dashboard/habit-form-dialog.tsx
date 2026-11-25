@@ -165,7 +165,7 @@ export function HabitFormDialog({ open, onOpenChange, habit }: Props) {
                 <Input
                   id="habit-remind"
                   type="time"
-                  step={900}
+                  step={60}
                   className="pl-8"
                   aria-invalid={!!errors.remind_at}
                   aria-describedby="habit-remind-hint"

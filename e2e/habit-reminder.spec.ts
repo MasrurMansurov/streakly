@@ -25,22 +25,22 @@ test("a habit can have its own reminder time", async ({ page }) => {
   await page.getByRole("button", { name: "or create your own" }).click()
   await page.getByLabel("Name").fill(name)
   const dialog = page.getByRole("dialog")
-  await dialog.getByLabel(/^Reminder/).fill("07:30")
+  await dialog.getByLabel(/^Reminder/).fill("07:37")
   await expect(page.getByText("Saving turns on notifications on this device.")).toBeVisible()
   await page.getByRole("button", { name: "Create habit" }).click()
   await expect(page.getByText("Reminder saved, but it won't reach this device")).toBeVisible()
 
   const card = page.locator("[data-slot=card]", { has: page.locator("h3", { hasText: name }) })
-  await expect(card.getByText("07:30")).toBeVisible()
+  await expect(card.getByText("07:37")).toBeVisible()
 
   // edit: the time is prefilled, clearing it removes the reminder
   await card.getByRole("button", { name: "Habit actions" }).click()
   await page.getByRole("menuitem", { name: "Edit" }).click()
-  await expect(dialog.getByLabel(/^Reminder/)).toHaveValue("07:30")
+  await expect(dialog.getByLabel(/^Reminder/)).toHaveValue("07:37")
   await dialog.getByRole("button", { name: "Clear" }).click()
   await dialog.getByRole("button", { name: "Save" }).click()
   await expect(dialog).toHaveCount(0)
-  await expect(card.getByText("07:30")).toHaveCount(0)
+  await expect(card.getByText("07:37")).toHaveCount(0)
 
   await deleteHabit(page, name)
 })
@@ -76,9 +76,9 @@ test("setting a reminder time turns notifications on for this device", async ({ 
   const name = `E2E push ${Date.now()}`
   await page.getByRole("button", { name: "or create your own" }).click()
   await page.getByLabel("Name").fill(name)
-  await page.getByRole("dialog").getByLabel(/^Reminder/).fill("07:45")
+  await page.getByRole("dialog").getByLabel(/^Reminder/).fill("07:43")
   await page.getByRole("button", { name: "Create habit" }).click()
-  await expect(page.getByText("Notifications are on — we'll remind you at 07:45.")).toBeVisible()
+  await expect(page.getByText("Notifications are on — we'll remind you at 07:43.")).toBeVisible()
 
   // Settings reflect it: reminders on, this device subscribed
   await page.goto("/settings", { waitUntil: "networkidle" })
