@@ -49,6 +49,12 @@ export type Database = {
         Update: { challenge_id?: string; habit_id?: string | null; invited_at?: string; joined_at?: string | null; status?: string; user_id?: string }
         Relationships: []
       }
+      invites: {
+        Row: { code: string; created_at: string; habit_id: string | null; inviter_id: string; uses: number }
+        Insert: { code: string; created_at?: string; habit_id?: string | null; inviter_id?: string; uses?: number }
+        Update: { code?: string; created_at?: string; habit_id?: string | null; inviter_id?: string; uses?: number }
+        Relationships: []
+      }
       events: {
         Row: { created_at: string; id: number; name: string; props: Json; user_id: string }
         Insert: { created_at?: string; id?: never; name: string; props?: Json; user_id?: string }
@@ -408,6 +414,14 @@ export type Database = {
       achievement_stats: {
         Args: { p_user: string }
         Returns: { total_checkins: number; best_streak: number; comebacks: number; quick_comebacks: number }[]
+      }
+      accept_invite: {
+        Args: { p_code: string }
+        Returns: { inviter_username: string; pact_proposed: boolean }[]
+      }
+      invite_preview: {
+        Args: { p_code: string }
+        Returns: { inviter_name: string; inviter_username: string; inviter_avatar: string | null; habit_name: string | null; habit_color: string | null; habit_checkins_30: number | null }[]
       }
       claim_push_subscription: {
         Args: { p_endpoint: string; p_p256dh: string; p_auth: string; p_user_agent?: string }

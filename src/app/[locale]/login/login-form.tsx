@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useSearchParams } from "next/navigation"
 import { Suspense } from "react"
-import { useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 
@@ -31,6 +31,11 @@ export function LoginForm({ providers }: { providers: OAuthProvider[] }) {
   const { t } = useI18n()
   const [mode, setMode] = useState<Mode>("signin")
   const [sentTo, setSentTo] = useState<string | null>(null)
+  // invite links send new people here with ?signup=1 (read in the browser: the page stays static)
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (new URLSearchParams(window.location.search).get("signup") === "1") setMode("signup")
+  }, [])
   const [pending, startTransition] = useTransition()
 
   const form = useForm<AuthInput>({

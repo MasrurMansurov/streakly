@@ -22,6 +22,7 @@ import { ConfettiBurst } from "@/components/confetti-burst"
 import { IconTile } from "@/components/icon-tile"
 import { SummaryStrip } from "@/components/summary-strip"
 import { HabitTemplates } from "./habit-templates"
+import { InvitePrompt } from "./invite-prompt"
 import { PactsCard } from "./pacts-card"
 import { ShareDialog } from "./share-dialog"
 import type { Pact } from "@/lib/pacts"
@@ -468,6 +469,11 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
                 ))}
               </div>
             </details>
+          )}
+
+          {/* the best moment to ask: a check-in just made, and no shared streak yet */}
+          {doneToday > 0 && pacts.length === 0 && (
+            <InvitePrompt habits={habits.map((h) => ({ id: h.id, name: h.name, color: h.color }))} />
           )}
 
           <FeelingCard today={feelings[today] ?? { mood: null, energy: null }} />

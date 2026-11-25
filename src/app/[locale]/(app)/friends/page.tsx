@@ -6,6 +6,7 @@ import { ChallengesCard } from "@/components/challenges/challenges-card"
 import { FollowButton } from "@/components/follow-button"
 import { IconTile } from "@/components/icon-tile"
 import { PactInviteButton } from "@/components/pact-invite-button"
+import { InviteDialog } from "@/components/invite-dialog"
 import { Link } from "@/components/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -32,9 +33,14 @@ export default async function FriendsPage({ searchParams }: { searchParams: Prom
           <h1 className="text-2xl font-semibold tracking-tight">{t.friends.title}</h1>
           <p className="text-sm text-muted-foreground">{t.friends.subtitle}</p>
         </div>
-        <Button variant="outline" size="sm" render={<Link href="/leaderboard" />}>
-          <TrophyIcon aria-hidden /> {t.nav.leaderboard}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Suspense fallback={null}>
+            <FriendsInvite />
+          </Suspense>
+          <Button variant="outline" render={<Link href="/leaderboard" />}>
+            <TrophyIcon aria-hidden /> {t.nav.leaderboard}
+          </Button>
+        </div>
       </div>
 
       <form role="search" action={`/${locale}/friends`} className="grid gap-2">
@@ -248,4 +254,10 @@ function FeedDay({ label, items, locale, timeZone }: { label: string; items: Fee
       </Card>
     </section>
   )
+}
+
+/** "Invite a friend" in the header (needs the user's habits for the optional pact). */
+async function FriendsInvite() {
+  const habits = await getMyHabitChoices()
+  return <InviteDialog habits={habits} />
 }
