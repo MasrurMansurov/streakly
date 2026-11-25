@@ -17,6 +17,14 @@ export type Database = {
   }
   public: {
     Tables: {
+      habit_reminders: {
+        Row: { habit_id: string; last_sent_on: string | null; remind_at: string; user_id: string }
+        Insert: { habit_id: string; last_sent_on?: string | null; remind_at: string; user_id?: string }
+        Update: { habit_id?: string; last_sent_on?: string | null; remind_at?: string; user_id?: string }
+        Relationships: [
+          { foreignKeyName: "habit_reminders_habit_id_fkey"; columns: ["habit_id"]; isOneToOne: true; referencedRelation: "habits"; referencedColumns: ["id"] },
+        ]
+      }
       weekly_letters: {
         Row: { body: string; created_at: string; locale: string; user_id: string; week_start: string }
         Insert: { body: string; created_at?: string; locale: string; user_id?: string; week_start: string }

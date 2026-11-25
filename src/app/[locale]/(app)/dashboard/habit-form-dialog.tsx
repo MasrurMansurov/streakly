@@ -1,9 +1,9 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { CheckIcon } from "lucide-react"
+import { BellIcon, CheckIcon } from "lucide-react"
 import { useTransition } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 
 import { createHabit, updateHabit } from "@/app/actions/habits"
@@ -45,11 +45,13 @@ export function HabitFormDialog({ open, onOpenChange, habit }: Props) {
       description: habit?.description ?? "",
       mini_label: habit?.mini_label ?? "",
       cue: habit?.cue ?? "",
+      remind_at: habit?.remind_at ?? "",
       color: (habit?.color as HabitColor) ?? "emerald",
       target_per_week: habit?.target_per_week ?? 7,
     },
   })
   const { errors } = form.formState
+  const remindAt = useWatch({ control: form.control, name: "remind_at" })
 
   const onSubmit = form.handleSubmit((values) => {
     startTransition(async () => {
@@ -126,6 +128,35 @@ export function HabitFormDialog({ open, onOpenChange, habit }: Props) {
               {t.habitForm.cueHint}
             </p>
             {errors.cue && <p className="text-xs text-destructive">{validationMessage(t, errors.cue.message)}</p>}
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="habit-remind">
+              {t.habitForm.remindAt} <span className="font-normal text-muted-foreground">{t.habitForm.optional}</span>
+            </Label>
+            <div className="flex items-center gap-2">
+              <div className="relative w-36">
+                <BellIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="habit-remind"
+                  type="time"
+                  step={900}
+                  className="pl-8"
+                  aria-invalid={!!errors.remind_at}
+                  aria-describedby="habit-remind-hint"
+                  {...form.register("remind_at")}
+                />
+              </div>
+              {remindAt && (
+                <Button type="button" variant="ghost" size="sm" onClick={() => form.setValue("remind_at", "", { shouldDirty: true })}>
+                  {t.habitForm.clearTime}
+                </Button>
+              )}
+            </div>
+            <p id="habit-remind-hint" className="text-xs text-muted-foreground">
+              {t.habitForm.remindAtHint} {remindAt && t.habitForm.remindAtNeedsPush}
+            </p>
+            {errors.remind_at && <p className="text-xs text-destructive">{validationMessage(t, errors.remind_at.message)}</p>}
           </div>
 
           <div className="grid gap-2">

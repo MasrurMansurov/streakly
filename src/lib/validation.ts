@@ -18,6 +18,12 @@ export const habitSchema = z.object({
   cue: z.string().trim().max(80, "cueMax").optional().or(z.literal("")),
   /** smaller version that still keeps the streak, e.g. "1 page" */
   mini_label: z.string().trim().max(60, "miniMax").optional().or(z.literal("")),
+  /** own reminder time for this habit, "HH:MM" in the user's time zone; "" = none */
+  remind_at: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "timeInvalid")
+    .optional()
+    .or(z.literal("")),
   color: z.enum(HABIT_COLOR_NAMES),
   /** 7 = every day, 1–6 = times per week */
   target_per_week: z.number().int().min(1).max(7),

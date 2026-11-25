@@ -17,7 +17,10 @@ import type { AchievementStats } from "./achievements"
 import type { Tables } from "./supabase/database.types"
 
 export type Profile = Tables<"profiles">
-export type Habit = Pick<Tables<"habits">, "id" | "name" | "description" | "color" | "position" | "target_per_week" | "created_at" | "mini_label" | "cue" | "graduated_at">
+export type Habit = Pick<Tables<"habits">, "id" | "name" | "description" | "color" | "position" | "target_per_week" | "created_at" | "mini_label" | "cue" | "graduated_at"> & {
+  /** own reminder time "HH:MM" (owner only) */
+  remind_at?: string | null
+}
 export type HabitLog = Pick<Tables<"habit_logs">, "habit_id" | "log_date"> & { is_mini?: boolean }
 
 /** How far back the dashboard and public profile look. */
@@ -98,7 +101,7 @@ export async function getDashboardData() {
   const [habitsRes, logs, profileRes, archivedCount, notesRes, stats] = await Promise.all([
     supabase
       .from("habits")
-      .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue, graduated_at")
+      .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue, graduated_at, habit_reminders(remind_at)")
       .eq("user_id", user.id) // RLS also exposes other users' *public* habits
       .is("archived_at", null)
       .order("position")
@@ -131,7 +134,10 @@ export async function getDashboardData() {
   return {
     user,
     profile: profileRes.data,
-    habits: habitsRes.data,
+    habits: habitsRes.data.map(({ habit_reminders, ...h }): Habit => ({
+      ...h,
+      remind_at: habit_reminders?.remind_at.slice(0, 5) ?? null,
+    })),
     logs,
     today,
     timeZone,
@@ -225,13 +231,15 @@ async function getArchivedCount(userId: string): Promise<number> {
 export async function getHabitDetail(id: string) {
   const user = await requireUser()
   const [{ today }, supabase] = await Promise.all([getToday(), createClient()])
-  const { data: habit } = await supabase
+  const { data: row } = await supabase
     .from("habits")
-    .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue, graduated_at, archived_at")
+    .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue, graduated_at, archived_at, habit_reminders(remind_at)")
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle()
-  if (!habit) return null
+  if (!row) return null
+  const { habit_reminders, ...rest } = row
+  const habit = { ...rest, remind_at: habit_reminders?.remind_at.slice(0, 5) ?? null }
 
   const since = addDays(today, -370)
   const logs = await fetchAllLogs((from, to) =>

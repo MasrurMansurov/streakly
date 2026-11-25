@@ -1,5 +1,6 @@
 // Streakly reminders: sends a Web Push notification to users who still have
-// habits due today, at their chosen local time.
+// habits due today, at their chosen local time — plus a separate push for each
+// habit that has its own reminder time.
 //
 // Called by:
 //   - pg_cron every 15 min      → { action: "send" }            auth: x-cron-token (Vault secret)
@@ -107,7 +108,7 @@ async function push(subs: Sub[], payload: Payload) {
  * Habits still due today for a user (not done today, weekly target not reached),
  * with the daily streak that ends yesterday (consecutive dates d where d + rank = today).
  */
-async function dueHabits(userId: string, localDate: string) {
+async function dueHabits(userId: string, localDate: string, scope: { only?: string; skipTimed?: boolean } = {}) {
   return await sql<{ id: string; name: string; streak: number; cue: string | null }[]>`
     select h.id, h.name, h.cue,
       case when h.target_per_week >= 7 then (
@@ -121,6 +122,9 @@ async function dueHabits(userId: string, localDate: string) {
     where h.user_id = ${userId}
       and h.archived_at is null
       and h.graduated_at is null  -- graduated habits run on autopilot: no reminders
+      ${scope.only ? sql`and h.id = ${scope.only}` : sql``}
+      -- habits with their own time get their own push, not the daily one
+      ${scope.skipTimed ? sql`and not exists (select 1 from public.habit_reminders r where r.habit_id = h.id)` : sql``}
       and not exists (select 1 from public.habit_logs l where l.habit_id = h.id and l.log_date = ${localDate}::date)
       and (
         h.target_per_week >= 7
@@ -184,7 +188,11 @@ const short = (s: string, n = 28) => (s.length > n ? `${s.slice(0, n - 1)}…` :
  * The daily reminder. If a streak of 3+ days is at stake, lead with it ("at risk");
  * the most important habit gets a one-tap check-in button.
  */
-function message(habits: { id: string; name: string; streak: number; cue?: string | null }[], locale: Locale): Payload {
+function message(
+  habits: { id: string; name: string; streak: number; cue?: string | null }[],
+  locale: Locale,
+  opts: { tag?: string; due?: number } = {}
+): Payload {
   const t = TEXT[locale]
   const names = habits.map((h) => h.name)
   const top = [...habits].sort((a, b) => b.streak - a.streak)[0]
@@ -201,11 +209,11 @@ function message(habits: { id: string; name: string; streak: number; cue?: strin
           ? t.one(names[0])
           : t.many(names.length, list),
     url: top ? `/${locale}/dashboard#habit-${top.id}` : `/${locale}/dashboard`,
-    tag: "daily-reminder",
+    tag: opts.tag ?? "daily-reminder",
     actions: top ? [{ action: "checkin", title: short(t.checkIn(top.name)) }] : [],
     habitId: top?.id,
     doneText: t.done,
-    due: habits.length,
+    due: opts.due ?? habits.length,
   }
 }
 
@@ -229,7 +237,7 @@ async function runReminders(dryRun: boolean) {
 
   const results = []
   for (const c of candidates) {
-    const due = await dueHabits(c.user_id, c.local_date)
+    const due = await dueHabits(c.user_id, c.local_date, { skipTimed: true })
     if (dryRun) {
       results.push({ user: c.user_id.slice(0, 8), due: due.length, risk: Math.max(0, ...due.map((h) => h.streak)) })
       continue
@@ -242,7 +250,53 @@ async function runReminders(dryRun: boolean) {
       returning user_id`
     if (claimed.length === 0 || due.length === 0) continue
     const subs = await sql<Sub[]>`select id, endpoint, p256dh, auth from public.push_subscriptions where user_id = ${c.user_id}`
-    results.push({ user: c.user_id.slice(0, 8), due: due.length, ...(await push(subs, message(due, asLocale(c.locale)))) })
+    const allDue = (await dueHabits(c.user_id, c.local_date)).length
+    results.push({ user: c.user_id.slice(0, 8), due: due.length, ...(await push(subs, message(due, asLocale(c.locale), { due: allDue }))) })
+  }
+  return { candidates: candidates.length, results }
+}
+
+/**
+ * Per-habit reminders ("Workout" at 07:00): one push per habit at its own local
+ * time, once a day, only while it's still due. Same master switch, time zone and
+ * vacation rules as the daily reminder.
+ */
+async function runHabitReminders(dryRun: boolean) {
+  const candidates = await sql<{ habit_id: string; user_id: string; local_date: string; locale: string }[]>`
+    select r.habit_id, r.user_id, rs.locale, ((now() at time zone rs.timezone)::date)::text as local_date
+    from public.habit_reminders r
+    join public.reminder_settings rs on rs.user_id = r.user_id
+    join pg_timezone_names tz on tz.name = rs.timezone
+    where rs.enabled
+      and exists (select 1 from public.push_subscriptions s where s.user_id = r.user_id)
+      and ((now() at time zone rs.timezone)::time - r.remind_at) >= interval '0'
+      and ((now() at time zone rs.timezone)::time - r.remind_at) < interval '2 hours'
+      and (r.last_sent_on is null or r.last_sent_on < (now() at time zone rs.timezone)::date)
+      and not exists (
+        select 1 from public.pauses p
+        where p.user_id = r.user_id
+          and (now() at time zone rs.timezone)::date between p.start_date and p.end_date
+      )`
+
+  const results = []
+  for (const c of candidates) {
+    const due = await dueHabits(c.user_id, c.local_date, { only: c.habit_id })
+    if (dryRun) {
+      results.push({ habit: c.habit_id.slice(0, 8), due: due.length })
+      continue
+    }
+    const claimed = await sql`
+      update public.habit_reminders set last_sent_on = ${c.local_date}::date
+      where habit_id = ${c.habit_id}
+        and (last_sent_on is null or last_sent_on < ${c.local_date}::date)
+      returning habit_id`
+    if (claimed.length === 0 || due.length === 0) continue // already done today → stay quiet
+    const subs = await sql<Sub[]>`select id, endpoint, p256dh, auth from public.push_subscriptions where user_id = ${c.user_id}`
+    const allDue = (await dueHabits(c.user_id, c.local_date)).length
+    results.push({
+      habit: c.habit_id.slice(0, 8),
+      ...(await push(subs, message(due, asLocale(c.locale), { tag: `habit-${c.habit_id}`, due: allDue }))),
+    })
   }
   return { candidates: candidates.length, results }
 }
@@ -378,7 +432,10 @@ Deno.serve(async (req) => {
 
     if (action === "setup") return json({ publicKey: (await vapidKeys(true)).publicKey })
     if (action === "selftest") return json(await selfTest())
-    if (action === "send") return json(await runReminders(Boolean(dryRun)))
+    if (action === "send") {
+      const [daily, perHabit] = [await runReminders(Boolean(dryRun)), await runHabitReminders(Boolean(dryRun))]
+      return json({ ...daily, perHabit })
+    }
     if (action === "cleanup") return json(await cleanupProofs())
     return json({ error: "unknown action" }, 400)
   } catch (e) {

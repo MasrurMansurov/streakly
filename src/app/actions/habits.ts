@@ -27,6 +27,14 @@ async function invalidatePublicProfile(supabase: Awaited<ReturnType<typeof creat
   if (data) updateTag(`profile:${data.username}`)
 }
 
+/** Sets or clears a habit's own reminder time (RLS: owner only). */
+async function saveReminder(supabase: Awaited<ReturnType<typeof createClient>>, habitId: string, remindAt: string | undefined) {
+  if (remindAt) {
+    return (await supabase.from("habit_reminders").upsert({ habit_id: habitId, remind_at: remindAt }, { onConflict: "habit_id" })).error
+  }
+  return (await supabase.from("habit_reminders").delete().eq("habit_id", habitId)).error
+}
+
 export async function createHabit(input: HabitInput): Promise<ActionResult> {
   const parsed = habitSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: validationMessage((await getActionT()).t, parsed.error.issues[0]?.message) }
@@ -38,16 +46,24 @@ export async function createHabit(input: HabitInput): Promise<ActionResult> {
     .eq("user_id", user.id)
     .is("archived_at", null)
 
-  const { error } = await supabase.from("habits").insert({
-    name: parsed.data.name,
-    description: parsed.data.description || null,
-    mini_label: parsed.data.mini_label || null,
-    cue: parsed.data.cue || null,
-    color: parsed.data.color,
-    target_per_week: parsed.data.target_per_week,
-    position: count ?? 0,
-  })
+  const { data: created, error } = await supabase
+    .from("habits")
+    .insert({
+      name: parsed.data.name,
+      description: parsed.data.description || null,
+      mini_label: parsed.data.mini_label || null,
+      cue: parsed.data.cue || null,
+      color: parsed.data.color,
+      target_per_week: parsed.data.target_per_week,
+      position: count ?? 0,
+    })
+    .select("id")
+    .single()
   if (error) return { ok: false, error: error.message }
+  if (parsed.data.remind_at) {
+    const reminderError = await saveReminder(supabase, created.id, parsed.data.remind_at)
+    if (reminderError) return { ok: false, error: reminderError.message }
+  }
 
   await invalidatePublicProfile(supabase, user.id)
   refresh()
@@ -71,6 +87,8 @@ export async function updateHabit(id: string, input: HabitInput): Promise<Action
     })
     .eq("id", id)
   if (error) return { ok: false, error: error.message }
+  const reminderError = await saveReminder(supabase, id, parsed.data.remind_at)
+  if (reminderError) return { ok: false, error: reminderError.message }
 
   await invalidatePublicProfile(supabase, user.id)
   refresh()

@@ -1,6 +1,6 @@
 "use client"
 
-import { ArchiveIcon, CheckIcon, ClockArrowUpIcon, GraduationCapIcon, RotateCcwIcon, FlameIcon, SnowflakeIcon, TreePalmIcon, WrenchIcon, MessageSquarePlusIcon, StickyNoteIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import { ArchiveIcon, BellIcon, CheckIcon, ClockArrowUpIcon, GraduationCapIcon, RotateCcwIcon, FlameIcon, SnowflakeIcon, TreePalmIcon, WrenchIcon, MessageSquarePlusIcon, StickyNoteIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import { useState, useTransition, type ReactNode, useMemo } from "react"
 import { toast } from "sonner"
 
@@ -140,10 +140,21 @@ export function HabitCard({ habit, done, mini, paused, repaired, strength = [], 
               </Link>
             </h3>
           </div>
-          {habit.cue && (
-            <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground" title={t.habit.planTitle}>
-              <ClockArrowUpIcon className={cn("size-3.5 shrink-0", color.text)} aria-hidden />
-              <span className="truncate">{t.habit.when(habit.cue)}</span>
+          {(habit.cue || habit.remind_at) && (
+            <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+              {habit.cue && (
+                <span className="flex min-w-0 items-center gap-1.5" title={t.habit.planTitle}>
+                  <ClockArrowUpIcon className={cn("size-3.5 shrink-0", color.text)} aria-hidden />
+                  <span className="truncate">{t.habit.when(habit.cue)}</span>
+                </span>
+              )}
+              {habit.remind_at && (
+                <span className="flex shrink-0 items-center gap-1 tabular-nums" title={t.habitForm.remindAt}>
+                  <BellIcon className={cn("size-3.5", color.text)} aria-hidden />
+                  <span className="sr-only">{t.habitForm.remindAt}:</span>
+                  {habit.remind_at}
+                </span>
+              )}
             </p>
           )}
           {habit.description && <p className="mt-0.5 truncate text-sm text-muted-foreground">{habit.description}</p>}

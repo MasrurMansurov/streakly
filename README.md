@@ -107,6 +107,7 @@ research review of retention mechanics (Duolingo, Strava, Wordle…) and habit-f
 
 ### Reminders, PWA & offline
 - **Daily reminder** at your time (Web Push) — only if something is still due; leads with the streak at risk and uses your if-then plan.
+- **Per-habit reminders** — give a habit its own time ("Workout" at 07:00, "Read" at 22:00): it gets a separate push then, only if it's still undone, and is left out of the daily one. The time is stored owner-only (`habit_reminders`), not on the publicly readable habit.
 - **One-tap check-in from the notification** (Chrome/Edge/Android/Firefox; elsewhere a tap opens the right habit) and an app-icon badge with habits left.
 - **Installable PWA** with a phone tab bar; **offline**: pages open without a connection, check-ins are queued on the device and synced later.
 
@@ -156,7 +157,7 @@ src/
     ├── ranks.ts offline-queue.ts csv.ts dates.ts …                             ┘
     └── supabase/               # server, browser, proxy and public clients + generated types
 supabase/
-├── migrations/                 # schema, RLS policies, functions, triggers, cron (26 migrations)
+├── migrations/                 # schema, RLS policies, functions, triggers, cron (27 migrations)
 └── functions/send-reminders/   # Web Push: daily reminders, pact nudges, test pushes
 public/sw.js                    # service worker: push, notification actions, offline cache
 ```
@@ -179,13 +180,14 @@ auth.users ─1:1─ profiles (username, display_name, bio, avatar_url, is_publi
                    ├─1:n─ habit_strength (week_start, score 1–5)  ·  habits.graduated_at
                    ├─1:n─ daily_moods (day, mood, energy)
                    ├─1:1─ reminder_settings (time, timezone, locale, enabled)
+                   ├─1:n─ habit_reminders (own time per habit, owner-only)
                    └─1:n─ push_subscriptions (endpoint, keys)
 ```
 
 ### How some of it works
 - **Streaks are pure functions.** Freezes, repairs and vacation days are "bridges" that keep a run alive without counting as check-ins. The same code runs on the dashboard, habit page, public profile and share cards.
 - **Caching.** Public profiles and the leaderboard are fetched with a cookie-less client inside `"use cache"` and invalidated with `updateTag` when the owner changes data. Signed-in pages render at request time behind `<Suspense>`; guests get public pages straight from the CDN — the proxy doesn't even run for them.
-- **Reminders.** `pg_cron` calls the `send-reminders` Edge Function every 15 minutes with a token from Vault. It finds users whose local reminder time just passed, claims the day atomically (no double sends), builds the message (streak at risk → if-then plan → list) and sends Web Push with a one-tap action. VAPID keys are generated inside the database and never leave Vault.
+- **Reminders.** `pg_cron` calls the `send-reminders` Edge Function every 15 minutes with a token from Vault. It finds users whose local reminder time just passed, claims the day atomically (no double sends), builds the message (streak at risk → if-then plan → list) and sends Web Push with a one-tap action. Habits with their own time are handled the same way, one push per habit, claimed per habit per day. VAPID keys are generated inside the database and never leave Vault.
 - **One-tap check-in.** The notification action is handled by the service worker, which calls `POST /api/checkin` with the user's cookies; the route accepts same-origin requests only, marks today in the user's timezone, refreshes the public profile cache and nudges a pact partner via `after()`.
 - **Offline.** Static assets are cache-first, pages network-first with the last good copy as a fallback. Check-ins made offline go to a device queue (last toggle per habit/day wins) and are replayed in order when the browser is back online.
 - **Share cards** are rendered with `next/og` (Satori) using the brand fonts with separate Latin and Cyrillic subsets.
