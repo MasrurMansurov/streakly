@@ -19,13 +19,18 @@ type Props = {
 export function NotesList({ habitId, habitName, dates, notes }: Props) {
   const { locale, t } = useI18n()
   const [editing, setEditing] = useState<string | null>(null)
+  const [showAll, setShowAll] = useState(false)
 
   if (dates.length === 0) return <p className="text-sm text-muted-foreground">{t.notes.empty}</p>
+
+  // days with a note always show; of the rest, only the last week (to add one)
+  const visible = showAll ? dates : dates.filter((d, i) => notes[d] || i < 7)
+  const hidden = dates.length - visible.length
 
   return (
     <>
       <ul className="divide-y">
-        {dates.map((date) => {
+        {visible.map((date) => {
           const note = notes[date]
           return (
             <li key={date} className="flex items-start gap-3 py-2.5">
@@ -54,6 +59,11 @@ export function NotesList({ habitId, habitName, dates, notes }: Props) {
           )
         })}
       </ul>
+      {hidden > 0 && (
+        <Button variant="ghost" size="sm" className="mt-1 text-muted-foreground" onClick={() => setShowAll(true)}>
+          {t.notes.showAll(hidden)}
+        </Button>
+      )}
 
       {editing && (
         <NoteDialog

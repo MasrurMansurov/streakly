@@ -20,6 +20,7 @@ import { canComeBackToday, comebackDays, isQuickComeback } from "@/lib/comeback"
 import { AchievementBadge } from "@/components/achievement-badge"
 import { ConfettiBurst } from "@/components/confetti-burst"
 import { IconTile } from "@/components/icon-tile"
+import { SummaryStrip } from "@/components/summary-strip"
 import { HabitTemplates } from "./habit-templates"
 import { PactsCard } from "./pacts-card"
 import { ShareDialog } from "./share-dialog"
@@ -384,12 +385,14 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
       ) : (
         <>
           {/* one quiet summary line — the habits below are the main thing */}
-          <dl className="grid grid-cols-4 divide-x rounded-xl border bg-card">
-            <Stat label={t.dashboard.statToday} value={`${doneToday}/${habits.length}`} />
-            <Stat label={t.dashboard.statBestStreak} value={bestStreak} />
-            <Stat label={t.dashboard.statCompletion} value={`${Math.round(rate30 * 100)}%`} />
-            <Stat label={t.dashboard.statCheckIns} value={String(totalCheckIns)} />
-          </dl>
+          <SummaryStrip
+            items={[
+              { label: t.dashboard.statToday, value: `${doneToday}/${habits.length}` },
+              { label: t.dashboard.statBestStreak, value: bestStreak },
+              { label: t.dashboard.statCompletion, value: `${Math.round(rate30 * 100)}%` },
+              { label: t.dashboard.statCheckIns, value: String(totalCheckIns) },
+            ]}
+          />
 
           {activePause && (
             <p
@@ -512,15 +515,6 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
       )}
 
       <HabitFormDialog open={createOpen} onOpenChange={setCreateOpen} />
-    </div>
-  )
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0 px-3 py-2.5 sm:px-4 sm:py-3">
-      <dt className="truncate text-xs text-muted-foreground">{label}</dt>
-      <dd className="text-lg font-semibold sm:text-xl">{value}</dd>
     </div>
   )
 }

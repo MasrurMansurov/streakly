@@ -302,6 +302,7 @@ export const ru: Dictionary = {
     invalidSubscription: "Некорректная подписка",
   },
   notes: {
+    showAll: (n: number) => `Показать ещё ${n} ${p(n, "день", "дня", "дней")}`,
     title: "Заметки",
     subtitle: "Ваши последние отметки. Заметки приватные — их видите только вы.",
     add: "Добавить заметку",

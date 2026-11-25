@@ -97,8 +97,9 @@ function Row({ row, place, t }: { row: LeaderboardRow; place: number; t: Diction
             <AvatarFallback className="text-xs">{row.name.slice(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
           <span className="min-w-0">
-            <span className={cn("block truncate font-semibold hover:underline", rank.text)}>{row.name}</span>
+            <span className="block truncate font-medium hover:underline">{row.name}</span>
             <span className="block truncate text-xs text-muted-foreground">
+              <span className={cn("mr-1 inline-block size-1.5 rounded-full align-middle", rank.dot)} aria-hidden />
               {t.leaderboard.ranks[rank.key]} · @{row.username}
             </span>
           </span>

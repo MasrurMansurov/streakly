@@ -1,4 +1,4 @@
-import { FlameIcon, TrophyIcon } from "lucide-react"
+import { FlameIcon } from "lucide-react"
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
@@ -6,6 +6,7 @@ import { Suspense } from "react"
 import { Achievements } from "@/components/achievements"
 import { Heatmap } from "@/components/heatmap"
 import { SiteFooter } from "@/components/site-footer"
+import { SummaryStrip } from "@/components/summary-strip"
 import { ProfileHeader } from "@/components/profile-header"
 import { SiteHeader } from "@/components/site-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -114,22 +115,13 @@ async function PublicProfile({ params }: Props) {
         }
       />
 
-      <div className="grid grid-cols-3 gap-3">
-        <Card className="gap-1 p-4">
-          <span className="text-xs text-muted-foreground">{t.publicProfile.habits}</span>
-          <span className="text-2xl font-semibold">{habits.length}</span>
-        </Card>
-        <Card className="gap-1 p-4">
-          <span className="text-xs text-muted-foreground">{t.publicProfile.checkIns}</span>
-          <span className="text-2xl font-semibold">{logs.length}</span>
-        </Card>
-        <Card className="gap-1 p-4">
-          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-            <TrophyIcon className="size-3.5" aria-hidden /> {t.publicProfile.bestStreak}
-          </span>
-          <span className="text-2xl font-semibold">{t.dashboard.streakShort(best, "day")}</span>
-        </Card>
-      </div>
+      <SummaryStrip
+        items={[
+          { label: t.publicProfile.habits, value: String(habits.length) },
+          { label: t.publicProfile.checkIns, value: String(logs.length) },
+          { label: t.publicProfile.bestStreak, value: t.dashboard.streakShort(best, "day") },
+        ]}
+      />
 
       <Card>
         <CardHeader>

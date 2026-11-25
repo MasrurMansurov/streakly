@@ -4,12 +4,7 @@ import {
   LockIcon,
   RotateCcwIcon,
   ClockArrowUpIcon,
-  CalendarDaysIcon,
-  FlameIcon,
   StickyNoteIcon,
-  TrendingUpIcon,
-  TrophyIcon,
-  type LucideIcon,
 } from "lucide-react"
 import type { Metadata } from "next"
 
@@ -18,7 +13,7 @@ import { notFound } from "next/navigation"
 import { Suspense } from "react"
 
 import { Heatmap } from "@/components/heatmap"
-import { IconTile, type IconTone } from "@/components/icon-tile"
+import { IconTile } from "@/components/icon-tile"
 import { Link } from "@/components/link"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -35,6 +30,7 @@ import { cn } from "@/lib/utils"
 import { ActivityChart } from "../../dashboard/activity-chart"
 import { comebackDays, isQuickComeback } from "@/lib/comeback"
 
+import { SummaryStrip } from "@/components/summary-strip"
 import { ArchivedCheckIn } from "./archived-check-in"
 import { HabitActions } from "./habit-actions"
 import { NotesList } from "./notes-list"
@@ -135,17 +131,15 @@ async function HabitDetail({ params }: Props) {
         />
       )}
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat icon={FlameIcon} tone="orange" label={t.habitPage.currentStreak} value={t.habit.streak(streak.current, streak.unit)} />
-        <Stat icon={TrophyIcon} tone="amber" label={t.habitPage.bestStreak} value={t.habit.streak(streak.best, streak.unit)} />
-        <Stat
-          icon={TrendingUpIcon}
-          tone="sky"
-          label={t.habitPage.completion}
-          value={`${Math.round(completionRate(done, today, 30, createdOn, target, bridges) * 100)}%`}
-        />
-        <Stat icon={CalendarDaysIcon} tone="violet" label={t.habitPage.checkInsYear} value={String(yearCount)} />
-      </div>
+      <SummaryStrip
+        className="max-sm:grid-cols-2! max-sm:divide-x-0"
+        items={[
+          { label: t.habitPage.currentStreak, value: t.habit.streak(streak.current, streak.unit) },
+          { label: t.habitPage.bestStreak, value: t.habit.streak(streak.best, streak.unit) },
+          { label: t.habitPage.completion, value: `${Math.round(completionRate(done, today, 30, createdOn, target, bridges) * 100)}%` },
+          { label: t.habitPage.checkInsYear, value: String(yearCount) },
+        ]}
+      />
 
       {target >= 7 && comebacks.length > 0 && (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -225,42 +219,13 @@ async function HabitDetail({ params }: Props) {
   )
 }
 
-function Stat({
-  icon,
-  tone,
-  label,
-  value,
-  index = 0,
-}: {
-  icon: LucideIcon
-  tone: IconTone
-  label: string
-  value: string
-  index?: number
-}) {
-  return (
-    <Card
-      className="flex-row items-center gap-3 p-4 transition-shadow hover:shadow-md motion-safe:animate-rise"
-      style={{ animationDelay: `${index * 70}ms` }}
-    >
-      <IconTile icon={icon} tone={tone} />
-      <div className="min-w-0">
-        <div className="truncate text-xs text-muted-foreground">{label}</div>
-        <div className="text-2xl font-semibold">{value}</div>
-      </div>
-    </Card>
-  )
-}
 
 function HabitSkeleton() {
   return (
     <div className="grid gap-6">
       <Skeleton className="h-8 w-64" />
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {Array.from({ length: 4 }, (_, i) => (
-          <Skeleton key={i} className="h-20 rounded-xl" />
-        ))}
-      </div>
+      {/* matches the summary strip */}
+      <Skeleton className="h-[68px] rounded-xl" />
       <Skeleton className="h-48 rounded-xl" />
     </div>
   )
@@ -290,14 +255,15 @@ function StrengthCard({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <GraduationCapIcon className="size-4 text-emerald-500" /> {t.strength.title}
+          <GraduationCapIcon className="size-4 text-muted-foreground" aria-hidden /> {t.strength.title}
         </CardTitle>
         <CardDescription>{t.strength.subtitle}</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-end">
         <div className="grid gap-1">
-          <span className="font-heading text-4xl font-semibold">{value === null ? "—" : `${value}%`}</span>
-          <span className="text-xs text-muted-foreground">
+          {/* no big placeholder dash: without a score, just say where the habit stands */}
+          {value !== null && <span className="font-heading text-4xl font-semibold">{value}%</span>}
+          <span className={value === null ? "text-sm font-medium" : "text-xs text-muted-foreground"}>
             {graduated ? t.strength.graduated : g.ready ? t.strength.readyTitle : t.strength.progress(g.daysLeft)}
           </span>
         </div>

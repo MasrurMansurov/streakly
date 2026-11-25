@@ -36,7 +36,7 @@ export function ActivityChart({ data, max, color = "#10b981", label = "Completed
             }}
             formatter={(value) => [value, label]}
           />
-          <Bar dataKey="done" radius={[4, 4, 0, 0]} fill={color} />
+          <Bar dataKey="done" radius={[4, 4, 0, 0]} fill={color} animationDuration={300} />
         </BarChart>
       </ResponsiveContainer>
     </div>

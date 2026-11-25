@@ -299,6 +299,7 @@ export const en = {
     invalidSubscription: "Invalid push subscription",
   },
   notes: {
+    showAll: (n: number) => `Show ${n} more ${p(n, "day", "days")}`,
     title: "Notes",
     subtitle: "Your recent check-ins. Notes are private — only you can see them.",
     add: "Add a note",
