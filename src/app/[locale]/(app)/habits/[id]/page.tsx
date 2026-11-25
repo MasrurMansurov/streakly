@@ -31,6 +31,7 @@ import { graduation, habitStrength } from "@/lib/strength"
 import { cn } from "@/lib/utils"
 
 import { ActivityChart } from "../../dashboard/activity-chart"
+import { ArchivedCheckIn } from "./archived-check-in"
 import { HabitActions } from "./habit-actions"
 import { NotesList } from "./notes-list"
 
@@ -111,6 +112,16 @@ async function HabitDetail({ params }: Props) {
         </div>
         <HabitActions habit={habit} archived={Boolean(habit.archived_at)} />
       </div>
+
+      {habit.archived_at && (
+        <ArchivedCheckIn
+          habitId={habit.id}
+          color={habit.color}
+          today={today}
+          createdOn={createdOn as ISODate}
+          done={[...done].filter((d) => d > addDays(today, -7))}
+        />
+      )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat icon={FlameIcon} tone="orange" label={t.habitPage.currentStreak} value={t.habit.streak(streak.current, streak.unit)} />

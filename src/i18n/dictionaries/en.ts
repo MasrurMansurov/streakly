@@ -192,6 +192,12 @@ export const en = {
     deleteText: (n: number) => `This permanently removes the habit and all ${n} ${p(n, "check-in", "check-ins")}.`,
     deleteAria: (name: string) => `Delete “${name}”`,
   },
+  archivedCheckIn: {
+    title: "Check-ins",
+    hint: "This habit is archived: it's off the dashboard and your public profile, and it gets no reminders. You can still check it off here — today and the last 7 days.",
+    today: "Check in today",
+    doneToday: "Done today",
+  },
   habitPage: {
     since: (date: string) => `since ${date}`,
     archivedBadge: "Archived",

@@ -196,6 +196,12 @@ export const ru: Dictionary = {
     deleteText: (n: number) => `Привычка и все ${n} ${p(n, "отметка", "отметки", "отметок")} будут удалены навсегда.`,
     deleteAria: (name: string) => `Удалить «${name}»`,
   },
+  archivedCheckIn: {
+    title: "Отметки",
+    hint: "Привычка в архиве: её нет на главной и в публичном профиле, напоминания не приходят. Но отмечать её можно здесь — за сегодня и последние 7 дней.",
+    today: "Отметить сегодня",
+    doneToday: "Сегодня отмечено",
+  },
   habitPage: {
     since: (date: string) => `с ${date}`,
     archivedBadge: "В архиве",

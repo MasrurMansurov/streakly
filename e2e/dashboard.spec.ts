@@ -139,6 +139,18 @@ test("archive, undo, archive again and restore from the archive page", async ({ 
   await expect(cardOf(name)).toHaveCount(0)
   await page.getByRole("link", { name: /archived habit/ }).click()
   await expect(page).toHaveURL(/\/archive$/)
+
+  // an archived habit can still be checked off on its own page
+  await page.getByRole("link", { name }).click()
+  await expect(page.getByText("This habit is archived: it's off the dashboard")).toBeVisible()
+  await page.getByRole("button", { name: "Check in today" }).click()
+  await expect(page.getByRole("button", { name: "Done today" })).toHaveAttribute("aria-pressed", "true")
+  await page.reload()
+  await expect(page.getByRole("button", { name: "Done today" })).toBeVisible() // saved
+  await page.getByRole("button", { name: "Done today" }).click() // undo
+  await expect(page.getByRole("button", { name: "Check in today" })).toBeVisible()
+  await page.goto("/archive")
+
   const row = page.locator("main li", { hasText: name }) // toasts are <li> too, outside <main>
   await row.getByRole("button", { name: "Restore" }).click()
   await expect(row).toHaveCount(0)
