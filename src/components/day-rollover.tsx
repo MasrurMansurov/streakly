@@ -3,22 +3,23 @@
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
-import { todayIn } from "@/lib/dates"
+import { clientToday } from "@/lib/day-start-client"
 
 export const browserTimezone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
 
 /**
  * Pages render the user's "today" on the server. A tab or installed PWA can
- * stay open across midnight, so re-render when the local date changes:
+ * stay open across the start of a new day (midnight, or the person's own
+ * day-start hour), so re-render when the person's "today" changes:
  * on return to the app, on focus, and with a light once-a-minute check.
  */
 export function DayRollover() {
   const router = useRouter()
 
   useEffect(() => {
-    let day = todayIn(browserTimezone())
+    let day = clientToday()
     const check = () => {
-      const now = todayIn(browserTimezone())
+      const now = clientToday()
       if (now === day) return
       day = now
       router.refresh()

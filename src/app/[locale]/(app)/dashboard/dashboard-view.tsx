@@ -43,8 +43,8 @@ import type { Habit, HabitLog } from "@/lib/data"
 import { Link } from "@/components/link"
 import { formatDay } from "@/i18n"
 import { useI18n } from "@/i18n/client"
-import { todayIn, type ISODate } from "@/lib/dates"
-import { browserTimezone } from "@/components/day-rollover"
+import type { ISODate } from "@/lib/dates"
+import { clientToday } from "@/lib/day-start-client"
 import { newlyEarned, type Achievement } from "@/lib/achievements"
 import { bridgesFor, completionRate, daysBetween, habitStreak, isDueToday } from "@/lib/streaks"
 import { asPauseReason, type PauseReason } from "@/lib/pause"
@@ -221,7 +221,7 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
     let done = tappedDone
     // The screen was rendered before midnight and is still open: a tap on
     // "today" means the new day, not yesterday. Re-render for the new day too.
-    const nowDay = todayIn(browserTimezone())
+    const nowDay = clientToday()
     if (date === today && nowDay > today) {
       date = nowDay
       done = true

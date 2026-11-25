@@ -381,6 +381,15 @@ export const en = {
     broken: (best: number) =>
       `Your record of ${best} stays yours. A new streak starts today — even the mini version counts.`,
   },
+  dayStart: {
+    title: "Start of your day",
+    description: "Up late? Choose when a new day starts for you: with a 3:00 start, a check-in at 1:30 a.m. counts for the day before. Streaks and reminders follow the same day.",
+    current: (time: string) => `A new day starts at ${time}.`,
+    pending: (time: string, date: string) => `From ${date}, a new day starts at ${time} — today finishes the old way, so no streak breaks.`,
+    timeZone: (tz: string) => `Time zone: ${tz}.`,
+    saved: (h: number) => `A new day now starts at ${String(h).padStart(2, "0")}:00`,
+    fromTomorrow: (h: number) => `From tomorrow, a new day starts at ${String(h).padStart(2, "0")}:00`,
+  },
   vacation: {
     title: "Vacation mode",
     description: "Going away, ill or just need a break? Pause everything: streaks don't break and reminders stay quiet. Up to 30 days.",

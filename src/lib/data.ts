@@ -4,6 +4,7 @@ import { cacheLife, cacheTag } from "next/cache"
 import { cookies } from "next/headers"
 import { connection } from "next/server"
 import { redirect } from "next/navigation"
+import { cache } from "react"
 
 import type { Pact, PactProof } from "./pacts"
 import type { PauseReason } from "./pause"
@@ -12,7 +13,7 @@ import { periodRange, type SharePeriod, type ShareHabit } from "./share"
 import type { DayFeeling } from "./insights"
 import { bridgesFor, habitStreak, weekStart } from "./streaks"
 import { evaluateAchievements } from "./achievements"
-import { addDays, DEFAULT_TIMEZONE, isValidTimezone, TIMEZONE_COOKIE, todayIn, type ISODate } from "./dates"
+import { addDays, DEFAULT_TIMEZONE, isValidTimezone, logicalToday, parseDayStart, TIMEZONE_COOKIE, type DayStart, type ISODate } from "./dates"
 import { createClient, createPublicClient } from "./supabase/server"
 import type { AchievementStats } from "./achievements"
 import type { Tables } from "./supabase/database.types"
@@ -38,20 +39,32 @@ async function achievementStats(
   return { totalCheckins: Number(data?.[0]?.total_checkins ?? 0), bestStreak: Number(data?.[0]?.best_streak ?? 0) }
 }
 
-/** The viewer's "today", based on the timezone cookie set by <TimezoneSync />. */
-export async function getToday(): Promise<{ today: ISODate; timeZone: string }> {
+/** The verified JWT claims of this request (one check per request), or null. */
+const getClaims = cache(async () => {
+  await connection() // JWT expiry check uses the current time → request-time only
+  const supabase = await createClient()
+  const { data } = await supabase.auth.getClaims()
+  return data?.claims ?? null
+})
+
+/**
+ * The viewer's "today": their time zone (cookie set by <TimezoneSync />) and
+ * their day-start hour (auth metadata, see DayStart). The one place the
+ * server decides what day it is.
+ */
+export async function getToday(): Promise<{ today: ISODate; timeZone: string; dayStart: DayStart }> {
   await connection() // "today" depends on the current time → request-time only
-  const tz = (await cookies()).get(TIMEZONE_COOKIE)?.value
+  const [jar, claims] = await Promise.all([cookies(), getClaims()])
+  const tz = jar.get(TIMEZONE_COOKIE)?.value
   const timeZone = isValidTimezone(tz) ? tz : DEFAULT_TIMEZONE
-  return { today: todayIn(timeZone), timeZone }
+  const meta = claims?.user_metadata as Record<string, unknown> | undefined
+  const dayStart = parseDayStart(meta?.day_start)
+  return { today: logicalToday(timeZone, dayStart), timeZone, dayStart }
 }
 
 /** Signed-in user (JWT verified) or null. */
 export async function getCurrentUser() {
-  await connection() // JWT expiry check uses the current time → request-time only
-  const supabase = await createClient()
-  const { data } = await supabase.auth.getClaims()
-  const claims = data?.claims
+  const claims = await getClaims()
   if (!claims?.sub) return null
   return { id: claims.sub, email: typeof claims.email === "string" ? claims.email : null }
 }

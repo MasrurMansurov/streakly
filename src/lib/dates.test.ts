@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { addDays, CHECKIN_WINDOW_DAYS, dateRange, isCheckInDateAllowed, todayIn } from "./dates"
+import { addDays, changeDayStart, CHECKIN_WINDOW_DAYS, dateRange, isCheckInDateAllowed, logicalToday, parseDayStart, todayIn } from "./dates"
 import { habitStreak, weekStart } from "./streaks"
 
 /** Timezone / midnight / DST matrix from the P0 audit. */
@@ -101,5 +101,78 @@ describe("isCheckInDateAllowed", () => {
     expect(tappedOn).toBe("2026-11-25")
     expect(serverToday).toBe("2026-11-26")
     expect(isCheckInDateAllowed(tappedOn, serverToday)).toBe(true)
+  })
+})
+
+describe("day start hour", () => {
+  const msk = "Europe/Moscow" // UTC+3
+  const at = (local: string) => new Date(`${local}+03:00`)
+
+  it("with a 3 a.m. day start, 01:30 still belongs to yesterday", () => {
+    expect(logicalToday(msk, { h: 3 }, at("2026-11-26T01:30:00"))).toBe("2026-11-25")
+    expect(logicalToday(msk, { h: 3 }, at("2026-11-26T02:59:00"))).toBe("2026-11-25")
+    expect(logicalToday(msk, { h: 3 }, at("2026-11-26T03:00:00"))).toBe("2026-11-26")
+  })
+  it("midnight (default) is the plain calendar date", () => {
+    expect(logicalToday(msk, { h: 0 }, at("2026-11-26T00:01:00"))).toBe("2026-11-26")
+    expect(logicalToday(msk, undefined, at("2026-11-26T00:01:00"))).toBe("2026-11-26")
+  })
+
+  it("a later day start takes effect from the next day — today never jumps back", () => {
+    // at 01:00 on 11-26 the person moves the start from 0 to 3
+    const today = logicalToday(msk, { h: 0 }, at("2026-11-26T01:00:00"))
+    expect(today).toBe("2026-11-26")
+    const ds = changeDayStart({ h: 0 }, 3, today)
+    expect(ds).toEqual({ h: 3, ph: 0, since: "2026-11-27" })
+    // right after the change it's still 11-26 (with the new hour applied now it would be 11-25)
+    expect(logicalToday(msk, ds, at("2026-11-26T01:01:00"))).toBe("2026-11-26")
+    // the night after: 01:30 on 11-27 is still 11-26 under the new rule… but never before `since`
+    expect(logicalToday(msk, ds, at("2026-11-27T01:30:00"))).toBe("2026-11-27")
+    // from then on the new rule applies
+    expect(logicalToday(msk, ds, at("2026-11-28T01:30:00"))).toBe("2026-11-27")
+    expect(logicalToday(msk, ds, at("2026-11-28T03:00:00"))).toBe("2026-11-28")
+  })
+
+  it("an earlier day start also waits for the next day — no day is skipped", () => {
+    // start at 03:00; at 20:00 on 11-25 the person moves it to midnight
+    const today = logicalToday(msk, { h: 3 }, at("2026-11-25T20:00:00"))
+    const ds = changeDayStart({ h: 3 }, 0, today)
+    expect(ds).toEqual({ h: 0, ph: 3, since: "2026-11-26" })
+    // 01:00 on 11-26 still belongs to 11-25 (the old rule finishes the day)
+    expect(logicalToday(msk, ds, at("2026-11-26T01:00:00"))).toBe("2026-11-25")
+    // at 03:00 the new day starts, then midnight rules
+    expect(logicalToday(msk, ds, at("2026-11-26T03:00:00"))).toBe("2026-11-26")
+    expect(logicalToday(msk, ds, at("2026-11-27T00:30:00"))).toBe("2026-11-27")
+  })
+
+  it("every instant maps to a date that never goes backwards across a change", () => {
+    const ds = changeDayStart({ h: 0 }, 5, "2026-11-26")
+    let prev = ""
+    for (let t = at("2026-11-25T12:00:00").getTime(); t < at("2026-11-29T12:00:00").getTime(); t += 15 * 60_000) {
+      const d = logicalToday(msk, ds, new Date(t))
+      expect(d >= prev).toBe(true)
+      prev = d
+    }
+  })
+
+  it("changing back during the transition keeps the hour that applies today", () => {
+    const ds = changeDayStart({ h: 0 }, 3, "2026-11-26") // pending from 11-27
+    expect(changeDayStart(ds, 5, "2026-11-26")).toEqual({ h: 5, ph: 0, since: "2026-11-27" })
+    expect(changeDayStart(ds, 0, "2026-11-26")).toEqual({ h: 0 })
+  })
+
+  it("works across DST (Berlin, 23-hour day)", () => {
+    // 2026-03-29: 01:59 CET → 03:00 CEST. With a 3 a.m. start, 02:30 doesn't exist; 03:30 CEST starts the 29th
+    expect(logicalToday("Europe/Berlin", { h: 3 }, new Date("2026-03-29T00:30:00Z"))).toBe("2026-03-28") // 01:30 CET
+    expect(logicalToday("Europe/Berlin", { h: 3 }, new Date("2026-03-29T01:30:00Z"))).toBe("2026-03-29") // 03:30 CEST
+  })
+
+  it("parses only sane stored values", () => {
+    expect(parseDayStart({ h: 3 })).toEqual({ h: 3 })
+    expect(parseDayStart({ h: 3, ph: 0, since: "2026-11-27" })).toEqual({ h: 3, ph: 0, since: "2026-11-27" })
+    expect(parseDayStart({ h: 9 })).toEqual({ h: 0 })
+    expect(parseDayStart({ h: "3" })).toEqual({ h: 0 })
+    expect(parseDayStart(null)).toEqual({ h: 0 })
+    expect(parseDayStart({ h: 2, ph: 0, since: "soon" })).toEqual({ h: 2 })
   })
 })

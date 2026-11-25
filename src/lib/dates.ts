@@ -36,6 +36,64 @@ export function todayIn(timeZone: string, now: Date = new Date()): ISODate {
   }).format(now)
 }
 
+/**
+ * When the person's day starts ("my day ends at 3 a.m."): 0–6 hours after
+ * midnight. A change takes effect from the next day (`since`): until then the
+ * previous hour (`ph`) applies, so "today" never jumps back and a streak never
+ * breaks because of the setting itself — the day of the change just gets a
+ * little longer or shorter.
+ */
+export type DayStart = { h: number; ph?: number; since?: ISODate }
+
+export const MAX_DAY_START_HOUR = 6
+
+const validHour = (n: unknown): n is number => Number.isInteger(n) && (n as number) >= 0 && (n as number) <= MAX_DAY_START_HOUR
+
+/** Reads the stored setting (user metadata); anything unexpected means midnight. */
+export function parseDayStart(value: unknown): DayStart {
+  if (!value || typeof value !== "object") return { h: 0 }
+  const v = value as Record<string, unknown>
+  if (!validHour(v.h)) return { h: 0 }
+  const out: DayStart = { h: v.h }
+  if (validHour(v.ph) && isISODate(v.since)) {
+    out.ph = v.ph
+    out.since = v.since
+  }
+  return out
+}
+
+/**
+ * The local date whose day started at `hours` o'clock (wall clock, not elapsed
+ * time — on a 23/25-hour DST day 03:30 is still "after 3"). Same as SQL
+ * ((now() at time zone tz) - hours * interval '1 hour')::date.
+ */
+function shiftedDate(timeZone: string, hours: number, now: Date): ISODate {
+  const date = todayIn(timeZone, now)
+  if (hours === 0) return date
+  const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone, hour: "2-digit", hourCycle: "h23" }).format(now))
+  return hour < hours ? addDays(date, -1) : date
+}
+
+/**
+ * The person's "today": the calendar date in their time zone, with the day
+ * starting at their day-start hour. The same rule runs in SQL
+ * (public.logical_date) for reminders.
+ */
+export function logicalToday(timeZone: string, dayStart: DayStart = { h: 0 }, now: Date = new Date()): ISODate {
+  const next = shiftedDate(timeZone, dayStart.h, now)
+  if (dayStart.since === undefined || dayStart.ph === undefined) return next
+  const before = shiftedDate(timeZone, dayStart.ph, now)
+  if (before < dayStart.since) return before
+  return next > dayStart.since ? next : dayStart.since
+}
+
+/** The setting after changing the hour to `h` while `today` is the person's current day. */
+export function changeDayStart(current: DayStart, h: number, today: ISODate): DayStart {
+  const effectiveNow = current.since !== undefined && today < current.since ? (current.ph ?? current.h) : current.h
+  if (h === effectiveNow) return { h }
+  return { h, ph: effectiveNow, since: addDays(today, 1) }
+}
+
 /** How many past days a check-in can still be set or cleared (the week strip on a habit card). */
 export const CHECKIN_WINDOW_DAYS = 7
 

@@ -211,6 +211,12 @@ describe("best streak: freezes, vacation and repairs (shared fixture with SQL)",
     expect(habitStreak(done, "2026-11-25", 7, bridges).best).toBe(27)
     expect(longestStreak(done)).toBe(15)
   })
+
+  it("current streak matches public.habit_current_streak(): 27, then a freeze, then broken", () => {
+    expect(habitStreak(done, "2026-10-26", 7, bridges).current).toBe(27)
+    expect(habitStreak(done, "2026-10-27", 7, bridges).current).toBe(27) // yesterday missed: frozen
+    expect(habitStreak(done, "2026-10-28", 7, bridges).current).toBe(0) // two misses in a row
+  })
 })
 
 describe("weekly habits and vacation", () => {

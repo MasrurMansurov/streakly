@@ -3,7 +3,7 @@
 // habit that has its own reminder time.
 //
 // Called by:
-//   - pg_cron every 15 min      → { action: "send" }            auth: x-cron-token (Vault secret)
+//   - pg_cron every minute      → { action: "send" }            auth: x-cron-token (Vault secret)
 //   - the app ("Send test")     → { action: "test" }            auth: the user's JWT
 //   - the app (pact check-in)   → { action: "pact", habitId }   auth: the user's JWT
 //   - pg_cron daily             → { action: "cleanup" }         auth: x-cron-token
@@ -107,18 +107,13 @@ async function push(subs: Sub[], payload: Payload) {
 
 /**
  * Habits still due today for a user (not done today, weekly target not reached),
- * with the daily streak that ends yesterday (consecutive dates d where d + rank = today).
+ * with the daily streak that ends yesterday.
  */
 async function dueHabits(userId: string, localDate: string, scope: { only?: string; skipTimed?: boolean } = {}) {
   return await sql<{ id: string; name: string; streak: number; cue: string | null }[]>`
     select h.id, h.name, h.cue,
-      case when h.target_per_week >= 7 then (
-        select count(*)::int from (
-          select l.log_date, row_number() over (order by l.log_date desc) as rn
-          from public.habit_logs l
-          where l.habit_id = h.id and l.log_date < ${localDate}::date and l.log_date >= ${localDate}::date - 400
-        ) x where x.log_date + x.rn::int = ${localDate}::date
-      ) else 0 end as streak
+      -- the same streak the app shows (freezes, vacation, repaired days)
+      case when h.target_per_week >= 7 then public.habit_current_streak(h.id, ${localDate}::date) else 0 end as streak
     from public.habits h
     where h.user_id = ${userId}
       and h.archived_at is null
@@ -221,19 +216,25 @@ function message(
 /** Users whose local reminder time passed in the last 2 hours and who weren't reminded today. */
 async function runReminders(dryRun: boolean) {
   const candidates = await sql<{ user_id: string; local_date: string; locale: string }[]>`
-    select rs.user_id, rs.locale, ((now() at time zone rs.timezone)::date)::text as local_date
-    from public.reminder_settings rs
-    join pg_timezone_names tz on tz.name = rs.timezone
-    where rs.enabled
-      and exists (select 1 from public.push_subscriptions s where s.user_id = rs.user_id)
-      and ((now() at time zone rs.timezone)::time - rs.remind_at) >= interval '0'
-      and ((now() at time zone rs.timezone)::time - rs.remind_at) < interval '2 hours'
-      and (rs.last_reminded_on is null or rs.last_reminded_on < (now() at time zone rs.timezone)::date)
-      -- vacation mode: stay quiet
+    select c.user_id, c.locale, c.local_date::text as local_date
+    from (
+      select rs.user_id, rs.locale, rs.remind_at, rs.last_reminded_on, rs.timezone,
+             -- the person's "today" (time zone + day-start hour), see logicalToday()
+             public.logical_date(rs.timezone, u.raw_user_meta_data -> 'day_start') as local_date
+      from public.reminder_settings rs
+      join pg_timezone_names tz on tz.name = rs.timezone
+      join auth.users u on u.id = rs.user_id
+      where rs.enabled
+    ) c
+    where exists (select 1 from public.push_subscriptions s where s.user_id = c.user_id)
+      -- the reminder time is clock time
+      and ((now() at time zone c.timezone)::time - c.remind_at) >= interval '0'
+      and ((now() at time zone c.timezone)::time - c.remind_at) < interval '2 hours'
+      and (c.last_reminded_on is null or c.last_reminded_on < c.local_date)
+      -- paused (vacation, ill, rest): stay quiet
       and not exists (
         select 1 from public.pauses p
-        where p.user_id = rs.user_id
-          and (now() at time zone rs.timezone)::date between p.start_date and p.end_date
+        where p.user_id = c.user_id and c.local_date between p.start_date and p.end_date
       )`
 
   const results = []
@@ -268,19 +269,23 @@ async function runReminders(dryRun: boolean) {
  */
 async function runHabitReminders(dryRun: boolean) {
   const candidates = await sql<{ habit_id: string; user_id: string; local_date: string; locale: string }[]>`
-    select r.habit_id, r.user_id, rs.locale, ((now() at time zone rs.timezone)::date)::text as local_date
-    from public.habit_reminders r
-    join public.reminder_settings rs on rs.user_id = r.user_id
-    join pg_timezone_names tz on tz.name = rs.timezone
-    where rs.enabled
-      and exists (select 1 from public.push_subscriptions s where s.user_id = r.user_id)
-      and ((now() at time zone rs.timezone)::time - r.remind_at) >= interval '0'
-      and ((now() at time zone rs.timezone)::time - r.remind_at) < interval '2 hours'
-      and (r.last_sent_on is null or r.last_sent_on < (now() at time zone rs.timezone)::date)
+    select c.habit_id, c.user_id, c.locale, c.local_date::text as local_date
+    from (
+      select r.habit_id, r.user_id, r.remind_at, r.last_sent_on, rs.locale, rs.timezone,
+             public.logical_date(rs.timezone, u.raw_user_meta_data -> 'day_start') as local_date
+      from public.habit_reminders r
+      join public.reminder_settings rs on rs.user_id = r.user_id
+      join pg_timezone_names tz on tz.name = rs.timezone
+      join auth.users u on u.id = r.user_id
+      where rs.enabled
+    ) c
+    where exists (select 1 from public.push_subscriptions s where s.user_id = c.user_id)
+      and ((now() at time zone c.timezone)::time - c.remind_at) >= interval '0'
+      and ((now() at time zone c.timezone)::time - c.remind_at) < interval '2 hours'
+      and (c.last_sent_on is null or c.last_sent_on < c.local_date)
       and not exists (
         select 1 from public.pauses p
-        where p.user_id = r.user_id
-          and (now() at time zone rs.timezone)::date between p.start_date and p.end_date
+        where p.user_id = c.user_id and c.local_date between p.start_date and p.end_date
       )`
 
   const results = []
@@ -336,8 +341,9 @@ async function runPactNudge(userId: string, habitId: string) {
   const results = []
   for (const p of pacts) {
     const [rs] = await sql<{ enabled: boolean; locale: string; local_date: string }[]>`
-      select enabled, locale, ((now() at time zone timezone)::date)::text as local_date
-      from public.reminder_settings where user_id = ${p.partner_id}`
+      select rs.enabled, rs.locale, public.logical_date(rs.timezone, u.raw_user_meta_data -> 'day_start')::text as local_date
+      from public.reminder_settings rs join auth.users u on u.id = rs.user_id
+      where rs.user_id = ${p.partner_id}`
     if (!rs?.enabled) continue
     const [onVacation] = await sql`
       select 1 from public.pauses

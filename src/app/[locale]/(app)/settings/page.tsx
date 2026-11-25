@@ -5,11 +5,12 @@ import { Suspense } from "react"
 import { getT } from "@/i18n/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { getActivePause, getAppearanceData, getMyProfile, getReminderSettings } from "@/lib/data"
+import { getActivePause, getAppearanceData, getMyProfile, getReminderSettings, getToday } from "@/lib/data"
 
 import { AccountCard } from "./account-card"
 import { AppearanceCard } from "./appearance-card"
 import { AvatarUploader } from "./avatar-uploader"
+import { DayStartCard } from "./day-start-card"
 import { ProfileForm } from "./profile-form"
 import { RemindersCard } from "./reminders-card"
 import { VacationCard } from "./vacation-card"
@@ -34,12 +35,13 @@ export default async function SettingsPage() {
 }
 
 async function Settings() {
-  const [profile, reminders, vacation, look, { t }] = await Promise.all([
+  const [profile, reminders, vacation, look, { t }, day] = await Promise.all([
     getMyProfile(),
     getReminderSettings(),
     getActivePause(),
     getAppearanceData(),
     getT(),
+    getToday(),
   ])
   return (
     <div className="grid gap-6">
@@ -63,6 +65,7 @@ async function Settings() {
         habits={look.habits.map((h) => ({ ...h, streak: t.habit.streak(h.streak.current, h.streak.unit) }))}
       />
       <RemindersCard initial={reminders} />
+      <DayStartCard dayStart={day.dayStart} today={day.today} timeZone={day.timeZone} />
       <VacationCard today={vacation.today} pause={"id" in vacation ? vacation : null} />
       <ProfileForm profile={profile} />
       <AccountCard username={profile.username} />
