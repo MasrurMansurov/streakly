@@ -87,6 +87,7 @@ export const ru: Dictionary = {
       default: "Ссылка недействительна или устарела. Войдите ещё раз.",
     },
     invalidCredentials: "Неверный email или пароль",
+    pwnedPassword: "Этот пароль есть в базах утечек — придумайте другой",
     confirmEmail: "Проверьте почту, чтобы подтвердить email.",
   },
   dashboard: {

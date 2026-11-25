@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers"
 
+import { pwnedCount } from "@/lib/pwned"
 import { createClient } from "@/lib/supabase/server"
 import { getActionLocale, getActionT, localeRedirect } from "@/i18n/server"
 import { authSchema, type ActionResult, type AuthInput } from "@/lib/validation"
@@ -22,6 +23,8 @@ export async function signUp(input: AuthInput): Promise<ActionResult> {
   const parsed = authSchema.safeParse(input)
   const { t } = await getActionT()
   if (!parsed.success) return { ok: false, error: t.auth.invalidCredentials }
+  // leaked passwords are rejected (if the check service is down, sign-up still works)
+  if (((await pwnedCount(parsed.data.password)) ?? 0) > 0) return { ok: false, error: t.auth.pwnedPassword }
 
   const origin = (await headers()).get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? ""
   const supabase = await createClient()

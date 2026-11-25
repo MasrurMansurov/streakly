@@ -20,6 +20,16 @@ test("login form validates input", async ({ page }) => {
   await expect(page.getByText("At least 8 characters")).toBeVisible()
 })
 
+test("sign-up rejects a password from known data breaches", async ({ page }) => {
+  await page.goto("/login")
+  await page.getByRole("tab", { name: "Sign up" }).click()
+  // never actually created: the check runs before Supabase is called
+  await page.getByLabel("Email").fill(`pwned-${Date.now()}@example.com`)
+  await page.getByLabel("Password").fill("password123")
+  await page.getByRole("button", { name: "Create account" }).click()
+  await expect(page.getByText("This password appears in known data breaches")).toBeVisible()
+})
+
 test("public profile is visible without an account", async ({ page }) => {
   await page.goto("/u/demo")
   await expect(page.getByRole("heading", { name: "Demo User" })).toBeVisible()

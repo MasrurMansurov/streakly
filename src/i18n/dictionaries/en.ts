@@ -85,6 +85,7 @@ export const en = {
       default: "That link is invalid or expired. Please sign in again.",
     },
     invalidCredentials: "Invalid email or password",
+    pwnedPassword: "This password appears in known data breaches — choose another one",
     confirmEmail: "Check your inbox to confirm your email.",
   },
   dashboard: {
