@@ -91,6 +91,7 @@ async function push(subs: Sub[], payload: Payload) {
         urgency: "normal",
       })
       sent++
+      await sql`update public.push_subscriptions set last_success_at = now() where id = ${s.id}`
     } catch (e) {
       const status = (e as { statusCode?: number }).statusCode
       if (status === 404 || status === 410) {
@@ -237,8 +238,8 @@ async function runReminders(dryRun: boolean) {
 
   const results = []
   for (const c of candidates) {
-    const due = await dueHabits(c.user_id, c.local_date, { skipTimed: true })
     if (dryRun) {
+      const due = await dueHabits(c.user_id, c.local_date, { skipTimed: true })
       results.push({ user: c.user_id.slice(0, 8), due: due.length, risk: Math.max(0, ...due.map((h) => h.streak)) })
       continue
     }
@@ -248,7 +249,11 @@ async function runReminders(dryRun: boolean) {
       where user_id = ${c.user_id}
         and (last_reminded_on is null or last_reminded_on < ${c.local_date}::date)
       returning user_id`
-    if (claimed.length === 0 || due.length === 0) continue
+    if (claimed.length === 0) continue
+    // "still due?" is decided after the claim, right before sending: a check-in
+    // made meanwhile means no push at all (a silent push gets revoked on iOS)
+    const due = await dueHabits(c.user_id, c.local_date, { skipTimed: true })
+    if (due.length === 0) continue
     const subs = await sql<Sub[]>`select id, endpoint, p256dh, auth from public.push_subscriptions where user_id = ${c.user_id}`
     const allDue = (await dueHabits(c.user_id, c.local_date)).length
     results.push({ user: c.user_id.slice(0, 8), due: due.length, ...(await push(subs, message(due, asLocale(c.locale), { due: allDue }))) })
@@ -280,8 +285,8 @@ async function runHabitReminders(dryRun: boolean) {
 
   const results = []
   for (const c of candidates) {
-    const due = await dueHabits(c.user_id, c.local_date, { only: c.habit_id })
     if (dryRun) {
+      const due = await dueHabits(c.user_id, c.local_date, { only: c.habit_id })
       results.push({ habit: c.habit_id.slice(0, 8), due: due.length })
       continue
     }
@@ -290,7 +295,9 @@ async function runHabitReminders(dryRun: boolean) {
       where habit_id = ${c.habit_id}
         and (last_sent_on is null or last_sent_on < ${c.local_date}::date)
       returning habit_id`
-    if (claimed.length === 0 || due.length === 0) continue // already done today → stay quiet
+    if (claimed.length === 0) continue
+    const due = await dueHabits(c.user_id, c.local_date, { only: c.habit_id })
+    if (due.length === 0) continue // already done today → stay quiet
     const subs = await sql<Sub[]>`select id, endpoint, p256dh, auth from public.push_subscriptions where user_id = ${c.user_id}`
     const allDue = (await dueHabits(c.user_id, c.local_date)).length
     results.push({

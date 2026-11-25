@@ -17,8 +17,6 @@ import { useEffect, useState, useSyncExternalStore, useTransition, type ReactNod
 import { toast } from "sonner"
 
 import {
-  removePushSubscription,
-  savePushSubscription,
   saveReminderSettings,
   sendTestNotification,
 } from "@/app/actions/reminders"
@@ -32,6 +30,7 @@ import { useI18n } from "@/i18n/client"
 import type { ReminderSettings } from "@/lib/data"
 import { cn } from "@/lib/utils"
 import { browserTimezone } from "@/components/day-rollover"
+import { subscribeThisDevice, unsubscribeThisDevice } from "@/lib/push-device"
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""
 
@@ -43,11 +42,6 @@ const PRESETS: { time: string; key: string; icon: LucideIcon; tone: IconTone }[]
 ]
 
 type Support = "checking" | "ok" | "ios-install" | "unsupported" | "denied"
-
-function base64UrlToUint8Array(base64Url: string) {
-  const padded = (base64Url + "=".repeat((4 - (base64Url.length % 4)) % 4)).replace(/-/g, "+").replace(/_/g, "/")
-  return Uint8Array.from(atob(padded), (c) => c.charCodeAt(0))
-}
 
 
 /** Round "HH:MM" to the nearest 15 minutes (the scheduler's resolution). */
@@ -65,10 +59,6 @@ function nextDay(time: string): "today" | "tomorrow" {
 }
 
 const noopSubscribe = () => () => {}
-
-async function getRegistration() {
-  return (await navigator.serviceWorker.getRegistration("/")) ?? navigator.serviceWorker.register("/sw.js", { scope: "/" })
-}
 
 export function RemindersCard({ initial }: { initial: ReminderSettings }) {
   const { locale, t } = useI18n()
@@ -105,21 +95,7 @@ export function RemindersCard({ initial }: { initial: ReminderSettings }) {
       if (permission === "denied") setSupport("denied")
       throw new Error(t.reminders.notAllowed)
     }
-    const reg = await getRegistration()
-    await navigator.serviceWorker.ready
-    const sub =
-      (await reg.pushManager.getSubscription()) ??
-      (await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: base64UrlToUint8Array(VAPID_PUBLIC_KEY),
-      }))
-    const json = sub.toJSON()
-    const res = await savePushSubscription({
-      endpoint: sub.endpoint,
-      p256dh: json.keys?.p256dh ?? "",
-      auth: json.keys?.auth ?? "",
-      userAgent: navigator.userAgent.slice(0, 300),
-    })
+    const res = await subscribeThisDevice()
     if (!res.ok) throw new Error(res.error)
     setDeviceSubscribed(true)
   }
@@ -132,12 +108,7 @@ export function RemindersCard({ initial }: { initial: ReminderSettings }) {
       try {
         if (on) await subscribeDevice()
         else {
-          const reg = await navigator.serviceWorker.getRegistration("/")
-          const sub = await reg?.pushManager.getSubscription()
-          if (sub) {
-            await removePushSubscription(sub.endpoint)
-            await sub.unsubscribe()
-          }
+          await unsubscribeThisDevice()
           setDeviceSubscribed(false)
         }
         const res = await save({ enabled: on, remindAt })
@@ -149,7 +120,7 @@ export function RemindersCard({ initial }: { initial: ReminderSettings }) {
       }
     })
 
-  const subscribeThisDevice = () =>
+  const subscribeOnThisDevice = () =>
     startTransition(async () => {
       try {
         await subscribeDevice()
@@ -290,7 +261,7 @@ export function RemindersCard({ initial }: { initial: ReminderSettings }) {
                 <CheckCircle2Icon className="size-4" /> {t.reminders.thisBrowser}
               </span>
             ) : (
-              <Button variant="outline" size="sm" disabled={pending} onClick={subscribeThisDevice}>
+              <Button variant="outline" size="sm" disabled={pending} onClick={subscribeOnThisDevice}>
                 <BellIcon /> {t.reminders.alsoThisBrowser}
               </Button>
             )}

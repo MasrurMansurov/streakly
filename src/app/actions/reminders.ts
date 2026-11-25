@@ -74,20 +74,24 @@ export async function syncTimezone(timezone: string): Promise<ActionResult> {
   return error ? { ok: false, error: error.message } : { ok: true }
 }
 
-/** Store this browser's push subscription (re-subscribing the same endpoint is a no-op). */
+/**
+ * Store (or refresh) this browser's push subscription for the signed-in user.
+ * Called when reminders are switched on and on every app open (<PushSync />):
+ * updates rotated keys, marks the device as seen, and moves a shared device's
+ * subscription to whoever is signed in now.
+ */
 export async function savePushSubscription(input: z.infer<typeof subscriptionSchema>): Promise<ActionResult> {
   const parsed = subscriptionSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: (await getActionT()).t.reminders.invalidSubscription }
 
   const { supabase } = await authed()
-  const { error } = await supabase.from("push_subscriptions").insert({
-    endpoint: parsed.data.endpoint,
-    p256dh: parsed.data.p256dh,
-    auth: parsed.data.auth,
-    user_agent: parsed.data.userAgent ?? null,
+  const { error } = await supabase.rpc("claim_push_subscription", {
+    p_endpoint: parsed.data.endpoint,
+    p_p256dh: parsed.data.p256dh,
+    p_auth: parsed.data.auth,
+    p_user_agent: parsed.data.userAgent,
   })
-  // 23505 = this device is already subscribed
-  if (error && error.code !== "23505") return { ok: false, error: error.message }
+  if (error) return { ok: false, error: error.message }
   return { ok: true }
 }
 

@@ -309,6 +309,8 @@ export type Database = {
           created_at: string
           endpoint: string
           id: string
+          last_seen_at: string
+          last_success_at: string | null
           p256dh: string
           user_agent: string | null
           user_id: string
@@ -318,6 +320,8 @@ export type Database = {
           created_at?: string
           endpoint: string
           id?: string
+          last_seen_at?: string
+          last_success_at?: string | null
           p256dh: string
           user_agent?: string | null
           user_id?: string
@@ -327,6 +331,8 @@ export type Database = {
           created_at?: string
           endpoint?: string
           id?: string
+          last_seen_at?: string
+          last_success_at?: string | null
           p256dh?: string
           user_agent?: string | null
           user_id?: string
@@ -387,6 +393,10 @@ export type Database = {
       achievement_stats: {
         Args: { p_user: string }
         Returns: { total_checkins: number; best_streak: number }[]
+      }
+      claim_push_subscription: {
+        Args: { p_endpoint: string; p_p256dh: string; p_auth: string; p_user_agent?: string }
+        Returns: undefined
       }
       delete_my_account: { Args: never; Returns: undefined }
       leaderboard: {

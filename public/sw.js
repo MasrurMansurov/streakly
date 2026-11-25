@@ -25,6 +25,13 @@ self.addEventListener("message", (event) => {
   if (event.data === "clear-pages") event.waitUntil(caches.delete(CACHE))
 })
 
+// hashed chunks of old deploys pile up: keep the newest entries only
+const MAX_ENTRIES = 300
+async function trim(cache) {
+  const keys = await cache.keys()
+  for (const key of keys.slice(0, Math.max(0, keys.length - MAX_ENTRIES))) await cache.delete(key)
+}
+
 const isStatic = (url) =>
   url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/") || url.pathname.startsWith("/brand/") || /\.(?:svg|png|ico|woff2)$/.test(url.pathname)
 
@@ -40,7 +47,7 @@ self.addEventListener("fetch", (event) => {
         const hit = await cache.match(request)
         if (hit) return hit
         const res = await fetch(request)
-        if (res.ok) cache.put(request, res.clone())
+        if (res.ok) event.waitUntil(cache.put(request, res.clone()).then(() => trim(cache)))
         return res
       })
     )
