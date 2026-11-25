@@ -246,6 +246,13 @@ export const en = {
     next: (day: "today" | "tomorrow", time: string) => `${day} at ${time}`,
     nextLabel: "Next reminder:",
     off: (time: string, tz: string) => `Reminders are off. Turn them on to get a notification at ${time} (${tz}).`,
+    notShown: {
+      mac: "Nothing showed up? Check macOS: System Settings → Notifications → your browser (e.g. Google Chrome) → Allow notifications, style Banners. And turn off Do Not Disturb / Focus.",
+      windows: "Nothing showed up? Check Windows: Settings → System → Notifications → your browser is on. And turn off Do not disturb.",
+      android: "Nothing showed up? Android Settings → Apps → your browser → Notifications must be on.",
+      ios: "Nothing showed up? iOS Settings → Notifications → Streakly must be allowed. Turn off Focus.",
+      other: "Nothing showed up? Make sure your system lets the browser show notifications.",
+    },
     thisBrowser: "This browser gets reminders",
     alsoThisBrowser: "Also remind me in this browser",
     sendTest: "Send a test",

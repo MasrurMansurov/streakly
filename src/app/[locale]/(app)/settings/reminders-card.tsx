@@ -44,6 +44,16 @@ const PRESETS: { time: string; key: string; icon: LucideIcon; tone: IconTone }[]
 type Support = "checking" | "ok" | "ios-install" | "unsupported" | "denied"
 
 
+/** Where to look when a delivered notification doesn't show up. */
+function osOf(): "mac" | "windows" | "android" | "ios" | "other" {
+  const ua = navigator.userAgent
+  if (/iPad|iPhone|iPod/.test(ua)) return "ios"
+  if (/Android/.test(ua)) return "android"
+  if (/Mac OS X|Macintosh/.test(ua)) return "mac"
+  if (/Windows/.test(ua)) return "windows"
+  return "other"
+}
+
 /** "today" or "tomorrow", depending on whether the time already passed. */
 function nextDay(time: string): "today" | "tomorrow" {
   const now = new Date()
@@ -145,8 +155,9 @@ export function RemindersCard({ initial }: { initial: ReminderSettings }) {
   const sendTest = () =>
     startTransition(async () => {
       const res = await sendTestNotification()
-      if (res.ok) toast.success(res.message ?? t.reminders.sent(1))
-      else toast.error(res.error)
+      if (!res.ok) return void toast.error(res.error)
+      // delivered to the push service — if nothing shows up, the OS is hiding it
+      toast.success(res.message ?? t.reminders.sent(1), { description: t.reminders.notShown[osOf()], duration: 15_000 })
     })
 
   const blocked = support !== "ok" && support !== "checking"
