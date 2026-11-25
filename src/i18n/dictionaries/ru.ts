@@ -692,6 +692,7 @@ export const ru: Dictionary = {
     invalidInput: "Некорректные данные",
     invalidDate: "Некорректная дата",
     futureDate: "Нельзя отмечать будущие дни",
+    tooOldDate: "Отмечать можно только последние 7 дней",
     invalidOrder: "Некорректный порядок",
     invalidAvatar: "Некорректная ссылка на фото",
     notSignedIn: "Вы не вошли",

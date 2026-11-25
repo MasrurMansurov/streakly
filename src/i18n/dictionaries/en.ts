@@ -686,6 +686,7 @@ export const en = {
     invalidInput: "Invalid input",
     invalidDate: "Invalid date",
     futureDate: "Can't log future days",
+    tooOldDate: "Only the last 7 days can be changed",
     invalidOrder: "Invalid order",
     invalidAvatar: "Invalid avatar URL",
     notSignedIn: "Not signed in",

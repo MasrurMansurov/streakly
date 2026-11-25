@@ -7,6 +7,7 @@ import { Geist_Mono, Onest, Unbounded } from "next/font/google"
 import { notFound } from "next/navigation"
 
 import { ThemeProvider } from "@/components/theme-provider"
+import { DayRollover } from "@/components/day-rollover"
 import { TimezoneSync } from "@/components/timezone-sync"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -62,6 +63,7 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[lo
             <TooltipProvider>{children}</TooltipProvider>
             <Toaster richColors position="bottom-right" />
             <TimezoneSync />
+            <DayRollover />
           </ThemeProvider>
         </I18nProvider>
         <ServiceWorkerRegister />

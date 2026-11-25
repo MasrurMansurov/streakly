@@ -43,7 +43,8 @@ import type { Habit, HabitLog } from "@/lib/data"
 import { Link } from "@/components/link"
 import { formatDay } from "@/i18n"
 import { useI18n } from "@/i18n/client"
-import type { ISODate } from "@/lib/dates"
+import { todayIn, type ISODate } from "@/lib/dates"
+import { browserTimezone } from "@/components/day-rollover"
 import { newlyEarned, type Achievement } from "@/lib/achievements"
 import { bridgesFor, completionRate, habitStreak, isDueToday } from "@/lib/streaks"
 
@@ -106,6 +107,8 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
   const queueKey = `streakly:offline:${profile?.username ?? "me"}`
   const [queue, setQueue] = useState<QueuedToggle[]>([])
   const [online, setOnline] = useState(true)
+  // bumped on return to the app → retry sending (Safari has no Background Sync)
+  const [flushTick, setFlushTick] = useState(0)
   const flushing = useRef(false)
   const updateQueue = (fn: (q: QueuedToggle[]) => QueuedToggle[]) =>
     setQueue((q) => {
@@ -121,11 +124,18 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
     setOnline(navigator.onLine)
     const on = () => setOnline(true)
     const off = () => setOnline(false)
+    const visible = () => {
+      if (document.visibilityState !== "visible") return
+      setOnline(navigator.onLine)
+      setFlushTick((n) => n + 1)
+    }
     window.addEventListener("online", on)
     window.addEventListener("offline", off)
+    document.addEventListener("visibilitychange", visible)
     return () => {
       window.removeEventListener("online", on)
       window.removeEventListener("offline", off)
+      document.removeEventListener("visibilitychange", visible)
     }
   }, [queueKey])
 
@@ -152,7 +162,7 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
       }
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [online, queue.length])
+  }, [online, queue.length, flushTick])
 
   const baseLogs = useMemo(
     () => applyQueue(logs, queue, (q) => ({ habit_id: q.habitId, log_date: q.date, is_mini: Boolean(q.mini) })),
@@ -198,7 +208,17 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
   // bumped when a check-in completes the day → plays the celebration once
   const [celebration, setCelebration] = useState(0)
 
-  const onToggle = (habitId: string, date: ISODate, done: boolean, mini = false) => {
+  const onToggle = (habitId: string, tappedDate: ISODate, tappedDone: boolean, mini = false) => {
+    let date = tappedDate
+    let done = tappedDone
+    // The screen was rendered before midnight and is still open: a tap on
+    // "today" means the new day, not yesterday. Re-render for the new day too.
+    const nowDay = todayIn(browserTimezone())
+    if (date === today && nowDay > today) {
+      date = nowDay
+      done = true
+      router.refresh()
+    }
     const habit = habits.find((h) => h.id === habitId)
     const days = byHabit.get(habitId)
     // first check-in after a broken streak → celebrate the comeback
@@ -210,7 +230,11 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
       const stillDue = habits.filter((h) => h.id !== habitId && isDueToday(byHabit.get(h.id)!, today, h.target_per_week))
       if (stillDue.length === 0) setCelebration((n) => n + 1)
     }
-    if (!navigator.onLine) return void updateQueue((q) => enqueue(q, { habitId, date, done, mini }))
+    if (!navigator.onLine) {
+      // ask the browser not to evict the queue (iOS clears storage of unused sites)
+      navigator.storage?.persist?.().catch(() => {})
+      return void updateQueue((q) => enqueue(q, { habitId, date, done, mini }))
+    }
     startTransition(async () => {
       applyToggle({ habitId, date, done, mini })
       try {

@@ -36,6 +36,14 @@ export function todayIn(timeZone: string, now: Date = new Date()): ISODate {
   }).format(now)
 }
 
+/** How many past days a check-in can still be set or cleared (the week strip on a habit card). */
+export const CHECKIN_WINDOW_DAYS = 7
+
+/** A check-in date is allowed from `today − CHECKIN_WINDOW_DAYS` up to `today` (the user's local day). */
+export function isCheckInDateAllowed(date: ISODate, today: ISODate): boolean {
+  return isISODate(date) && date <= today && date >= addDays(today, -CHECKIN_WINDOW_DAYS)
+}
+
 export function addDays(date: ISODate, days: number): ISODate {
   const d = new Date(`${date}T00:00:00Z`)
   d.setUTCDate(d.getUTCDate() + days)

@@ -5,8 +5,8 @@ import { after } from "next/server"
 import { refresh, updateTag } from "next/cache"
 import { z } from "zod"
 
-import { getCurrentUser } from "@/lib/data"
-import { addDays, isISODate, todayIn } from "@/lib/dates"
+import { getCurrentUser, getToday } from "@/lib/data"
+import { addDays, isCheckInDateAllowed, isISODate } from "@/lib/dates"
 import { validationMessage } from "@/i18n"
 import { getActionT } from "@/i18n/server"
 import { nudgePactPartner } from "@/lib/pact-nudge"
@@ -128,10 +128,13 @@ export async function toggleHabitLog(habitId: string, date: string, done: boolea
   if (!z.uuid().safeParse(habitId).success) return { ok: false, error: t.validation.invalidInput }
   if (!isISODate(date)) return { ok: false, error: t.validation.invalidDate }
 
-  // The client sends its local date. Allow any timezone (UTC−12…UTC+14),
-  // but no days in the future.
-  const latestAllowed = addDays(todayIn("UTC"), 1)
-  if (date > latestAllowed) return { ok: false, error: t.validation.futureDate }
+  // The client sends the day it tapped; the server checks it against the
+  // user's own "today" (timezone cookie): no future days, no backdating
+  // beyond the week strip. The database enforces a slightly wider window too.
+  const { today } = await getToday()
+  if (!isCheckInDateAllowed(date, today)) {
+    return { ok: false, error: date > today ? t.validation.futureDate : t.validation.tooOldDate }
+  }
 
   const { user, supabase } = await authed()
 
@@ -142,10 +145,10 @@ export async function toggleHabitLog(habitId: string, date: string, done: boolea
   if (error?.code === "23505") {
     ;({ error } = await supabase.from("habit_logs").update({ is_mini: mini }).eq("habit_id", habitId).eq("log_date", date))
   }
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: error.code === "22008" ? t.validation.tooOldDate : error.message }
 
   await invalidatePublicProfile(supabase, user.id)
-  if (done && date >= addDays(todayIn("UTC"), -1)) {
+  if (done && date >= addDays(today, -1)) {
     // after the response: if this habit is part of a pact, nudge the partner
     after(() => nudgePactPartner(supabase, habitId))
   }

@@ -56,6 +56,24 @@ export async function saveReminderSettings(input: z.infer<typeof settingsSchema>
   return { ok: true }
 }
 
+/**
+ * Move the reminders' timezone to the device's current one (called on app
+ * open by <TimezoneSync />). Reminders and the UI then agree on "today".
+ * No-op when signed out or reminders were never set up.
+ */
+export async function syncTimezone(timezone: string): Promise<ActionResult> {
+  if (typeof timezone !== "string" || timezone.length > 64 || !isValidTimezone(timezone)) return { ok: false, error: "timezone" }
+  const user = await getCurrentUser()
+  if (!user) return { ok: false, error: "signed out" }
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from("reminder_settings")
+    .update({ timezone, updated_at: new Date().toISOString() })
+    .eq("user_id", user.id)
+    .neq("timezone", timezone)
+  return error ? { ok: false, error: error.message } : { ok: true }
+}
+
 /** Store this browser's push subscription (re-subscribing the same endpoint is a no-op). */
 export async function savePushSubscription(input: z.infer<typeof subscriptionSchema>): Promise<ActionResult> {
   const parsed = subscriptionSchema.safeParse(input)

@@ -31,6 +31,7 @@ import { Switch } from "@/components/ui/switch"
 import { useI18n } from "@/i18n/client"
 import type { ReminderSettings } from "@/lib/data"
 import { cn } from "@/lib/utils"
+import { browserTimezone } from "@/components/day-rollover"
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""
 
@@ -48,7 +49,6 @@ function base64UrlToUint8Array(base64Url: string) {
   return Uint8Array.from(atob(padded), (c) => c.charCodeAt(0))
 }
 
-const browserTimezone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
 
 /** Round "HH:MM" to the nearest 15 minutes (the scheduler's resolution). */
 function roundTo15(value: string) {
