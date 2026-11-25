@@ -247,7 +247,7 @@ export const en = {
     nextLabel: "Next reminder:",
     off: (time: string, tz: string) => `Reminders are off. Turn them on to get a notification at ${time} (${tz}).`,
     notShown: {
-      mac: "Nothing showed up? Check macOS: System Settings → Notifications → your browser (e.g. Google Chrome) → Allow notifications, style Banners. And turn off Do Not Disturb / Focus.",
+      mac: "If it didn't appear, check macOS: System Settings → Notifications → your browser (e.g. Google Chrome) → Allow notifications, style Banners. And turn off Do Not Disturb / Focus.",
       windows: "Nothing showed up? Check Windows: Settings → System → Notifications → your browser is on. And turn off Do not disturb.",
       android: "Nothing showed up? Android Settings → Apps → your browser → Notifications must be on.",
       ios: "Nothing showed up? iOS Settings → Notifications → Streakly must be allowed. Turn off Focus.",
@@ -265,7 +265,7 @@ export const en = {
     moved: (time: string) => `Reminder moved to ${time}`,
     timeSaved: (time: string) => `Time saved: ${time}`,
     alsoOn: "This browser will get reminders too",
-    sent: (n: number) => `Sent to ${n} ${p(n, "device", "devices")} — check your notifications`,
+    sent: (n: number) => `Test sent to ${n} ${p(n, "device", "devices")}. A Streakly notification should pop up in the corner of your screen within a few seconds.`,
     sessionEnded: "Your session has ended. Please sign out and sign in again.",
     noDevices: "No device is subscribed yet. Turn reminders on in this browser first.",
     expired: "This device's subscription expired. Turn reminders off and on again.",
