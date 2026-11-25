@@ -28,8 +28,11 @@ test("mini version keeps the streak and can be upgraded to full", async ({ page 
     await card.getByRole("button", { name: 'Mark "Read 10 pages" as done today' }).click()
     await saved
     await expect(card.getByRole("button", { name: 'Mark "Read 10 pages" as not done today' })).toBeVisible()
-    await page.reload()
-    await expect(card.getByText("Mini version done", { exact: false })).toHaveCount(0)
+    // other background actions (time zone, push sync) may answer first: re-check after reloads
+    await expect(async () => {
+      await page.reload()
+      await expect(card.getByText("Mini version done", { exact: false })).toHaveCount(0, { timeout: 2_000 })
+    }).toPass({ timeout: 15_000 })
   } finally {
     await card.getByRole("button", { name: "Habit actions" }).click()
     await page.getByRole("menuitem", { name: "Delete" }).click()

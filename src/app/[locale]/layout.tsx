@@ -3,7 +3,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 
 import { ServiceWorkerRegister } from "@/components/sw-register"
 import type { Metadata, Viewport } from "next"
-import { Geist_Mono, Onest, Unbounded } from "next/font/google"
+import { Onest, Unbounded } from "next/font/google"
 import { notFound } from "next/navigation"
 
 import { ThemeProvider } from "@/components/theme-provider"
@@ -19,10 +19,9 @@ import { getT } from "@/i18n/server"
 
 import "../globals.css"
 
-// Onest for text, Unbounded (wide, geometric, with proper Cyrillic) for headings and the wordmark
+// Onest for all text; Unbounded only draws the "streakly" wordmark (one weight, Latin)
 const onest = Onest({ variable: "--font-sans", subsets: ["latin", "cyrillic"] })
-const unbounded = Unbounded({ variable: "--font-unbounded", subsets: ["latin", "cyrillic"], weight: ["500", "600", "700"] })
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin", "cyrillic"] })
+const unbounded = Unbounded({ variable: "--font-unbounded", subsets: ["latin"], weight: ["600"] })
 
 /** Prerender every page once per language. */
 export function generateStaticParams() {
@@ -57,7 +56,7 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[lo
     <html
       lang={locale}
       suppressHydrationWarning
-      className={`${onest.variable} ${unbounded.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${onest.variable} ${unbounded.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
         <I18nProvider locale={locale}>

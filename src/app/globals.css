@@ -8,7 +8,6 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
   /* one text family everywhere; the wide display face is kept for the wordmark only */
   --font-heading: var(--font-sans);
   --font-brand: var(--font-unbounded);

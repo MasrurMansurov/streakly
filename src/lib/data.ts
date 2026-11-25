@@ -112,7 +112,8 @@ export async function getDashboardData() {
   const [{ today, timeZone }, supabase] = await Promise.all([getToday(), createClient()])
   const since = addDays(today, -(HISTORY_DAYS - 1))
 
-  const [habitsRes, logs, profileRes, archivedCount, notesRes, stats] = await Promise.all([
+  // one wave: every query only needs the user and the date range
+  const [habitsRes, logs, profileRes, archivedCount, notesRes, stats, { repairs, pauses }, { data: strengthRows }, { data: moodRows }] = await Promise.all([
     supabase
       .from("habits")
       .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue, graduated_at, is_private, habit_reminders(remind_at)")
@@ -133,13 +134,11 @@ export async function getDashboardData() {
     getArchivedCount(user.id),
     supabase.from("habit_notes").select("habit_id, note").eq("user_id", user.id).eq("log_date", today),
     achievementStats(supabase, user.id),
-  ])
-  if (habitsRes.error) throw habitsRes.error
-  const [{ repairs, pauses }, { data: strengthRows }, { data: moodRows }] = await Promise.all([
     bridgesData(supabase, user.id, since),
     supabase.from("habit_strength").select("habit_id, week_start, score").eq("user_id", user.id).gte("week_start", addDays(today, -7 * 10)).order("week_start", { ascending: false }),
     supabase.from("daily_moods").select("day, mood, energy").eq("user_id", user.id).gte("day", addDays(today, -90)),
   ])
+  if (habitsRes.error) throw habitsRes.error
   // weekly self-reports per habit, newest first
   const strength: Record<string, { week: ISODate; score: number }[]> = {}
   for (const r of strengthRows ?? []) (strength[r.habit_id] ??= []).push({ week: r.week_start as ISODate, score: r.score })
@@ -187,7 +186,7 @@ export async function getPublicProfile(username: string) {
 
   // a little extra history so any viewer timezone is covered
   const since = addDays(new Date().toISOString().slice(0, 10), -(HISTORY_DAYS + 1))
-  const [habitsRes, logs] = await Promise.all([
+  const [habitsRes, logs, stats, { repairs, pauses }] = await Promise.all([
     supabase
       .from("habits")
       .select("id, name, description, color, position, target_per_week, created_at")
@@ -204,9 +203,9 @@ export async function getPublicProfile(username: string) {
         .order("log_date")
         .range(from, to)
     ),
+    achievementStats(supabase, profile.id),
+    bridgesData(supabase, profile.id, since),
   ])
-
-  const [stats, { repairs, pauses }] = await Promise.all([achievementStats(supabase, profile.id), bridgesData(supabase, profile.id, since)])
   return { profile, habits: habitsRes.data ?? [], logs, stats, repairs, pauses }
 }
 
@@ -245,39 +244,40 @@ async function getArchivedCount(userId: string): Promise<number> {
 export async function getHabitDetail(id: string) {
   const user = await requireUser()
   const [{ today }, supabase] = await Promise.all([getToday(), createClient()])
-  const { data: row } = await supabase
-    .from("habits")
-    .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue, graduated_at, is_private, archived_at, habit_reminders(remind_at)")
-    .eq("id", id)
-    .eq("user_id", user.id)
-    .maybeSingle()
+  const since = addDays(today, -370)
+
+  // one wave: every query is scoped to the user, so nothing leaks if the habit isn't theirs
+  const [{ data: row }, logs, { data: notes }, { repairs, pauses }, { data: strengthRows }] = await Promise.all([
+    supabase
+      .from("habits")
+      .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue, graduated_at, is_private, archived_at, habit_reminders(remind_at)")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .maybeSingle(),
+    fetchAllLogs((from, to) =>
+      supabase
+        .from("habit_logs")
+        .select("habit_id, log_date")
+        .eq("habit_id", id)
+        .eq("user_id", user.id)
+        .gte("log_date", since)
+        .order("log_date")
+        .range(from, to)
+    ),
+    supabase.from("habit_notes").select("log_date, note").eq("habit_id", id).eq("user_id", user.id),
+    bridgesData(supabase, user.id, since),
+    supabase
+      .from("habit_strength")
+      .select("week_start, score")
+      .eq("habit_id", id)
+      .eq("user_id", user.id)
+      .order("week_start", { ascending: false })
+      .limit(12),
+  ])
   if (!row) return null
   const { habit_reminders, ...rest } = row
   const habit = { ...rest, remind_at: habit_reminders?.remind_at.slice(0, 5) ?? null }
 
-  const since = addDays(today, -370)
-  const logs = await fetchAllLogs((from, to) =>
-    supabase
-      .from("habit_logs")
-      .select("habit_id, log_date")
-      .eq("habit_id", id)
-      .eq("user_id", user.id)
-      .gte("log_date", since)
-      .order("log_date")
-      .range(from, to)
-  )
-  const { data: notes } = await supabase
-    .from("habit_notes")
-    .select("log_date, note")
-    .eq("habit_id", id)
-    .eq("user_id", user.id)
-  const { repairs, pauses } = await bridgesData(supabase, user.id, since)
-  const { data: strengthRows } = await supabase
-    .from("habit_strength")
-    .select("week_start, score")
-    .eq("habit_id", id)
-    .order("week_start", { ascending: false })
-    .limit(12)
   return {
     habit,
     logs,
