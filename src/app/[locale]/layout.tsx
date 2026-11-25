@@ -7,6 +7,7 @@ import { Onest, Unbounded } from "next/font/google"
 import { notFound } from "next/navigation"
 
 import { ThemeProvider } from "@/components/theme-provider"
+import { AttributionCapture } from "@/components/attribution"
 import { DayRollover } from "@/components/day-rollover"
 import { ReminderSound } from "@/components/reminder-sound"
 import { TimezoneSync } from "@/components/timezone-sync"
@@ -64,6 +65,7 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[lo
             <TooltipProvider>{children}</TooltipProvider>
             <Toaster richColors position="bottom-right" />
             <TimezoneSync />
+            <AttributionCapture />
             <DayRollover />
             <ReminderSound />
             <VisualViewportVars />

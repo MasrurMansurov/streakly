@@ -1,9 +1,10 @@
 "use client"
 
 import { CopyIcon, DownloadIcon, Share2Icon } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
+import { track } from "@/app/actions/analytics"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -17,6 +18,12 @@ export function ShareDialog({ open, onOpenChange }: { open: boolean; onOpenChang
   const [period, setPeriod] = useState<SharePeriod>("week")
   const [loaded, setLoaded] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+
+  // growth analytics: how many open the dialog, how many actually share
+  useEffect(() => {
+    if (open) void track("share_opened").catch(() => {})
+  }, [open])
+  const done = (how: "share" | "download" | "copy") => void track("share_done", { how, period }).catch(() => {})
 
   const src = `/api/share-card?period=${period}&locale=${locale}`
   const filename = `streakly-${period}.png`
@@ -34,6 +41,7 @@ export function ShareDialog({ open, onOpenChange }: { open: boolean; onOpenChang
       const [file, caption] = await Promise.all([imageFile(), text()])
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], text: caption })
+        done("share")
       } else {
         download(file)
       }
@@ -49,12 +57,14 @@ export function ShareDialog({ open, onOpenChange }: { open: boolean; onOpenChang
     const url = URL.createObjectURL(file)
     Object.assign(document.createElement("a"), { href: url, download: filename }).click()
     URL.revokeObjectURL(url)
+    done("download")
   }
 
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(await text())
       toast.success(t.share.copied)
+      done("copy")
     } catch {
       toast.error(t.common.somethingWrong)
     }

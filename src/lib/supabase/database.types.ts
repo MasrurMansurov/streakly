@@ -25,6 +25,12 @@ export type Database = {
           { foreignKeyName: "habit_reminders_habit_id_fkey"; columns: ["habit_id"]; isOneToOne: true; referencedRelation: "habits"; referencedColumns: ["id"] },
         ]
       }
+      user_attribution: {
+        Row: { created_at: string; landing: string | null; ref: string | null; source: string; user_id: string }
+        Insert: { created_at?: string; landing?: string | null; ref?: string | null; source: string; user_id?: string }
+        Update: { created_at?: string; landing?: string | null; ref?: string | null; source?: string; user_id?: string }
+        Relationships: []
+      }
       weekly_letters: {
         Row: { body: string; created_at: string; locale: string; user_id: string; week_start: string }
         Insert: { body: string; created_at?: string; locale: string; user_id?: string; week_start: string }
@@ -41,6 +47,12 @@ export type Database = {
         Row: { challenge_id: string; habit_id: string | null; invited_at: string; joined_at: string | null; status: string; user_id: string }
         Insert: { challenge_id: string; habit_id?: string | null; invited_at?: string; joined_at?: string | null; status?: string; user_id: string }
         Update: { challenge_id?: string; habit_id?: string | null; invited_at?: string; joined_at?: string | null; status?: string; user_id?: string }
+        Relationships: []
+      }
+      events: {
+        Row: { created_at: string; id: number; name: string; props: Json; user_id: string }
+        Insert: { created_at?: string; id?: never; name: string; props?: Json; user_id?: string }
+        Update: { created_at?: string; id?: never; name?: string; props?: Json; user_id?: string }
         Relationships: []
       }
       follows: {
