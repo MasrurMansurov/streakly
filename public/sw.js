@@ -97,7 +97,12 @@ self.addEventListener("push", (event) => {
         // one-tap check-in where supported (Chrome/Edge/Android, Firefox); others open the app
         actions: Array.isArray(data.actions) ? data.actions.slice(0, 2) : [],
         data: { url: data.url || "/dashboard", habitId: data.habitId || null, done: data.doneText || "✓" },
+        silent: false, // let the OS play its notification sound
       })
+      // an open Streakly tab adds its own chime (one tab: the one in front if any)
+      const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true })
+      const target = windows.find((w) => w.focused) || windows.find((w) => w.visibilityState === "visible") || windows[0]
+      if (target) target.postMessage({ type: "reminder-sound" })
     })(),
   ]
   // "N left today" on the app icon (installed PWA)

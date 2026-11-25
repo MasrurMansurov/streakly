@@ -8,6 +8,7 @@ import { notFound } from "next/navigation"
 
 import { ThemeProvider } from "@/components/theme-provider"
 import { DayRollover } from "@/components/day-rollover"
+import { ReminderSound } from "@/components/reminder-sound"
 import { TimezoneSync } from "@/components/timezone-sync"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -64,6 +65,7 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[lo
             <Toaster richColors position="bottom-right" />
             <TimezoneSync />
             <DayRollover />
+            <ReminderSound />
           </ThemeProvider>
         </I18nProvider>
         <ServiceWorkerRegister />

@@ -12,6 +12,8 @@ import {
   ClockIcon,
   SendIcon,
   SmartphoneIcon,
+  PlayIcon,
+  Volume2Icon,
 } from "lucide-react"
 import { useEffect, useState, useSyncExternalStore, useTransition, type ReactNode } from "react"
 import { toast } from "sonner"
@@ -30,6 +32,7 @@ import { useI18n } from "@/i18n/client"
 import type { ReminderSettings } from "@/lib/data"
 import { cn } from "@/lib/utils"
 import { browserTimezone } from "@/components/day-rollover"
+import { playChime, reminderSoundOn, setReminderSound } from "@/lib/reminder-sound"
 import { subscribeThisDevice, unsubscribeThisDevice } from "@/lib/push-device"
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""
@@ -71,6 +74,7 @@ export function RemindersCard({ initial }: { initial: ReminderSettings }) {
   const [deviceSubscribed, setDeviceSubscribed] = useState(false)
   const [timezone, setTimezone] = useState(initial.timezone)
   const [customTime, setCustomTime] = useState(initial.remindAt)
+  const [soundOn, setSoundOn] = useState(true)
   const [pending, startTransition] = useTransition()
   // "today"/"tomorrow" depends on the browser clock: skip it during SSR
   const isClient = useSyncExternalStore(noopSubscribe, () => true, () => false)
@@ -79,6 +83,7 @@ export function RemindersCard({ initial }: { initial: ReminderSettings }) {
   useEffect(() => {
     const check = async () => {
       setTimezone(browserTimezone())
+      setSoundOn(reminderSoundOn())
       const hasPush = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
       const standalone = window.matchMedia("(display-mode: standalone)").matches
@@ -274,6 +279,37 @@ export function RemindersCard({ initial }: { initial: ReminderSettings }) {
             <Button variant="outline" size="sm" disabled={pending} onClick={sendTest}>
               <SendIcon /> {t.reminders.sendTest}
             </Button>
+          </div>
+        )}
+
+        {enabled && !blocked && (
+          <div className="flex items-start justify-between gap-4">
+            <div className="grid gap-1">
+              <Label htmlFor="reminder-sound" className="inline-flex items-center gap-1.5">
+                <Volume2Icon className="size-4" /> {t.reminders.sound}
+              </Label>
+              <p className="text-xs text-muted-foreground">{t.reminders.soundHint}</p>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={async () => {
+                  if (!(await playChime())) toast.error(t.reminders.soundBlocked)
+                }}
+              >
+                <PlayIcon /> {t.reminders.soundPreview}
+              </Button>
+              <Switch
+                id="reminder-sound"
+                checked={soundOn}
+                onCheckedChange={(on) => {
+                  setReminderSound(on)
+                  setSoundOn(on)
+                  if (on) void playChime()
+                }}
+              />
+            </div>
           </div>
         )}
       </CardContent>

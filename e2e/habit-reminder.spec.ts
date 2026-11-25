@@ -86,6 +86,16 @@ test("setting a reminder time turns notifications on for this device", async ({ 
   await expect(toggle).toHaveAttribute("aria-checked", "true")
   await expect(page.getByText("This browser gets reminders")).toBeVisible()
 
+  // reminder chime: on by default, the choice is remembered on this device
+  const sound = page.getByRole("switch", { name: "Sound" })
+  await expect(sound).toHaveAttribute("aria-checked", "true")
+  await sound.click()
+  await expect(sound).toHaveAttribute("aria-checked", "false")
+  await page.reload()
+  await expect(sound).toHaveAttribute("aria-checked", "false")
+  await sound.click()
+  await expect(sound).toHaveAttribute("aria-checked", "true")
+
   // clean up: switch reminders off (unsubscribes the device) and delete the habit
   await toggle.click()
   await expect(toggle).toHaveAttribute("aria-checked", "false")
