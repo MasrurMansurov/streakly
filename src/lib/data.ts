@@ -12,7 +12,7 @@ import { buildChallenges, type Challenge } from "./challenges"
 import { periodRange, type SharePeriod, type ShareHabit } from "./share"
 import type { DayFeeling } from "./insights"
 import { bridgesFor, habitStreak, weekStart } from "./streaks"
-import { evaluateAchievements } from "./achievements"
+import { evaluateAchievements, statsFromRow } from "./achievements"
 import { addDays, DEFAULT_TIMEZONE, isValidTimezone, logicalToday, parseDayStart, TIMEZONE_COOKIE, type DayStart, type ISODate } from "./dates"
 import { createClient, createPublicClient } from "./supabase/server"
 import type { AchievementStats } from "./achievements"
@@ -36,7 +36,7 @@ async function achievementStats(
   userId: string
 ): Promise<AchievementStats> {
   const { data } = await supabase.rpc("achievement_stats", { p_user: userId })
-  return { totalCheckins: Number(data?.[0]?.total_checkins ?? 0), bestStreak: Number(data?.[0]?.best_streak ?? 0) }
+  return statsFromRow(data?.[0])
 }
 
 /** The verified JWT claims of this request (one check per request), or null. */

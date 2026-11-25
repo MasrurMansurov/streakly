@@ -395,7 +395,7 @@ export type Database = {
     Functions: {
       achievement_stats: {
         Args: { p_user: string }
-        Returns: { total_checkins: number; best_streak: number }[]
+        Returns: { total_checkins: number; best_streak: number; comebacks: number; quick_comebacks: number }[]
       }
       claim_push_subscription: {
         Args: { p_endpoint: string; p_p256dh: string; p_auth: string; p_user_agent?: string }

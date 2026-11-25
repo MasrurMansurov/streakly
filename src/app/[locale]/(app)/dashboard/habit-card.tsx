@@ -30,6 +30,7 @@ import { formatDay } from "@/i18n"
 import { useI18n } from "@/i18n/client"
 import { addDays, diffDays, type ISODate } from "@/lib/dates"
 import { habitColor } from "@/lib/habit-colors"
+import { canComeBackToday } from "@/lib/comeback"
 import type { PauseReason } from "@/lib/pause"
 import { completionRate, countInWeek, FREEZES_PER_MONTH, habitStreak, repairCandidate, weekStart } from "@/lib/streaks"
 import { graduation } from "@/lib/strength"
@@ -76,6 +77,8 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
   const repair = target >= 7 && !paused?.has(today) ? repairCandidate(done, today, bridges, repairedThisMonth) : null
   // a recent break (last check-in within two weeks) of a streak worth caring about
   const lastDone = [...done].sort().at(-1)
+  // yesterday was missed: today's check-in would be a comeback (daily habits)
+  const comebackToday = target >= 7 && !habit.graduated_at && !paused?.has(today) && canComeBackToday(done, today, bridges)
   const recentlyBroken =
     !repair && streak.current === 0 && streak.best >= 3 && lastDone !== undefined && lastDone >= addDays(today, -14)
   const thisWeek = countInWeek(done, weekStart(today))
@@ -320,6 +323,10 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
       ) : recentlyBroken && !doneToday ? (
         <p className="mt-3 rounded-lg bg-muted/60 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
           {t.comeback.broken(streak.best)}
+        </p>
+      ) : comebackToday ? (
+        <p className="mt-3 flex items-center gap-2 rounded-lg bg-teal-500/10 px-3 py-2 text-xs leading-relaxed text-teal-800 dark:text-teal-200">
+          <RotateCcwIcon className="size-3.5 shrink-0" aria-hidden /> {t.comeback.nudge}
         </p>
       ) : null}
 

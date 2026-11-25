@@ -110,10 +110,18 @@ async function push(subs: Sub[], payload: Payload) {
  * with the daily streak that ends yesterday.
  */
 async function dueHabits(userId: string, localDate: string, scope: { only?: string; skipTimed?: boolean } = {}) {
-  return await sql<{ id: string; name: string; streak: number; cue: string | null }[]>`
+  return await sql<{ id: string; name: string; streak: number; cue: string | null; comeback: boolean }[]>`
     select h.id, h.name, h.cue,
       -- the same streak the app shows (freezes, vacation, repaired days)
-      case when h.target_per_week >= 7 then public.habit_current_streak(h.id, ${localDate}::date) else 0 end as streak
+      case when h.target_per_week >= 7 then public.habit_current_streak(h.id, ${localDate}::date) else 0 end as streak,
+      -- yesterday was missed (not vacation / repaired) after earlier check-ins:
+      -- today's check-in would be a comeback (same rule as src/lib/comeback.ts)
+      (h.target_per_week >= 7
+        and not exists (select 1 from public.habit_logs l where l.habit_id = h.id and l.log_date = ${localDate}::date - 1)
+        and not exists (select 1 from public.habit_repairs r where r.habit_id = h.id and r.day = ${localDate}::date - 1)
+        and not exists (select 1 from public.pauses p where p.user_id = h.user_id and ${localDate}::date - 1 between p.start_date and p.end_date)
+        and exists (select 1 from public.habit_logs l where l.habit_id = h.id and l.log_date < ${localDate}::date - 1)
+      ) as comeback
     from public.habits h
     where h.user_id = ${userId}
       and h.archived_at is null
@@ -156,6 +164,8 @@ const TEXT = {
     pactTurn: (name: string, habit: string) => `${name} is done with “${habit}”. Your turn — keep your shared streak going!`,
     pactBothTitle: "You both did it today",
     pactBoth: (name: string) => `${name} checked in too — your shared streak grows.`,
+    comebackTitle: "A good day to come back",
+    comeback: (name: string) => `Yesterday was a miss — check in “${name}” today and it counts as a comeback 💪`,
   },
   ru: {
     title: "Не прерывайте серию 🔥",
@@ -173,6 +183,8 @@ const TEXT = {
     pactTurn: (name: string, habit: string) => `${name}: «${habit}» — готово. Ваша очередь, чтобы сохранить общую серию!`,
     pactBothTitle: "Сегодня вы оба справились",
     pactBoth: (name: string) => `${name} — отметка есть. Общая серия растёт!`,
+    comebackTitle: "Отличный день, чтобы вернуться",
+    comeback: (name: string) => `Вчера был пропуск — отметьте «${name}» сегодня, и это засчитается как возвращение 💪`,
   },
 } satisfies Record<Locale, unknown>
 
@@ -185,7 +197,7 @@ const short = (s: string, n = 28) => (s.length > n ? `${s.slice(0, n - 1)}…` :
  * the most important habit gets a one-tap check-in button.
  */
 function message(
-  habits: { id: string; name: string; streak: number; cue?: string | null }[],
+  habits: { id: string; name: string; streak: number; cue?: string | null; comeback?: boolean }[],
   locale: Locale,
   opts: { tag?: string; due?: number } = {}
 ): Payload {
@@ -194,20 +206,26 @@ function message(
   const top = [...habits].sort((a, b) => b.streak - a.streak)[0]
   const list = `${names.slice(0, 3).join(", ")}${names.length > 3 ? "…" : ""}`
   const atRisk = top && top.streak >= 3
+  // comeback bonus: no streak at stake, but yesterday was a miss → invite the return
+  const back = !atRisk ? habits.find((h) => h.comeback) : undefined
+  const focus = back ?? top
   return {
-    title: atRisk ? t.riskTitle(top.streak) : t.title,
+    title: atRisk ? t.riskTitle(top.streak) : back ? t.comebackTitle : t.title,
     // the if-then plan is the strongest cue we have — use it when there is one
     body: atRisk
       ? t.risk(top.name, top.streak)
-      : top?.cue
+      : back
+        ? t.comeback(back.name)
+        : top?.cue
         ? t.cue(top.cue, top.name)
         : names.length === 1
           ? t.one(names[0])
           : t.many(names.length, list),
-    url: top ? `/${locale}/dashboard#habit-${top.id}` : `/${locale}/dashboard`,
+    // link and one-tap button go to the habit the message is about
+    url: focus ? `/${locale}/dashboard#habit-${focus.id}` : `/${locale}/dashboard`,
     tag: opts.tag ?? "daily-reminder",
-    actions: top ? [{ action: "checkin", title: short(t.checkIn(top.name)) }] : [],
-    habitId: top?.id,
+    actions: focus ? [{ action: "checkin", title: short(t.checkIn(focus.name)) }] : [],
+    habitId: focus?.id,
     doneText: t.done,
     due: opts.due ?? habits.length,
   }

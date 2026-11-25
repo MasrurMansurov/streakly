@@ -15,7 +15,10 @@ test("dashboard shows earned and locked achievements", async ({ page }) => {
   await signIn(page, "demo@streakly.dev", "streakly-demo")
   await page.goto("/progress")
   await expect(page.getByText("Achievements", { exact: true })).toBeVisible()
-  await expect(page.getByText(/\d of 6 unlocked/)).toBeVisible()
+  await expect(page.getByText(/\d of 8 unlocked/)).toBeVisible()
+  // comeback bonus: returning after a miss is an achievement of its own
+  await expect(page.getByRole("listitem", { name: /^Comeback:/ })).toBeVisible()
+  await expect(page.getByRole("listitem", { name: /^Never miss twice:/ })).toBeVisible()
   await expect(page.getByRole("listitem", { name: /One week: Unlocked/ })).toBeVisible()
   await expect(page.getByRole("listitem", { name: /Hundred days: \d+\/100/ })).toBeVisible()
 })

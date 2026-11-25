@@ -22,6 +22,7 @@ import { toast } from "sonner"
 
 import { reorderHabits, toggleHabitLog } from "@/app/actions/habits"
 import { applyQueue, enqueue, loadQueue, saveQueue, type QueuedToggle } from "@/lib/offline-queue"
+import { canComeBackToday, comebackDays, isQuickComeback } from "@/lib/comeback"
 import { AchievementBadge } from "@/components/achievement-badge"
 import { ConfettiBurst } from "@/components/confetti-burst"
 import { IconTile, type IconTone } from "@/components/icon-tile"
@@ -229,10 +230,14 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
     }
     const habit = habits.find((h) => h.id === habitId)
     const days = byHabit.get(habitId)
-    // first check-in after a broken streak → celebrate the comeback
-    if (done && date === today && habit && days && !days.has(today) && days.size > 0) {
-      const before = habitStreak(days, today, habit.target_per_week, bridgesOf(habitId))
-      if (before.current === 0) toast.success(t.comeback.title, { description: t.comeback.text })
+    // comeback bonus: the first check-in after a missed day is celebrated on its own
+    // (freezes and repairs protect a streak; this rewards the return itself)
+    if (done && date === today && habit && days && habit.target_per_week >= 7 && canComeBackToday(days, today, bridgesOf(habitId))) {
+      const withToday = new Set(days).add(today)
+      const n = comebackDays(withToday, bridgesOf(habitId)).length
+      const quick = isQuickComeback(withToday, today, bridgesOf(habitId))
+      toast.success(t.comeback.title, { description: quick ? t.comeback.quick : t.comeback.text(n), duration: 6000 })
+      setCelebration((c) => c + 1)
     }
     if (done && date === today && !byHabit.get(habitId)?.has(today)) {
       const stillDue = habits.filter((h) => h.id !== habitId && isDueToday(byHabit.get(h.id)!, today, h.target_per_week))

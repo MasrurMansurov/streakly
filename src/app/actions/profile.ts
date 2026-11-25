@@ -4,7 +4,7 @@ import { refresh, updateTag } from "next/cache"
 
 import { z } from "zod"
 
-import { evaluateAchievements } from "@/lib/achievements"
+import { evaluateAchievements, statsFromRow } from "@/lib/achievements"
 import { ACCENTS, BANNERS, FRAMES, normalizeLink, type AccentKey, type BannerKey } from "@/lib/profile-style"
 import { getCurrentUser } from "@/lib/data"
 import { createClient } from "@/lib/supabase/server"
@@ -113,7 +113,7 @@ export async function updateAppearance(input: AppearanceInput): Promise<ActionRe
   // only badges you have actually earned can be shown off
   const { data: stats } = await supabase.rpc("achievement_stats", { p_user: user.id })
   const earned = new Set(
-    evaluateAchievements({ totalCheckins: Number(stats?.[0]?.total_checkins ?? 0), bestStreak: Number(stats?.[0]?.best_streak ?? 0) })
+    evaluateAchievements(statsFromRow(stats?.[0]))
       .filter((a) => a.earned)
       .map((a) => a.id as string)
   )

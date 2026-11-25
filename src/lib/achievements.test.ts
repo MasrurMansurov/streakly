@@ -32,3 +32,14 @@ describe("achievements", () => {
     expect(newlyEarned(after, after)).toEqual([])
   })
 })
+
+describe("comeback achievements", () => {
+  it("reward coming back, not only unbroken runs", () => {
+    const ids = (s: Parameters<typeof evaluateAchievements>[0]) => evaluateAchievements(s).filter((a) => a.earned).map((a) => a.id)
+    expect(ids({ totalCheckins: 20, bestStreak: 4, comebacks: 1, quickComebacks: 0 })).toContain("comeback")
+    expect(ids({ totalCheckins: 20, bestStreak: 4, comebacks: 6, quickComebacks: 4 })).not.toContain("never_twice")
+    expect(ids({ totalCheckins: 20, bestStreak: 4, comebacks: 6, quickComebacks: 5 })).toContain("never_twice")
+    // old rows without comeback columns still work
+    expect(ids({ totalCheckins: 20, bestStreak: 4 })).not.toContain("comeback")
+  })
+})

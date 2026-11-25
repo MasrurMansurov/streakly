@@ -1,4 +1,4 @@
-import { CheckIcon, FlameIcon, FootprintsIcon, LockIcon, type LucideIcon } from "lucide-react"
+import { CheckIcon, FlameIcon, FootprintsIcon, LockIcon, RotateCcwIcon, type LucideIcon } from "lucide-react"
 
 import type { AchievementId } from "@/lib/achievements"
 import { cn } from "@/lib/utils"
@@ -48,6 +48,18 @@ const STYLES: Record<AchievementId, Style> = {
     icon: CheckIcon,
     rim: "from-yellow-100 via-yellow-400 to-amber-700",
     face: "from-yellow-400 to-amber-600",
+  },
+  comeback: {
+    value: null,
+    icon: RotateCcwIcon,
+    rim: "from-teal-100 via-teal-400 to-teal-700",
+    face: "from-teal-400 to-cyan-600",
+  },
+  never_twice: {
+    value: "×2",
+    icon: RotateCcwIcon,
+    rim: "from-fuchsia-200 via-fuchsia-400 to-purple-800",
+    face: "from-fuchsia-500 to-purple-700",
   },
 }
 

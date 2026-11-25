@@ -202,6 +202,8 @@ export const en = {
     doneToday: "Done today",
   },
   habitPage: {
+    comebacks: (n: number, quick: number) =>
+      `Comebacks after a missed day this year: ${n}${quick ? `, ${quick} of them the very next day` : ""}.`,
     since: (date: string) => `since ${date}`,
     archivedBadge: "Archived",
     currentStreak: "Current streak",
@@ -338,6 +340,8 @@ export const en = {
       streak_100: { name: "Hundred days", description: "Keep a 100-day streak" },
       checkins_100: { name: "Centurion", description: "Make 100 check-ins" },
       checkins_500: { name: "Unstoppable", description: "Make 500 check-ins" },
+      comeback: { name: "Comeback", description: "Come back to a habit after a missed day" },
+      never_twice: { name: "Never miss twice", description: "Come back the very next day after a miss, 5 times" },
     } as Record<string, { name: string; description: string }>,
   },
   leaderboard: {
@@ -386,7 +390,10 @@ export const en = {
   },
   comeback: {
     title: "Welcome back!",
-    text: "Coming back after a miss is the real habit skill.",
+    text: (n: number) =>
+      n > 1 ? `That's comeback #${n}. Coming back after a miss is the real habit skill.` : "Coming back after a miss is the real habit skill.",
+    quick: "You didn't miss twice — that's exactly how habits stick.",
+    nudge: "Yesterday was a miss — today's check-in counts as a comeback, rewarded on its own.",
     broken: (best: number) =>
       `Your record of ${best} stays yours. A new streak starts today — even the mini version counts.`,
   },

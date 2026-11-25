@@ -2,6 +2,7 @@ import {
   ArrowLeftIcon,
   GraduationCapIcon,
   LockIcon,
+  RotateCcwIcon,
   ClockArrowUpIcon,
   CalendarDaysIcon,
   FlameIcon,
@@ -32,6 +33,8 @@ import { graduation, habitStrength } from "@/lib/strength"
 import { cn } from "@/lib/utils"
 
 import { ActivityChart } from "../../dashboard/activity-chart"
+import { comebackDays, isQuickComeback } from "@/lib/comeback"
+
 import { ArchivedCheckIn } from "./archived-check-in"
 import { HabitActions } from "./habit-actions"
 import { NotesList } from "./notes-list"
@@ -70,6 +73,9 @@ async function HabitDetail({ params }: Props) {
   const createdOn = habit.created_at.slice(0, 10)
   const done = new Set<ISODate>(logs.map((l) => l.log_date))
   const bridges = bridgesFor(habit.id, repairs, pauses)
+  // comeback bonus: returns after a missed day in the last year
+  const comebacks = comebackDays(done, bridges)
+  const quickComebacks = comebacks.filter((d) => isQuickComeback(done, d, bridges)).length
   const streak = habitStreak(done, today, target, bridges)
   const counts = new Map<ISODate, number>([...done].map((d) => [d, 1]))
   const yearCount = [...done].filter((d) => d > addDays(today, -365)).length
@@ -140,6 +146,13 @@ async function HabitDetail({ params }: Props) {
         />
         <Stat icon={CalendarDaysIcon} tone="violet" label={t.habitPage.checkInsYear} value={String(yearCount)} />
       </div>
+
+      {target >= 7 && comebacks.length > 0 && (
+        <p className="flex items-center gap-2 text-sm text-muted-foreground">
+          <RotateCcwIcon className="size-4 text-teal-700 dark:text-teal-400" aria-hidden />
+          {t.habitPage.comebacks(comebacks.length, quickComebacks)}
+        </p>
+      )}
 
       <StrengthCard
         t={t}

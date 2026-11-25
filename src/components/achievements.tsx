@@ -11,6 +11,8 @@ const BAR: Record<AchievementId, string> = {
   streak_100: "bg-violet-500",
   checkins_100: "bg-sky-500",
   checkins_500: "bg-yellow-500",
+  comeback: "bg-teal-500",
+  never_twice: "bg-fuchsia-500",
 }
 
 type Props = {
