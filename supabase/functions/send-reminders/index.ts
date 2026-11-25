@@ -390,23 +390,68 @@ async function cleanupProofs() {
   return { removed: rows.length }
 }
 
-/** Encrypts a payload for a throwaway subscription without sending it. */
+const b64url = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes)).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_")
+const utf8 = new TextEncoder()
+const concat = (...parts: Uint8Array[]) => {
+  const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0))
+  let at = 0
+  for (const p of parts) (out.set(p, at), (at += p.length))
+  return out
+}
+async function hkdf(salt: Uint8Array, ikm: Uint8Array, info: Uint8Array, length: number) {
+  const key = await crypto.subtle.importKey("raw", ikm, "HKDF", false, ["deriveBits"])
+  return new Uint8Array(await crypto.subtle.deriveBits({ name: "HKDF", hash: "SHA-256", salt, info }, key, length * 8))
+}
+
+/** What a browser does with a push body (RFC 8291, aes128gcm), done with WebCrypto. */
+async function decryptPush(body: Uint8Array, uaPrivate: CryptoKey, uaPublic: Uint8Array, authSecret: Uint8Array) {
+  const salt = body.slice(0, 16)
+  const idlen = body[20]
+  const asPublic = body.slice(21, 21 + idlen)
+  const ciphertext = body.slice(21 + idlen)
+  const asKey = await crypto.subtle.importKey("raw", asPublic, { name: "ECDH", namedCurve: "P-256" }, false, [])
+  const ecdh = new Uint8Array(await crypto.subtle.deriveBits({ name: "ECDH", public: asKey }, uaPrivate, 256))
+  const ikm = await hkdf(authSecret, ecdh, concat(utf8.encode("WebPush: info\0"), uaPublic, asPublic), 32)
+  const cek = await hkdf(salt, ikm, utf8.encode("Content-Encoding: aes128gcm\0"), 16)
+  const nonce = await hkdf(salt, ikm, utf8.encode("Content-Encoding: nonce\0"), 12)
+  const aes = await crypto.subtle.importKey("raw", cek, "AES-GCM", false, ["decrypt"])
+  const padded = new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: nonce }, aes, ciphertext))
+  let end = padded.length - 1
+  while (end >= 0 && padded[end] === 0) end-- // padding, then the 0x02 record delimiter
+  return new TextDecoder().decode(padded.slice(0, end))
+}
+
+/**
+ * Round trip without sending: encrypt a real reminder for a throwaway
+ * subscription, then decrypt it the way a browser would. A push service
+ * accepts any body, so this is the only way to catch broken encryption.
+ */
 async function selfTest() {
   const keys = await vapidKeys()
   if (!keys) return { ok: false, error: "VAPID keys missing" }
-  const ecdh = (await import("node:crypto")).createECDH("prime256v1")
-  ecdh.generateKeys()
-  const p256dh = ecdh.getPublicKey().toString("base64url")
-  const auth = crypto.getRandomValues(new Uint8Array(16))
+  const ua = (await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"])) as CryptoKeyPair
+  const uaPublic = new Uint8Array(await crypto.subtle.exportKey("raw", ua.publicKey))
+  const authSecret = crypto.getRandomValues(new Uint8Array(16))
+  const payload = JSON.stringify(message([{ id: "00000000-0000-0000-0000-000000000000", name: "Self-test ✓", streak: 5 }], "ru"))
   const details = webpush.generateRequestDetails(
-    { endpoint: "https://fcm.googleapis.com/fcm/send/selftest", keys: { p256dh, auth: btoa(String.fromCharCode(...auth)).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_") } },
-    JSON.stringify(message([{ id: "00000000-0000-0000-0000-000000000000", name: "Self-test", streak: 5 }], "en")),
+    { endpoint: "https://fcm.googleapis.com/fcm/send/selftest", keys: { p256dh: b64url(uaPublic), auth: b64url(authSecret) } },
+    payload,
     { vapidDetails: { subject: SITE_URL, publicKey: keys.publicKey, privateKey: keys.privateKey } }
   )
+  const body = new Uint8Array(details.body as Uint8Array)
+  let roundTrip = false
+  let error: string | undefined
+  try {
+    roundTrip = (await decryptPush(body, ua.privateKey, uaPublic, authSecret)) === payload
+  } catch (e) {
+    error = (e as Error).message
+  }
   return {
-    ok: Boolean(details.body && details.headers.Authorization?.startsWith("vapid ")),
+    ok: roundTrip && Boolean(details.headers.Authorization?.startsWith("vapid ")),
+    roundTrip,
+    error,
     encoding: details.headers["Content-Encoding"],
-    bodyBytes: details.body?.length ?? 0,
+    bodyBytes: body.length,
   }
 }
 
