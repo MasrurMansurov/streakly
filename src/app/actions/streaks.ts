@@ -6,6 +6,7 @@ import { z } from "zod"
 import { getActionT } from "@/i18n/server"
 import { getCurrentUser, getToday } from "@/lib/data"
 import { addDays, isISODate } from "@/lib/dates"
+import { PAUSE_REASONS, type PauseReason } from "@/lib/pause"
 import { createClient } from "@/lib/supabase/server"
 import type { ActionResult } from "@/lib/validation"
 
@@ -37,21 +38,22 @@ export async function repairStreak(habitId: string, day: string): Promise<Action
   return { ok: true, message: t.repair.done }
 }
 
-/** Vacation mode from today until `endDate` (at most 30 days). */
-export async function startPause(endDate: string): Promise<ActionResult> {
+/** A pause (vacation, illness, rest) from today until `endDate` (at most 30 days). */
+export async function startPause(endDate: string, reason: PauseReason = "vacation"): Promise<ActionResult> {
   const { t, user, supabase } = await setup()
   if (!user) return { ok: false, error: t.validation.notSignedIn }
   const { today } = await getToday()
   if (!isISODate(endDate) || endDate < today || endDate > addDays(today, 30)) return { ok: false, error: t.vacation.invalid }
+  if (!PAUSE_REASONS.includes(reason)) return { ok: false, error: t.validation.invalidInput }
 
   const { data: active } = await supabase.from("pauses").select("id").eq("user_id", user.id).gte("end_date", today).limit(1)
   if (active?.length) return { ok: false, error: t.vacation.alreadyOn }
 
-  const { error } = await supabase.from("pauses").insert({ start_date: today, end_date: endDate })
+  const { error } = await supabase.from("pauses").insert({ start_date: today, end_date: endDate, reason })
   if (error) return { ok: false, error: error.message }
   await invalidateProfile(supabase, user.id)
   refresh()
-  return { ok: true, message: t.vacation.started }
+  return { ok: true, message: t.vacation.started[reason] }
 }
 
 /** End vacation now: today counts as a normal day again. */

@@ -241,9 +241,9 @@ export type Database = {
         Relationships: []
       }
       pauses: {
-        Row: { created_at: string; end_date: string; id: string; start_date: string; user_id: string }
-        Insert: { created_at?: string; end_date: string; id?: string; start_date: string; user_id?: string }
-        Update: { created_at?: string; end_date?: string; id?: string; start_date?: string; user_id?: string }
+        Row: { created_at: string; end_date: string; id: string; reason: string; start_date: string; user_id: string }
+        Insert: { created_at?: string; end_date: string; id?: string; reason?: string; start_date: string; user_id?: string }
+        Update: { created_at?: string; end_date?: string; id?: string; reason?: string; start_date?: string; user_id?: string }
         Relationships: []
       }
       profiles: {
@@ -449,6 +449,7 @@ export type Database = {
           partner_habit_name: string | null
           partner_name: string
           partner_username: string
+          paused_days: string[]
           status: string
         }[]
       }

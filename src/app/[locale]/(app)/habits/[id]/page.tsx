@@ -67,7 +67,8 @@ async function HabitDetail({ params }: Props) {
   const target = habit.target_per_week
   const createdOn = habit.created_at.slice(0, 10)
   const done = new Set<ISODate>(logs.map((l) => l.log_date))
-  const streak = habitStreak(done, today, target, bridgesFor(habit.id, repairs, pauses))
+  const bridges = bridgesFor(habit.id, repairs, pauses)
+  const streak = habitStreak(done, today, target, bridges)
   const counts = new Map<ISODate, number>([...done].map((d) => [d, 1]))
   const yearCount = [...done].filter((d) => d > addDays(today, -365)).length
 
@@ -118,7 +119,7 @@ async function HabitDetail({ params }: Props) {
           icon={TrendingUpIcon}
           tone="sky"
           label={t.habitPage.completion}
-          value={`${Math.round(completionRate(done, today, 30, createdOn, target) * 100)}%`}
+          value={`${Math.round(completionRate(done, today, 30, createdOn, target, bridges) * 100)}%`}
         />
         <Stat icon={CalendarDaysIcon} tone="violet" label={t.habitPage.checkInsYear} value={String(yearCount)} />
       </div>
@@ -129,7 +130,7 @@ async function HabitDetail({ params }: Props) {
         strength={strength}
         createdOn={createdOn as ISODate}
         today={today}
-        completion28={completionRate(done, today, 28, createdOn, target)}
+        completion28={completionRate(done, today, 28, createdOn, target, bridges)}
         graduated={Boolean(habit.graduated_at)}
       />
 

@@ -157,6 +157,30 @@ function currentWeeklyStreakBridged(done: ReadonlySet<ISODate>, today: ISODate, 
   return streak
 }
 
+/** Longest weekly streak where weeks touched by a bridge (vacation) never break it (and don't count). */
+export function longestWeeklyStreakBridged(done: ReadonlySet<ISODate>, target: Target, bridges: ReadonlySet<ISODate>): number {
+  const weeks = new Map<ISODate, number>()
+  for (const d of done) weeks.set(weekStart(d), (weeks.get(weekStart(d)) ?? 0) + 1)
+  const bridged = new Set([...bridges].map(weekStart))
+  const all = [...new Set([...weeks.keys(), ...bridged])].sort()
+  let best = 0
+  let run = 0
+  let prev: ISODate | null = null
+  for (const w of all) {
+    const hit = (weeks.get(w) ?? 0) >= target
+    if (!hit && !bridged.has(w)) {
+      run = 0
+      prev = null
+      continue
+    }
+    if (prev !== null && diffDays(prev, w) !== 7) run = 0
+    if (hit) run++
+    best = Math.max(best, run)
+    prev = w
+  }
+  return best
+}
+
 export type HabitStreak = {
   current: number
   best: number
@@ -179,7 +203,7 @@ export function habitStreak(
   if (target < DAILY) {
     return {
       current: bridges.size ? currentWeeklyStreakBridged(done, today, target, bridges) : currentWeeklyStreak(done, today, target),
-      best: longestWeeklyStreak(done, target),
+      best: bridges.size ? longestWeeklyStreakBridged(done, target, bridges) : longestWeeklyStreak(done, target),
       unit: "week",
     }
   }
@@ -238,21 +262,25 @@ export function isDueToday(done: ReadonlySet<ISODate>, today: ISODate, target: T
  * Share of the expected check-ins done in the last `days` days (including today),
  * counted only from the day the habit was created. For a weekly target of N,
  * N/7 check-ins are expected per day. Capped at 100%.
+ * `bridges` (vacation, repaired days) aren't expected — they never lower the rate;
+ * a check-in made on such a day still counts.
  */
 export function completionRate(
   done: ReadonlySet<ISODate>,
   today: ISODate,
   days: number,
   createdOn?: ISODate,
-  target: Target = DAILY
+  target: Target = DAILY,
+  bridges: ReadonlySet<ISODate> = new Set()
 ): number {
   let total = 0
   let hit = 0
   for (let i = 0; i < days; i++) {
     const d = addDays(today, -i)
     if (createdOn && d < createdOn) break
-    total++
     if (done.has(d)) hit++
+    else if (bridges.has(d)) continue
+    total++
   }
   if (total === 0) return 0
   return Math.min(1, hit / ((total * Math.min(target, DAILY)) / DAILY))

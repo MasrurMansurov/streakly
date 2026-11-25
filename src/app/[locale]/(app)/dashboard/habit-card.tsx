@@ -30,6 +30,7 @@ import { formatDay } from "@/i18n"
 import { useI18n } from "@/i18n/client"
 import { addDays, diffDays, type ISODate } from "@/lib/dates"
 import { habitColor } from "@/lib/habit-colors"
+import type { PauseReason } from "@/lib/pause"
 import { completionRate, countInWeek, FREEZES_PER_MONTH, habitStreak, repairCandidate, weekStart } from "@/lib/streaks"
 import { graduation } from "@/lib/strength"
 import { rateStrength, setGraduated } from "@/app/actions/wellbeing"
@@ -45,6 +46,8 @@ type Props = {
   mini?: ReadonlySet<ISODate>
   /** vacation days (never break a streak) */
   paused?: ReadonlySet<ISODate>
+  /** why a paused day was paused (vacation / ill / rest) */
+  pauseReasons?: ReadonlyMap<ISODate, PauseReason>
   /** repaired days of this habit */
   repaired?: ReadonlySet<ISODate>
   /** weekly "how automatic" reports, newest first */
@@ -56,7 +59,7 @@ type Props = {
   todayNote?: string
 }
 
-export function HabitCard({ habit, done, mini, paused, repaired, strength = [], today, onToggle, dragHandle, todayNote }: Props) {
+export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, strength = [], today, onToggle, dragHandle, todayNote }: Props) {
   const { locale, t } = useI18n()
   const color = habitColor(habit.color)
   const target = habit.target_per_week
@@ -67,7 +70,7 @@ export function HabitCard({ habit, done, mini, paused, repaired, strength = [], 
     createdOn: createdOn as ISODate,
     today,
     scores: strength.map((s) => s.score),
-    completion28: completionRate(done, today, 28, createdOn, target),
+    completion28: completionRate(done, today, 28, createdOn, target, bridges),
   })
   const repairedThisMonth = [...(repaired ?? [])].some((d) => d.startsWith(today.slice(0, 7)))
   const repair = target >= 7 && !paused?.has(today) ? repairCandidate(done, today, bridges, repairedThisMonth) : null
@@ -184,7 +187,8 @@ export function HabitCard({ habit, done, mini, paused, repaired, strength = [], 
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs whitespace-nowrap text-muted-foreground">
             <span className={cn("inline-flex items-center gap-1 font-medium", streak.current > 0 && color.text)}>
               <FlameIcon className={cn("size-3.5", streak.current === 0 ? "text-muted-foreground/60" : "text-orange-500")} />
-              {t.habit.streak(streak.current, streak.unit)}
+              {/* no big "0": a broken streak reads as a fresh start, the record stays next to it */}
+              {streak.current === 0 && streak.best > 0 ? t.habit.startToday : t.habit.streak(streak.current, streak.unit)}
             </span>
             {streak.freezesUsed !== undefined && streak.freezesUsed > 0 && (
               <span
@@ -331,7 +335,7 @@ export function HabitCard({ habit, done, mini, paused, repaired, strength = [], 
               aria-pressed={isDone}
               aria-label={
                 isPaused
-                  ? t.vacation.dayStatus(formatDay(locale, date, { weekday: "long", month: "short", day: "numeric" }))
+                  ? t.vacation.dayStatus[pauseReasons?.get(date) ?? "vacation"](formatDay(locale, date, { weekday: "long", month: "short", day: "numeric" }))
                   : isRepaired
                     ? t.repair.dayStatus(formatDay(locale, date, { weekday: "long", month: "short", day: "numeric" }))
                     : isFrozen

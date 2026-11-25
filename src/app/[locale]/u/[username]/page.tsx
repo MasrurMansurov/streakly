@@ -17,7 +17,7 @@ import { getT } from "@/i18n/server"
 import { addDays, type ISODate } from "@/lib/dates"
 import { evaluateAchievements, type AchievementId } from "@/lib/achievements"
 import { habitColor } from "@/lib/habit-colors"
-import { bridgesFor, habitStreak, longestStreak } from "@/lib/streaks"
+import { bridgesFor, habitStreak } from "@/lib/streaks"
 import { cn } from "@/lib/utils"
 
 type Props = { params: Promise<{ username: string }> }
@@ -73,7 +73,8 @@ async function PublicProfile({ params }: Props) {
   const streaks = habits.map((h) =>
     habitStreak(byHabit.get(h.id)!, today, h.target_per_week, bridgesFor(h.id, data.repairs, data.pauses))
   )
-  const best = Math.max(0, ...habits.map((h) => longestStreak(byHabit.get(h.id)!)))
+  // all-time, with freezes / vacation / repairs — the same number as achievements and the dashboard
+  const best = data.stats.bestStreak
   const featuredIndex = habits.findIndex((h) => h.id === profile.featured_habit_id)
 
   return (

@@ -29,10 +29,27 @@ test("vacation mode pauses streaks and can be ended early", async ({ page }) => 
     await page.getByRole("button", { name: "End vacation" }).click()
     await saved
     await expect(page.getByRole("button", { name: "Start vacation" })).toBeVisible()
+
+    // a pause can be named "I'm ill" — same streak protection, kinder words
+    await page.getByRole("radio", { name: "I'm ill" }).click()
+    saved = serverAction(page)
+    await page.getByRole("button", { name: "Pause while ill" }).click()
+    await saved
+    await expect(page.getByText("Paused. Get well soon — your streaks are safe.")).toBeVisible()
+    await page.goto("/dashboard")
+    await expect(page.getByRole("heading", { level: 1, name: "Get well soon — your streaks will wait" })).toBeVisible()
+    await expect(page.getByRole("button", { name: /: ill$/ })).toBeVisible()
+    await page.goto("/settings")
+    saved = serverAction(page)
+    await page.getByRole("button", { name: "I'm feeling better" }).click()
+    await saved
+    await expect(page.getByRole("button", { name: "Start vacation" })).toBeVisible()
   } finally {
     await page.goto("/settings")
-    const end = page.getByRole("button", { name: "End vacation" })
-    if (await end.isVisible()) await end.click()
+    for (const name of ["End vacation", "I'm feeling better"]) {
+      const end = page.getByRole("button", { name })
+      if (await end.isVisible()) await end.click()
+    }
     await page.goto("/dashboard")
     const card = page.locator("[data-slot=card]", { has: page.locator("h3", { hasText: "Walk 20 minutes" }) })
     await card.getByRole("button", { name: "Habit actions" }).click()

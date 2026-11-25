@@ -46,7 +46,8 @@ import { useI18n } from "@/i18n/client"
 import { todayIn, type ISODate } from "@/lib/dates"
 import { browserTimezone } from "@/components/day-rollover"
 import { newlyEarned, type Achievement } from "@/lib/achievements"
-import { bridgesFor, completionRate, habitStreak, isDueToday } from "@/lib/streaks"
+import { bridgesFor, completionRate, daysBetween, habitStreak, isDueToday } from "@/lib/streaks"
+import { asPauseReason, type PauseReason } from "@/lib/pause"
 
 import { HabitCard } from "./habit-card"
 import { HabitFormDialog } from "./habit-form-dialog"
@@ -197,6 +198,13 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
     return map
   }, [repairs])
   const activePause = pauses.find((p) => p.start_date <= today && p.end_date >= today)
+  const pauseReason = asPauseReason(activePause?.reason)
+  // why each paused day was paused (for the 7-day strip's labels)
+  const pauseReasonByDay = useMemo(() => {
+    const map = new Map<ISODate, PauseReason>()
+    for (const p of pauses) for (const d of daysBetween(p.start_date, p.end_date)) map.set(d, asPauseReason(p.reason))
+    return map
+  }, [pauses])
   const bridgesOf = (habitId: string) => new Set<ISODate>([...pausedDays, ...(repairedByHabit.get(habitId) ?? [])])
 
   const perDay = useMemo(() => {
@@ -277,7 +285,7 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
     .sort((a, b) => (b.unit === "day" ? b.current : b.current * 7) - (a.unit === "day" ? a.current : a.current * 7))[0]
   const bestStreak = t.dashboard.streakShort(best?.current ?? 0, best?.unit ?? "day")
   const rate30 = habits.length
-    ? habits.reduce((s, h) => s + completionRate(byHabit.get(h.id)!, today, 30, h.created_at.slice(0, 10), h.target_per_week), 0) /
+    ? habits.reduce((s, h) => s + completionRate(byHabit.get(h.id)!, today, 30, h.created_at.slice(0, 10), h.target_per_week, bridgesOf(h.id)), 0) /
       habits.length
     : 0
   const review = useMemo(
@@ -326,7 +334,7 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
             {habits.length === 0 ? (
               t.dashboard.welcome(name)
             ) : activePause && leftToday > 0 ? (
-              t.vacation.heading
+              t.vacation.heading[pauseReason]
             ) : leftToday === 0 ? (
               <>
                 {t.dashboard.allDone}
@@ -390,10 +398,10 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
             >
               <TreePalmIcon className="size-4 shrink-0" />
               <span className="flex-1">
-                {t.vacation.active(formatDay(locale, activePause.end_date, { month: "long", day: "numeric" }))}
+                {t.vacation.active[pauseReason](formatDay(locale, activePause.end_date, { month: "long", day: "numeric" }))}
               </span>
               <Link href="/settings#vacation" className="font-medium underline underline-offset-4">
-                {t.vacation.end}
+                {t.vacation.end[pauseReason]}
               </Link>
             </p>
           )}
@@ -419,6 +427,7 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
                 done={byHabit.get(h.id)!}
                 mini={miniByHabit.get(h.id)}
                 paused={pausedDays}
+                pauseReasons={pauseReasonByDay}
                 repaired={repairedByHabit.get(h.id)}
                 strength={strength[h.id]}
                 today={today}
@@ -449,6 +458,7 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
                     done={byHabit.get(h.id)!}
                     mini={miniByHabit.get(h.id)}
                     paused={pausedDays}
+                pauseReasons={pauseReasonByDay}
                     repaired={repairedByHabit.get(h.id)}
                     today={today}
                     onToggle={onToggle}

@@ -6,6 +6,7 @@ import { connection } from "next/server"
 import { redirect } from "next/navigation"
 
 import type { Pact, PactProof } from "./pacts"
+import type { PauseReason } from "./pause"
 import { buildChallenges, type Challenge } from "./challenges"
 import { periodRange, type SharePeriod, type ShareHabit } from "./share"
 import type { DayFeeling } from "./insights"
@@ -82,13 +83,13 @@ async function fetchAllLogs(query: LogQuery): Promise<HabitLog[]> {
 }
 
 export type Repair = { habit_id: string; day: ISODate }
-export type Pause = { id: string; start_date: ISODate; end_date: ISODate }
+export type Pause = { id: string; start_date: ISODate; end_date: ISODate; reason: PauseReason }
 
 /** Repaired days and vacation ranges of a user (RLS: own, or a public profile's). */
 async function bridgesData(supabase: Awaited<ReturnType<typeof createClient>> | ReturnType<typeof createPublicClient>, userId: string, since: ISODate) {
   const [{ data: repairs }, { data: pauses }] = await Promise.all([
     supabase.from("habit_repairs").select("habit_id, day").eq("user_id", userId).gte("day", since),
-    supabase.from("pauses").select("id, start_date, end_date").eq("user_id", userId).gte("end_date", since).order("start_date"),
+    supabase.from("pauses").select("id, start_date, end_date, reason").eq("user_id", userId).gte("end_date", since).order("start_date"),
   ])
   return { repairs: (repairs ?? []) as Repair[], pauses: (pauses ?? []) as Pause[] }
 }
@@ -403,6 +404,7 @@ export async function getPacts(): Promise<Pact[]> {
       myHabit: r.my_habit_id && r.my_habit_name ? { id: r.my_habit_id, name: r.my_habit_name } : null,
       partnerHabit: r.partner_habit_name ? { name: r.partner_habit_name, color: r.partner_habit_color ?? "emerald" } : null,
       partnerDates: (r.partner_dates ?? []) as ISODate[],
+      pausedDays: (r.paused_days ?? []) as ISODate[],
       proofs: {
         mine: mine ? toProof(mine) : null,
         partner: theirs ? toProof(theirs) : null,
@@ -488,7 +490,7 @@ export async function getActivePause(): Promise<(Pause & { today: ISODate }) | {
   const [{ today }, supabase] = await Promise.all([getToday(), createClient()])
   const { data } = await supabase
     .from("pauses")
-    .select("id, start_date, end_date")
+    .select("id, start_date, end_date, reason")
     .eq("user_id", user.id)
     .gte("end_date", today)
     .order("start_date")

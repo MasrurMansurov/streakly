@@ -106,7 +106,7 @@ export function PactsCard({ pacts, byHabit, today, habits }: Props) {
 
 function ActivePact({ pact, mine, today }: { pact: Pact; mine: Set<ISODate> | undefined; today: ISODate }) {
   const { t } = useI18n()
-  const s = duoStreak(mine ?? new Set(), new Set(pact.partnerDates), today)
+  const s = duoStreak(mine ?? new Set(), new Set(pact.partnerDates), today, new Set(pact.pausedDays))
   const rows = [
     { who: t.pacts.you, habit: pact.myHabit?.name ?? t.pacts.habitArchived, done: s.meToday },
     { who: pact.partner.name, habit: pact.partnerHabit?.name ?? "—", done: s.partnerToday, color: pact.partnerHabit?.color },

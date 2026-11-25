@@ -187,3 +187,54 @@ describe("streak repair and vacation", () => {
     expect(habitStreak(weekly, today, 3, run("2026-11-16", "2026-11-22")).current).toBe(3)
   })
 })
+
+/**
+ * The same fixture is checked against public.achievement_stats() in SQL —
+ * "best streak" must be the same number everywhere (see migration
+ * 20261125001100_best_streak_with_bridges.sql).
+ */
+describe("best streak: freezes, vacation and repairs (shared fixture with SQL)", () => {
+  const range = (a: string, b: string) => dateRange(a, b)
+  const done = new Set([
+    ...range("2026-09-01", "2026-09-10"), // miss 09-11 → freeze 1
+    ...range("2026-09-12", "2026-09-16"), // miss 09-17 → freeze 2
+    ...range("2026-09-18", "2026-09-20"), // miss 09-21 → no freezes left in September: run ends (18)
+    ...range("2026-09-22", "2026-09-30"),
+    // vacation 10-01 … 10-05
+    ...range("2026-10-06", "2026-10-20"),
+    // 10-21 repaired, 10-22 missed → freeze (October still has 2)
+    ...range("2026-10-23", "2026-10-25"),
+  ])
+  const bridges = new Set([...range("2026-10-01", "2026-10-05"), "2026-10-21"])
+
+  it("daily habit: 9 + 15 + 3 = 27 days, plain consecutive days only 15", () => {
+    expect(habitStreak(done, "2026-11-25", 7, bridges).best).toBe(27)
+    expect(longestStreak(done)).toBe(15)
+  })
+})
+
+describe("weekly habits and vacation", () => {
+  it("the best weekly streak bridges vacation weeks, like the current one", () => {
+    // 2×/week: weeks of 11-02 and 11-09 hit, vacation week 11-16, week of 11-23 hit
+    const done = new Set(["2026-11-02", "2026-11-04", "2026-11-09", "2026-11-11", "2026-11-23", "2026-11-25"])
+    const bridges = new Set(dateRange("2026-11-16", "2026-11-22"))
+    const s = habitStreak(done, "2026-11-25", 2, bridges)
+    expect(s.current).toBe(3)
+    expect(s.best).toBe(3)
+    expect(habitStreak(done, "2026-11-25", 2).best).toBe(2) // without the vacation: 2 weeks, then a break
+  })
+})
+
+describe("completion rate ignores vacation and repaired days", () => {
+  it("a week of vacation doesn't lower the rate", () => {
+    const done = new Set(dateRange("2026-11-01", "2026-11-14"))
+    const vacation = new Set(dateRange("2026-11-15", "2026-11-21"))
+    expect(completionRate(done, "2026-11-21", 21, "2026-11-01", 7)).toBeCloseTo(14 / 21)
+    expect(completionRate(done, "2026-11-21", 21, "2026-11-01", 7, vacation)).toBe(1)
+  })
+  it("a check-in on a vacation day still counts", () => {
+    const done = new Set(["2026-11-20"])
+    const vacation = new Set(["2026-11-20", "2026-11-21"])
+    expect(completionRate(done, "2026-11-21", 2, undefined, 7, vacation)).toBe(1)
+  })
+})

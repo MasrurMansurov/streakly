@@ -19,4 +19,15 @@ describe("duoStreak", () => {
     const partner = d("2026-11-22", "2026-11-23", "2026-11-24")
     expect(duoStreak(me, partner, "2026-11-24" as ISODate).current).toBe(1)
   })
+
+  it("a partner's vacation doesn't break the shared streak (and doesn't add to it)", () => {
+    const me = d("2026-11-18", "2026-11-19", "2026-11-20", "2026-11-21", "2026-11-22", "2026-11-23", "2026-11-24")
+    // partner on vacation 11-20 … 11-22
+    const partner = d("2026-11-18", "2026-11-19", "2026-11-23", "2026-11-24")
+    const paused = d("2026-11-20", "2026-11-21", "2026-11-22")
+    const s = duoStreak(me, partner, "2026-11-24" as ISODate, paused)
+    expect(s.current).toBe(4)
+    expect(s.best).toBe(4)
+    expect(duoStreak(me, partner, "2026-11-24" as ISODate).current).toBe(2) // without vacation: broken
+  })
 })

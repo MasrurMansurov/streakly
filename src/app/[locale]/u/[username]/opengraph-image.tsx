@@ -6,7 +6,6 @@ import { getPublicProfile } from "@/lib/data"
 import { addDays, todayIn, weekdayMon0 } from "@/lib/dates"
 import { OG_TEXT, ogFonts } from "@/lib/og/fonts"
 import { LOGO } from "@/lib/og/logo"
-import { longestStreak } from "@/lib/streaks"
 
 export const alt = "Habit streaks on Streakly"
 export const size = { width: 1200, height: 630 }
@@ -34,7 +33,7 @@ export default async function Image({ params }: { params: Promise<{ username: st
     perDay.set(l.log_date, (perDay.get(l.log_date) ?? 0) + 1)
     byHabit.set(l.habit_id, [...(byHabit.get(l.habit_id) ?? []), l.log_date])
   }
-  const best = Math.max(0, ...[...byHabit.values()].map((d) => longestStreak(d)))
+  const best = data?.stats.bestStreak ?? 0
   const max = Math.max(1, habits.length)
   const start = addDays(today, -weekdayMon0(today) - (WEEKS - 1) * 7)
 

@@ -78,9 +78,16 @@ export async function deleteMyAccount(confirm: string): Promise<{ ok: true } | {
     return { ok: false, error: t.account.confirmMismatch }
   }
 
-  // avatar files first (Storage can't be cleaned up from SQL)
+  // Files first — Storage can't be cleaned up from SQL, and rows that point to
+  // them are about to disappear. Then the account itself: its rows (push
+  // subscriptions included, so nothing is sent to a deleted user) cascade.
+  // Avatar and banner:
   const { data: files } = await supabase.storage.from("avatars").list(user.id)
   if (files?.length) await supabase.storage.from("avatars").remove(files.map((f) => `${user.id}/${f.name}`))
+  // Pact proof photos (the partner's own photos go with the pact in the nightly cleanup):
+  const { data: proofs } = await supabase.from("pact_proofs").select("photo_path").eq("user_id", user.id).not("photo_path", "is", null)
+  const photos = (proofs ?? []).flatMap((p) => (p.photo_path ? [p.photo_path] : []))
+  if (photos.length) await supabase.storage.from("proofs").remove(photos)
 
   const { error } = await supabase.rpc("delete_my_account")
   if (error) return { ok: false, error: error.message }
