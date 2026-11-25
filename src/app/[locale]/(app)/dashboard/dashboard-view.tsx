@@ -23,6 +23,7 @@ import { IconTile } from "@/components/icon-tile"
 import { SummaryStrip } from "@/components/summary-strip"
 import { HabitTemplates } from "./habit-templates"
 import { InvitePrompt } from "./invite-prompt"
+import { WrappedBanner } from "./wrapped-banner"
 import { PactsCard } from "./pacts-card"
 import { ShareDialog } from "./share-dialog"
 import type { Pact } from "@/lib/pacts"
@@ -470,6 +471,8 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
               </div>
             </details>
           )}
+
+          <WrappedBanner today={today} />
 
           {/* the best moment to ask: a check-in just made, and no shared streak yet */}
           {doneToday > 0 && pacts.length === 0 && (

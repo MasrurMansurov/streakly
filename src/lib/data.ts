@@ -600,3 +600,64 @@ export async function getWeeklyLetter() {
     .maybeSingle()
   return data
 }
+
+/**
+ * Year in review (growth plan 2.1). The recap year is the current one, and
+ * still the previous one during the first half of January.
+ */
+export async function getWrappedData() {
+  const user = await requireUser()
+  const [{ today, timeZone }, supabase] = await Promise.all([getToday(), createClient()])
+  const thisYear = Number(today.slice(0, 4))
+  const year = today.slice(5) <= "01-15" ? thisYear - 1 : thisYear
+  const start = `${year}-01-01` as ISODate
+  const end = `${year}-12-31` as ISODate
+
+  const [{ data: habits }, logs, { repairs, pauses }, { data: profile }] = await Promise.all([
+    supabase.from("habits").select("id, name, color, target_per_week").eq("user_id", user.id).order("position"),
+    fetchAllRows<{ habit_id: string; log_date: string; created_at: string }>((from, to) =>
+      supabase
+        .from("habit_logs")
+        .select("habit_id, log_date, created_at")
+        .eq("user_id", user.id)
+        .gte("log_date", start)
+        .lte("log_date", end)
+        .order("log_date")
+        .range(from, to)
+    ),
+    bridgesData(supabase, user.id, start),
+    supabase.from("profiles").select("username, is_public").eq("id", user.id).single(),
+  ])
+
+  // local hour of each check-in (early bird / night owl)
+  const hourFmt = new Intl.DateTimeFormat("en-GB", { timeZone, hour: "2-digit", hourCycle: "h23" })
+  const hours = logs.map((l) => Number(hourFmt.format(new Date(l.created_at))))
+  const byHabit = new Map<string, ISODate[]>()
+  for (const l of logs) byHabit.set(l.habit_id, [...(byHabit.get(l.habit_id) ?? []), l.log_date as ISODate])
+
+  return {
+    year,
+    today,
+    username: profile?.username ?? null,
+    isPublic: Boolean(profile?.is_public),
+    hours,
+    habits: (habits ?? []).map((h) => ({
+      id: h.id,
+      name: h.name,
+      color: h.color,
+      target: h.target_per_week,
+      done: byHabit.get(h.id) ?? [],
+      bridges: [...bridgesFor(h.id, repairs, pauses)],
+    })),
+  }
+}
+
+async function fetchAllRows<T>(query: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>): Promise<T[]> {
+  const rows: T[] = []
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await query(from, from + PAGE - 1)
+    if (error) throw error
+    rows.push(...(data ?? []))
+    if (!data || data.length < PAGE) return rows
+  }
+}
