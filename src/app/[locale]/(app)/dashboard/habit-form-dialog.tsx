@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { BellIcon, CheckIcon } from "lucide-react"
+import { BellIcon, CheckIcon, LockIcon } from "lucide-react"
 import { useTransition } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import type { Habit } from "@/lib/data"
 import { HABIT_COLOR_NAMES, habitColor, type HabitColor } from "@/lib/habit-colors"
@@ -51,6 +52,7 @@ export function HabitFormDialog({ open, onOpenChange, habit }: Props) {
       remind_at: habit?.remind_at ?? "",
       color: (habit?.color as HabitColor) ?? "emerald",
       target_per_week: habit?.target_per_week ?? 7,
+      is_private: habit?.is_private ?? false,
     },
   })
   const { errors } = form.formState
@@ -259,6 +261,29 @@ export function HabitFormDialog({ open, onOpenChange, habit }: Props) {
                     )
                   })}
                 </div>
+              )}
+            />
+          </div>
+
+          <div className="flex items-start justify-between gap-4">
+            <div className="grid gap-1">
+              <Label htmlFor="habit-private" className="inline-flex items-center gap-1.5">
+                <LockIcon className="size-4" aria-hidden /> {t.habitForm.private}
+              </Label>
+              <p id="habit-private-hint" className="text-xs text-muted-foreground">
+                {t.habitForm.privateHint}
+              </p>
+            </div>
+            <Controller
+              control={form.control}
+              name="is_private"
+              render={({ field }) => (
+                <Switch
+                  id="habit-private"
+                  aria-describedby="habit-private-hint"
+                  checked={Boolean(field.value)}
+                  onCheckedChange={field.onChange}
+                />
               )}
             />
           </div>

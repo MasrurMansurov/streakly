@@ -155,6 +155,7 @@ export type Database = {
           created_at: string
           description: string | null
           icon: string
+          is_private: boolean
           id: string
           name: string
           position: number
@@ -170,6 +171,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           icon?: string
+          is_private?: boolean
           id?: string
           name: string
           position?: number
@@ -185,6 +187,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           icon?: string
+          is_private?: boolean
           id?: string
           name?: string
           position?: number

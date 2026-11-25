@@ -25,6 +25,7 @@ async function authed() {
 async function invalidatePublicProfile(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
   const { data } = await supabase.from("profiles").select("username").eq("id", userId).single()
   if (data) updateTag(`profile:${data.username}`)
+  updateTag("leaderboard")
 }
 
 /** Sets or clears a habit's own reminder time (RLS: owner only). */
@@ -55,6 +56,7 @@ export async function createHabit(input: HabitInput): Promise<ActionResult> {
       cue: parsed.data.cue || null,
       color: parsed.data.color,
       target_per_week: parsed.data.target_per_week,
+      is_private: parsed.data.is_private ?? false,
       position: count ?? 0,
     })
     .select("id")
@@ -84,6 +86,7 @@ export async function updateHabit(id: string, input: HabitInput): Promise<Action
       cue: parsed.data.cue || null,
       color: parsed.data.color,
       target_per_week: parsed.data.target_per_week,
+      ...(parsed.data.is_private === undefined ? {} : { is_private: parsed.data.is_private }),
     })
     .eq("id", id)
   if (error) return { ok: false, error: error.message }

@@ -1,6 +1,6 @@
 "use client"
 
-import { ArchiveIcon, BellIcon, CheckIcon, ClockArrowUpIcon, GraduationCapIcon, RotateCcwIcon, FlameIcon, SnowflakeIcon, TreePalmIcon, WrenchIcon, MessageSquarePlusIcon, StickyNoteIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import { ArchiveIcon, BellIcon, CheckIcon, LockIcon, ClockArrowUpIcon, GraduationCapIcon, RotateCcwIcon, FlameIcon, SnowflakeIcon, TreePalmIcon, WrenchIcon, MessageSquarePlusIcon, StickyNoteIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import { useState, useTransition, type ReactNode, useMemo } from "react"
 import { toast } from "sonner"
 
@@ -142,6 +142,12 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
                 {habit.name}
               </Link>
             </h3>
+            {habit.is_private && (
+              <span className="shrink-0 text-muted-foreground" title={t.habitForm.privateBadge}>
+                <LockIcon className="size-3.5" aria-hidden />
+                <span className="sr-only">{t.habitForm.privateBadge}</span>
+              </span>
+            )}
           </div>
           {(habit.cue || habit.remind_at) && (
             <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">

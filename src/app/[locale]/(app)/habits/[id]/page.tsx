@@ -1,6 +1,7 @@
 import {
   ArrowLeftIcon,
   GraduationCapIcon,
+  LockIcon,
   ClockArrowUpIcon,
   CalendarDaysIcon,
   FlameIcon,
@@ -98,6 +99,11 @@ async function HabitDetail({ params }: Props) {
             <span className={cn("size-3 rounded-full", color.dot)} />
             <h1 className="text-2xl font-semibold tracking-tight">{habit.name}</h1>
             {habit.archived_at && <Badge variant="secondary">{t.habitPage.archivedBadge}</Badge>}
+            {habit.is_private && (
+              <Badge variant="outline" className="gap-1">
+                <LockIcon className="size-3" aria-hidden /> {t.habitForm.private}
+              </Badge>
+            )}
           </div>
           <p className="text-sm text-muted-foreground">
             {target < 7 ? t.habit.timesWeek(target) : t.habit.everyDay} ·{" "}

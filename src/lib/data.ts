@@ -19,7 +19,7 @@ import type { AchievementStats } from "./achievements"
 import type { Tables } from "./supabase/database.types"
 
 export type Profile = Tables<"profiles">
-export type Habit = Pick<Tables<"habits">, "id" | "name" | "description" | "color" | "position" | "target_per_week" | "created_at" | "mini_label" | "cue" | "graduated_at"> & {
+export type Habit = Pick<Tables<"habits">, "id" | "name" | "description" | "color" | "position" | "target_per_week" | "created_at" | "mini_label" | "cue" | "graduated_at" | "is_private"> & {
   /** own reminder time "HH:MM" (owner only) */
   remind_at?: string | null
 }
@@ -115,7 +115,7 @@ export async function getDashboardData() {
   const [habitsRes, logs, profileRes, archivedCount, notesRes, stats] = await Promise.all([
     supabase
       .from("habits")
-      .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue, graduated_at, habit_reminders(remind_at)")
+      .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue, graduated_at, is_private, habit_reminders(remind_at)")
       .eq("user_id", user.id) // RLS also exposes other users' *public* habits
       .is("archived_at", null)
       .order("position")
@@ -218,7 +218,7 @@ export async function getArchivedHabits(): Promise<ArchivedHabit[]> {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from("habits")
-    .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue, graduated_at, archived_at, habit_logs(count)")
+    .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue, graduated_at, is_private, archived_at, habit_logs(count)")
     .eq("user_id", user.id)
     .not("archived_at", "is", null)
     .order("archived_at", { ascending: false })
@@ -247,7 +247,7 @@ export async function getHabitDetail(id: string) {
   const [{ today }, supabase] = await Promise.all([getToday(), createClient()])
   const { data: row } = await supabase
     .from("habits")
-    .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue, graduated_at, archived_at, habit_reminders(remind_at)")
+    .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue, graduated_at, is_private, archived_at, habit_reminders(remind_at)")
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle()

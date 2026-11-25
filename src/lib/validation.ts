@@ -27,6 +27,8 @@ export const habitSchema = z.object({
   color: z.enum(HABIT_COLOR_NAMES),
   /** 7 = every day, 1–6 = times per week */
   target_per_week: z.number().int().min(1).max(7),
+  /** tracked as usual, but never shown to others (public profile, feed, leaderboard) */
+  is_private: z.boolean().optional(),
 })
 export type HabitInput = z.infer<typeof habitSchema>
 
