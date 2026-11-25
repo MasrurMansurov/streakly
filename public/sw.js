@@ -81,17 +81,24 @@ self.addEventListener("push", (event) => {
     data = { body: event.data && event.data.text() }
   }
 
+  const tag = data.tag || "streakly"
   const tasks = [
-    self.registration.showNotification(data.title || "Streakly", {
-      body: data.body || "Time to check in on your habits.",
-      icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
-      tag: data.tag || "streakly",
-      renotify: true,
-      // one-tap check-in where supported (Chrome/Edge/Android, Firefox); others open the app
-      actions: Array.isArray(data.actions) ? data.actions.slice(0, 2) : [],
-      data: { url: data.url || "/dashboard", habitId: data.habitId || null, done: data.doneText || "✓" },
-    }),
+    (async () => {
+      // A notification with the same tag still sitting in the notification
+      // center (yesterday's reminder, an earlier test) would be replaced
+      // silently — macOS shows no banner for a replacement. Close it first,
+      // so every push pops up as a fresh notification.
+      for (const old of await self.registration.getNotifications({ tag })) old.close()
+      await self.registration.showNotification(data.title || "Streakly", {
+        body: data.body || "Time to check in on your habits.",
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-192.png",
+        tag,
+        // one-tap check-in where supported (Chrome/Edge/Android, Firefox); others open the app
+        actions: Array.isArray(data.actions) ? data.actions.slice(0, 2) : [],
+        data: { url: data.url || "/dashboard", habitId: data.habitId || null, done: data.doneText || "✓" },
+      })
+    })(),
   ]
   // "N left today" on the app icon (installed PWA)
   if (typeof data.due === "number" && self.navigator.setAppBadge) {
