@@ -45,7 +45,7 @@ export default function InvitePage({ params }: Props) {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
+      <main id="main" className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
         <Suspense fallback={<Skeleton className="h-80 rounded-xl" />}>
           <Invite params={params} />
         </Suspense>

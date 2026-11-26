@@ -14,7 +14,7 @@ import { TimezoneSync } from "@/components/timezone-sync"
 import { VisualViewportVars } from "@/components/visual-viewport"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { isLocale, locales } from "@/i18n"
+import { getDictionary, isLocale, locales } from "@/i18n"
 import { I18nProvider } from "@/i18n/client"
 import { getT } from "@/i18n/server"
 
@@ -69,6 +69,13 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[lo
       className={`${onest.variable} ${unbounded.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
+        {/* WCAG 2.4.1: the first Tab jumps past the header straight to the page */}
+        <a
+          href="#main"
+          className="sr-only z-50 rounded-md bg-foreground px-3 py-2 text-sm font-medium text-background focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
+        >
+          {getDictionary(locale).nav.skip}
+        </a>
         <I18nProvider locale={locale}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <TooltipProvider>{children}</TooltipProvider>

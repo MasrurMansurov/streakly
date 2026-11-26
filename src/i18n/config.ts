@@ -37,5 +37,8 @@ export function splitLocale(pathname: string): { locale: Locale | null; path: st
 
 export function localizePath(locale: Locale, path: string): string {
   if (!path.startsWith("/")) return path // external or relative
-  return path === "/" ? `/${locale}` : `/${locale}${path}`
+  if (path === "/") return `/${locale}`
+  // the root with a query or hash: "/?home" → "/en?home", not "/en/?home"
+  if (path.startsWith("/?") || path.startsWith("/#")) return `/${locale}${path.slice(1)}`
+  return `/${locale}${path}`
 }

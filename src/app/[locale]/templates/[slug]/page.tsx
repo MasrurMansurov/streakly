@@ -55,7 +55,7 @@ export default async function GuidePage({ params }: Props) {
         }}
       />
       <SiteHeader />
-      <main className="flex-1">
+      <main id="main" className="flex-1">
         <article className="mx-auto grid max-w-3xl gap-10 px-4 py-12">
           <header className="grid gap-4">
             <nav aria-label={t.guides.breadcrumbs} className="flex items-center gap-1 text-sm text-muted-foreground">

@@ -21,7 +21,7 @@ export default async function TemplatesPage() {
   return (
     <>
       <SiteHeader />
-      <main className="flex-1">
+      <main id="main" className="flex-1">
         <section className="mx-auto grid max-w-5xl gap-8 px-4 py-14">
           <div className="grid max-w-2xl gap-3">
             <h1 className="text-3xl leading-tight font-semibold tracking-tight sm:text-4xl">{t.guides.indexTitle}</h1>

@@ -5,6 +5,16 @@ import type { Dictionary } from "./en"
 const p = (n: number, one: string, few: string, many: string) => plural("ru", n, { one, few, many, other: few })
 
 export const ru: Dictionary = {
+  me: {
+    title: "Профиль",
+    publicOn: "Так вас видят другие",
+    publicOff: "Выключена — включить в настройках",
+    archived: (n: number) => (n === 0 ? "Пусто" : `${n} ${p(n, "привычка", "привычки", "привычек")}`),
+    settingsHint: "Профиль, напоминания, начало дня, данные",
+    yearInReview: "Итоги года",
+    tools: "Инструменты",
+    about: "О Streakly",
+  },
   meta: {
     title: "Трекер привычек онлайн бесплатно — Streakly",
     description: "Бесплатный трекер привычек без лимита: серии с заморозками, шаги, напоминания и друзья. Открытый код, без рекламы — попробуйте без регистрации.",
@@ -34,11 +44,15 @@ export const ru: Dictionary = {
     dashboard: "Сегодня",
     archive: "Архив",
     settings: "Настройки",
-    publicProfile: "Публичный профиль",
+    publicProfile: "Публичная страница",
     friends: "Друзья",
     leaderboard: "Рейтинг",
     progress: "Прогресс",
     main: "Основное меню",
+    me: "Профиль",
+    following: "Подписки",
+    site: "Сайт",
+    skip: "Перейти к содержимому",
     signOut: "Выйти",
     accountMenu: "Меню аккаунта",
     toggleTheme: "Сменить тему",

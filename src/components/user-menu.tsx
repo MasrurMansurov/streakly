@@ -1,10 +1,9 @@
 "use client"
 
-import { ArchiveIcon, ExternalLinkIcon, LayoutDashboardIcon, LogOutIcon, SettingsIcon, TrophyIcon, UsersIcon } from "lucide-react"
+import { ArchiveIcon, CircleUserRoundIcon, ExternalLinkIcon, LogOutIcon, SettingsIcon } from "lucide-react"
 
-import { signOut } from "@/app/actions/auth"
 import { Link } from "@/components/link"
-import { clearOfflinePages } from "@/components/sw-register"
+import { signOutEverywhere } from "@/components/sign-out-button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useI18n } from "@/i18n/client"
 import { Button } from "@/components/ui/button"
@@ -52,14 +51,9 @@ export function UserMenu({ email, username, displayName, isPublic, avatarUrl }: 
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem render={<Link href="/dashboard" />}>
-          <LayoutDashboardIcon /> {t.nav.dashboard}
-        </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/friends" />}>
-          <UsersIcon /> {t.nav.friends}
-        </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/leaderboard" />}>
-          <TrophyIcon /> {t.nav.leaderboard}
+        {/* only the personal, occasional things — the sections themselves live in the header */}
+        <DropdownMenuItem render={<Link href="/me" />}>
+          <CircleUserRoundIcon /> {t.nav.me}
         </DropdownMenuItem>
         <DropdownMenuItem render={<Link href="/archive" />}>
           <ArchiveIcon /> {t.nav.archive}
@@ -73,7 +67,7 @@ export function UserMenu({ email, username, displayName, isPublic, avatarUrl }: 
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={async () => { await clearOfflinePages(); await signOut() }}>
+        <DropdownMenuItem onClick={signOutEverywhere}>
           <LogOutIcon /> {t.nav.signOut}
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -6,6 +6,7 @@ import { DayStartFromServer } from "@/components/day-start-server"
 import { GuestGate } from "@/components/guest-gate"
 import { InviteClaim } from "@/components/invite-claim"
 import { PushSync } from "@/components/push-sync"
+import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
 import { NOINDEX } from "@/lib/seo"
 
@@ -15,13 +16,14 @@ export const metadata: Metadata = { robots: NOINDEX }
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <>
-      <SiteHeader />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
+      <SiteHeader home="/dashboard" />
+      <main id="main" className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
         <Suspense fallback={null}>
           <GuestGate />
         </Suspense>
         {children}
       </main>
+      <SiteFooter variant="compact" />
       <PushSync />
       <AttributionSave />
       <InviteClaim />

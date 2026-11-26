@@ -21,8 +21,8 @@ export const config = {
     //    (files from public/ pass through: images, and .txt / .html / .xml for search-console
     //    ownership files and the IndexNow key — a redirect would make them fail)
     "/((?!en(?:/|$)|ru(?:/|$)|auth/|api/|robots\\.txt|sitemap\\.xml|_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|html|xml)$).*)",
-    // 2. app pages: auth guard + session refresh
-    "/(en|ru)/(dashboard|progress|settings|archive|habits|friends)/:path*",
+    // 2. app pages: auth guard + session refresh (keep in sync with PROTECTED_PREFIXES)
+    "/(en|ru)/(dashboard|progress|settings|archive|habits|friends|me|wrapped)/:path*",
     // 3. public pages only for signed-in visitors (session refresh, /login → /dashboard).
     //    Guests get these pages straight from the CDN without running any function.
     //    (config must be static literals: the Supabase session cookie, whole or chunked)

@@ -7,12 +7,7 @@ import { Notice } from "@/components/notice"
 import { Button } from "@/components/ui/button"
 import { useI18n } from "@/i18n/client"
 import type { ISODate } from "@/lib/dates"
-
-/** Dec 1 – Jan 15: the year's recap is one tap away on the Today screen. */
-export function isWrappedSeason(today: ISODate) {
-  const md = today.slice(5)
-  return md >= "12-01" || md <= "01-15"
-}
+import { isWrappedSeason } from "@/lib/wrapped-season"
 
 export function WrappedBanner({ today }: { today: ISODate }) {
   const { t } = useI18n()

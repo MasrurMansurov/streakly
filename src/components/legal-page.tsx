@@ -21,7 +21,7 @@ export async function LegalPage({ kind }: { kind: LegalKind }) {
   return (
     <>
       <SiteHeader />
-      <main className="flex-1">
+      <main id="main" className="flex-1">
         <article className="mx-auto grid max-w-2xl gap-8 px-4 py-14">
           <header className="grid gap-3">
             <h1 className="text-3xl font-semibold tracking-tight">{doc.title}</h1>

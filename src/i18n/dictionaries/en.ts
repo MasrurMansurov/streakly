@@ -3,6 +3,16 @@ import { plural } from "../plural"
 const p = (n: number, one: string, other: string) => plural("en", n, { one, other })
 
 export const en = {
+  me: {
+    title: "Profile",
+    publicOn: "How others see you",
+    publicOff: "Off — turn it on in Settings",
+    archived: (n: number) => (n === 0 ? "Nothing archived" : `${n} ${p(n, "habit", "habits")}`),
+    settingsHint: "Profile, reminders, day start, data",
+    yearInReview: "Year in review",
+    tools: "Tools",
+    about: "About Streakly",
+  },
   meta: {
     title: "Free Habit Tracker, Open Source — Streakly",
     description: "A free habit tracker with no limit on habits: forgiving streaks, steps, reminders and friends. Open source, no ads — try it without signing up.",
@@ -32,11 +42,15 @@ export const en = {
     dashboard: "Today",
     archive: "Archive",
     settings: "Settings",
-    publicProfile: "Public profile",
+    publicProfile: "Public page",
     friends: "Friends",
     leaderboard: "Leaderboard",
     progress: "Progress",
     main: "Main",
+    me: "Profile",
+    following: "Following",
+    site: "Site",
+    skip: "Skip to content",
     signOut: "Sign out",
     accountMenu: "Account menu",
     toggleTheme: "Toggle theme",

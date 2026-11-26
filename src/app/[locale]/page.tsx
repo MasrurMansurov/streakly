@@ -68,7 +68,7 @@ export default async function Home() {
     <>
       <JsonLd data={landingJsonLd(locale, t.meta.description)} />
       <SiteHeader />
-      <main className="flex-1">
+      <main id="main" className="flex-1">
         <section className="mx-auto grid max-w-5xl gap-12 px-4 py-20 md:grid-cols-[1.1fr_1fr] md:items-center md:py-28">
           <div className="grid gap-6">
             {/* no entrance animation on the hero text: it is the LCP element and must paint immediately */}

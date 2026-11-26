@@ -16,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function LoginPage() {
   const providers = await getEnabledProviders()
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-8 px-4 py-12">
+    <main id="main" className="flex flex-1 flex-col items-center justify-center gap-8 px-4 py-12">
       <Logo />
       <LoginForm providers={providers} />
       <TryDemoButton variant="ghost" source="login" />

@@ -1,9 +1,10 @@
-import { SearchIcon, TrophyIcon, UsersIcon } from "lucide-react"
+import { SearchIcon, UsersIcon } from "lucide-react"
 import type { Metadata } from "next"
 import { Suspense } from "react"
 
 import { ChallengesCard } from "@/components/challenges/challenges-card"
 import { FollowButton } from "@/components/follow-button"
+import { FriendsTabs } from "@/components/friends-tabs"
 import { IconTile } from "@/components/icon-tile"
 import { PactInviteButton } from "@/components/pact-invite-button"
 import { InviteDialog } from "@/components/invite-dialog"
@@ -29,6 +30,9 @@ export default async function FriendsPage({ searchParams }: { searchParams: Prom
   const { t, locale } = await getT()
   return (
     <div className="mx-auto grid max-w-2xl gap-6">
+      <Suspense fallback={<div className="h-9" />}>
+        <FriendsTabs />
+      </Suspense>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{t.friends.title}</h1>
@@ -38,9 +42,6 @@ export default async function FriendsPage({ searchParams }: { searchParams: Prom
           <Suspense fallback={null}>
             <FriendsInvite />
           </Suspense>
-          <Button variant="outline" render={<Link href="/leaderboard" />}>
-            <TrophyIcon aria-hidden /> {t.nav.leaderboard}
-          </Button>
         </div>
       </div>
 

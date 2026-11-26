@@ -242,7 +242,7 @@ export async function getArchivedHabits(): Promise<ArchivedHabit[]> {
 }
 
 /** How many habits are archived (for the dashboard link). */
-async function getArchivedCount(userId: string): Promise<number> {
+export async function getArchivedCount(userId: string): Promise<number> {
   const supabase = await createClient()
   const { count } = await supabase
     .from("habits")

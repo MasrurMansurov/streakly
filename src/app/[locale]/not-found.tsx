@@ -8,7 +8,7 @@ import { useI18n } from "@/i18n/client"
 export default function NotFound() {
   const { t } = useI18n()
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4 text-center">
+    <main id="main" className="flex flex-1 flex-col items-center justify-center gap-6 px-4 text-center">
       <Logo />
       <div className="grid gap-1">
         <h1 className="text-2xl font-semibold">{t.notFound.title}</h1>

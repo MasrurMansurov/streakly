@@ -2,6 +2,7 @@ import { TrophyIcon } from "lucide-react"
 import type { Metadata } from "next"
 import { Suspense } from "react"
 
+import { FriendsTabs } from "@/components/friends-tabs"
 import { Link } from "@/components/link"
 import { Notice } from "@/components/notice"
 import { SiteFooter } from "@/components/site-footer"
@@ -30,8 +31,12 @@ export default async function LeaderboardPage() {
   return (
     <>
       <SiteHeader />
-      <main className="flex-1">
+      <main id="main" className="flex-1">
         <div className="mx-auto grid max-w-3xl gap-6 px-4 py-10">
+          {/* signed in: the leaderboard is the second view of Friends */}
+          <Suspense fallback={null}>
+            <FriendsTabs />
+          </Suspense>
           <div className="grid gap-2">
             <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
               {t.leaderboard.title}

@@ -1,80 +1,58 @@
 "use client"
 
-import { ChartNoAxesColumnIcon, CircleCheckBigIcon, TrophyIcon, UsersIcon, type LucideIcon } from "lucide-react"
+import { ChartNoAxesColumnIcon, CircleCheckBigIcon, CircleUserRoundIcon, UsersIcon, type LucideIcon } from "lucide-react"
 import { usePathname } from "next/navigation"
 
 import { Link } from "@/components/link"
 import { splitLocale } from "@/i18n"
 import { useI18n } from "@/i18n/client"
+import { SECTIONS, sectionOf, type Section } from "@/lib/nav"
 import { cn } from "@/lib/utils"
 
-type Item = { href: string; label: string; icon: LucideIcon }
-
-function useItems(): Item[] {
-  const { t } = useI18n()
-  return [
-    { href: "/dashboard", label: t.nav.dashboard, icon: CircleCheckBigIcon },
-    { href: "/progress", label: t.nav.progress, icon: ChartNoAxesColumnIcon },
-    { href: "/friends", label: t.nav.friends, icon: UsersIcon },
-    { href: "/leaderboard", label: t.nav.leaderboard, icon: TrophyIcon },
-  ]
+const ICONS: Record<Section, LucideIcon> = {
+  today: CircleCheckBigIcon,
+  progress: ChartNoAxesColumnIcon,
+  friends: UsersIcon,
+  me: CircleUserRoundIcon,
 }
 
-function useActive() {
-  const { path } = splitLocale(usePathname())
-  return (href: string) => path === href || path.startsWith(`${href}/`) || (href === "/dashboard" && path.startsWith("/habits/"))
-}
-
-/** Desktop: the main sections in the header. */
-export function HeaderNav() {
-  const items = useItems()
-  const active = useActive()
+/**
+ * The one main navigation, a single landmark for every screen size: a row of
+ * three sections in the header from 768px, a fixed four-tab bar at the bottom
+ * on phones (Profile is the fourth tab there; on desktop it's the avatar menu).
+ * Opaque surfaces, no blur; the active item is marked by ink, weight and a
+ * bar — not by the brand color.
+ */
+export function AppNav() {
   const { t } = useI18n()
-  return (
-    <nav aria-label={t.nav.main} className="hidden items-center gap-1 md:flex">
-      {items.map(({ href, label }) => (
-        <Link
-          key={href}
-          href={href}
-          aria-current={active(href) ? "page" : undefined}
-          className={cn(
-            "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-            active(href) ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          {label}
-        </Link>
-      ))}
-    </nav>
-  )
-}
+  const current = sectionOf(splitLocale(usePathname()).path)
+  const labels: Record<Section, string> = { today: t.nav.dashboard, progress: t.nav.progress, friends: t.nav.friends, me: t.nav.me }
 
-/** Phones: a native-style tab bar at the bottom (installed PWA friendly). */
-export function TabBar() {
-  const items = useItems()
-  const active = useActive()
-  const { t } = useI18n()
   return (
     <nav
       data-tabbar
       aria-label={t.nav.main}
-      className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+      className="max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-40 max-md:border-t max-md:bg-background max-md:pb-[env(safe-area-inset-bottom)]"
     >
-      <ul className="mx-auto grid max-w-md grid-cols-4">
-        {items.map(({ href, label, icon: Icon }) => {
-          const on = active(href)
+      <ul className="mx-auto grid max-w-md grid-cols-4 md:flex md:max-w-none md:items-center md:gap-1">
+        {SECTIONS.map(({ id, href, phoneOnly }) => {
+          const on = current === id
+          const Icon = ICONS[id]
           return (
-            <li key={href}>
+            <li key={id} className={cn(phoneOnly && "md:hidden")}>
               <Link
                 href={href}
                 aria-current={on ? "page" : undefined}
                 className={cn(
-                  "flex flex-col items-center gap-1 py-2 text-[11px] font-medium transition-colors",
-                  on ? "text-emerald-700 dark:text-emerald-400" : "text-muted-foreground"
+                  "relative flex flex-col items-center gap-1 pt-2 pb-1.5 text-[11px] transition-colors",
+                  "md:h-14 md:flex-row md:px-3 md:py-0 md:text-sm",
+                  // the active bar: on top of the tab on phones, under the label in the header
+                  "after:absolute after:inset-x-6 after:top-0 after:h-0.5 after:rounded-full md:after:inset-x-3 md:after:top-auto md:after:bottom-0",
+                  on ? "font-semibold text-foreground after:bg-foreground" : "font-medium text-muted-foreground hover:text-foreground"
                 )}
               >
-                <Icon className="size-5" strokeWidth={on ? 2.25 : 1.75} />
-                {label}
+                <Icon className="size-5 md:hidden" strokeWidth={on ? 2.25 : 1.75} aria-hidden />
+                {labels[id]}
               </Link>
             </li>
           )

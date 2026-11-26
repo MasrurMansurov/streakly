@@ -43,7 +43,7 @@ export default function PublicProfilePage({ params }: Props) {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
+      <main id="main" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
         <Suspense fallback={<ProfileSkeleton />}>
           <PublicProfile params={params} />
         </Suspense>

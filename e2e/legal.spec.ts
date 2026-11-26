@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test"
 
 test("privacy policy and terms are reachable from the footer and login", async ({ page }) => {
   await page.goto("/")
-  await page.getByRole("navigation", { name: "Legal" }).getByRole("link", { name: "Privacy" }).click()
+  await page.getByRole("navigation", { name: "Site" }).getByRole("link", { name: "Privacy" }).click()
   await expect(page).toHaveURL(/\/en\/privacy$/)
   await expect(page.getByRole("heading", { level: 1, name: "Privacy Policy" })).toBeVisible()
   await expect(page.getByRole("heading", { name: "Who processes your data" })).toBeVisible()
