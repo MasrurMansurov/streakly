@@ -89,7 +89,6 @@ export const en = {
     ],
     ctaTitle: "Start your first streak today",
     ctaText: "Free, no ads, no limit on habits. Or look around first — no sign-up needed.",
-    footer: "Built with Next.js, Supabase & Tailwind CSS",
   },
   auth: {
     welcomeBack: "Welcome back",

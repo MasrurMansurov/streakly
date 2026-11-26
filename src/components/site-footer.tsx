@@ -8,7 +8,7 @@ export async function SiteFooter() {
     <footer className="border-t py-8">
       <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-2">
-          <LogoMark size={18} /> Streakly · {t.landing.footer}
+          <LogoMark size={18} /> Streakly
         </span>
         <nav aria-label={t.legal.nav} className="flex flex-wrap gap-x-5 gap-y-2">
           <Link href="/demo" className="hover:text-foreground">

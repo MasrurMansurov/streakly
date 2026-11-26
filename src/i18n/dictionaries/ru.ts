@@ -91,7 +91,6 @@ export const ru: Dictionary = {
     ],
     ctaTitle: "Начните первую серию сегодня",
     ctaText: "Бесплатно, без рекламы и без лимита привычек. Или сначала осмотритесь — без регистрации.",
-    footer: "Сделано на Next.js, Supabase и Tailwind CSS",
   },
   auth: {
     welcomeBack: "С возвращением",
