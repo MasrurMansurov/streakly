@@ -1,6 +1,5 @@
-import { ArrowDownRightIcon, ArrowUpRightIcon, MinusIcon, RocketIcon, TriangleAlertIcon } from "lucide-react"
+import { ArrowDownRightIcon, ArrowUpRightIcon, MinusIcon } from "lucide-react"
 
-import { IconTile } from "@/components/icon-tile"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatDay } from "@/i18n"
 import { useI18n } from "@/i18n/client"
@@ -24,15 +23,12 @@ export function WeeklyReview({ review }: { review: Review }) {
       </CardHeader>
       <CardContent className="grid gap-6 md:grid-cols-[auto_1fr_1.2fr] md:items-center">
         <div className="grid gap-1">
-          <span className="font-heading text-4xl font-semibold">{rate === null ? "—" : pct(rate)}</span>
+          <span className="font-brand text-4xl font-semibold tabular-nums">{rate === null ? "—" : pct(rate)}</span>
           <span
             className={cn(
               "inline-flex items-center gap-1 text-xs font-medium",
-              delta === null || delta === 0
-                ? "text-muted-foreground"
-                : delta > 0
-                  ? "text-emerald-700 dark:text-emerald-400"
-                  : "text-rose-700 dark:text-rose-400"
+              // a weaker week is just information, never a red alarm
+              delta !== null && delta > 0 ? "text-primary" : "text-muted-foreground"
             )}
           >
             <Trend className="size-3.5" />
@@ -52,7 +48,7 @@ export function WeeklyReview({ review }: { review: Review }) {
                 <div
                   className={cn(
                     "min-h-1 rounded-sm transition-[height] duration-500",
-                    current ? "bg-emerald-500" : "bg-emerald-500/25 dark:bg-emerald-400/25"
+                    current ? "bg-done" : "bg-done/25"
                   )}
                   style={{ height: `${Math.max(4, (w.rate ?? 0) * 100)}%` }}
                 />
@@ -63,9 +59,8 @@ export function WeeklyReview({ review }: { review: Review }) {
 
         <ul className="grid gap-3 text-sm">
           {top && (
-            <li className="flex items-center gap-3">
-              <IconTile icon={RocketIcon} tone="emerald" size="sm" />
-              <span className="min-w-0">
+            <li>
+              <span className="block min-w-0">
                 <span className="block text-xs text-muted-foreground">{t.review.onARoll}</span>
                 <span className="block truncate font-medium">
                   {top.name} <span className="font-normal text-muted-foreground tabular-nums">· {top.done}/{top.target}</span>
@@ -74,9 +69,8 @@ export function WeeklyReview({ review }: { review: Review }) {
             </li>
           )}
           {behind && (
-            <li className="flex items-center gap-3">
-              <IconTile icon={TriangleAlertIcon} tone="amber" size="sm" />
-              <span className="min-w-0">
+            <li>
+              <span className="block min-w-0">
                 <span className="block text-xs text-muted-foreground">{t.review.needsAttention}</span>
                 <span className="block truncate font-medium">
                   {behind.name} <span className="font-normal text-muted-foreground tabular-nums">· {behind.done}/{behind.target}</span>

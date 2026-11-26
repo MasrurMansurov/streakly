@@ -8,7 +8,6 @@ import {
   TreePalmIcon,
   PlusIcon,
   Share2Icon,
-  SproutIcon,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useOptimistic, useRef, useState, useTransition } from "react"
@@ -18,7 +17,6 @@ import { reorderHabits, toggleHabitLog } from "@/app/actions/habits"
 import { applyQueue, enqueue, loadQueue, saveQueue, type QueuedToggle } from "@/lib/offline-queue"
 import { canComeBackToday, comebackDays, isQuickComeback } from "@/lib/comeback"
 import { AchievementBadge } from "@/components/achievement-badge"
-import { ConfettiBurst } from "@/components/confetti-burst"
 import { IconTile } from "@/components/icon-tile"
 import { SummaryStrip } from "@/components/summary-strip"
 import { HabitTemplates } from "./habit-templates"
@@ -329,7 +327,8 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
   const name = profile?.display_name || profile?.username
 
   return (
-    <div className="grid grid-cols-1 gap-8">
+    // one column, like a list you work through — not a dashboard of cards
+    <div className="mx-auto grid w-full max-w-3xl grid-cols-1 gap-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm text-muted-foreground">
@@ -343,17 +342,12 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
             ) : leftToday === 0 ? (
               <>
                 {t.dashboard.allDone}
-                <span className="relative inline-flex">
-                  <CircleCheckIcon
-                    key={celebration}
-                    aria-hidden
-                    className={cn(
-                      "size-7 text-emerald-500",
-                      celebration > 0 && "motion-safe:animate-pop"
-                    )}
-                  />
-                  {celebration > 0 && <ConfettiBurst key={celebration} count={14} distance={36} />}
-                </span>
+                {/* a quiet "done": confetti is kept for streak milestones */}
+                <CircleCheckIcon
+                  key={celebration}
+                  aria-hidden
+                  className={cn("size-7 text-done", celebration > 0 && "motion-safe:animate-pop")}
+                />
               </>
             ) : (
               t.dashboard.leftToday(leftToday)
@@ -374,14 +368,13 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
       <ShareDialog open={shareOpen} onOpenChange={setShareOpen} />
 
       {habits.length === 0 ? (
-        <Card className="gap-6 border-dashed px-4 py-10 sm:px-8">
-          <div className="grid justify-items-center gap-3 text-center">
-            <IconTile icon={SproutIcon} size="lg" />
+        <Card className="gap-5 px-4 py-6 sm:px-6">
+          <div className="grid gap-1">
             <h2 className="font-medium">{t.templates.title}</h2>
-            <p className="max-w-sm text-sm text-muted-foreground">{t.templates.subtitle}</p>
+            <p className="max-w-md text-sm text-muted-foreground">{t.templates.subtitle}</p>
           </div>
           <HabitTemplates />
-          <div className="flex justify-center">
+          <div>
             <Button variant="outline" onClick={() => setCreateOpen(true)}>
               <PlusIcon /> {t.templates.orOwn}
             </Button>
@@ -389,16 +382,6 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
         </Card>
       ) : (
         <>
-          {/* one quiet summary line — the habits below are the main thing */}
-          <SummaryStrip
-            items={[
-              { label: t.dashboard.statToday, value: `${doneToday}/${habits.length}` },
-              { label: t.dashboard.statBestStreak, value: bestStreak },
-              { label: t.dashboard.statCompletion, value: `${Math.round(rate30 * 100)}%` },
-              { label: t.dashboard.statCheckIns, value: String(totalCheckIns) },
-            ]}
-          />
-
           {activePause && (
             <Notice
               role="status"
@@ -455,7 +438,7 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
                 </span>
                 <ChevronRightIcon className="size-5 text-muted-foreground transition group-open:rotate-90" />
               </summary>
-              <div className="grid gap-3 px-4 pb-4 md:grid-cols-2">
+              <div className="grid gap-3 px-4 pb-4">
                 {autopilot.map((h) => (
                   <HabitCard
                     key={h.id}
@@ -474,6 +457,16 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
               </div>
             </details>
           )}
+
+          {/* the numbers come after the habits: checking in is the job of this screen */}
+          <SummaryStrip
+            items={[
+              { label: t.dashboard.statToday, value: `${doneToday}/${habits.length}` },
+              { label: t.dashboard.statBestStreak, value: bestStreak },
+              { label: t.dashboard.statCompletion, value: `${Math.round(rate30 * 100)}%` },
+              { label: t.dashboard.statCheckIns, value: String(totalCheckIns) },
+            ]}
+          />
 
           <WrappedBanner today={today} />
 

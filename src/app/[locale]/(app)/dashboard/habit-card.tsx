@@ -65,6 +65,9 @@ type Props = {
   stepsDone?: string[]
 }
 
+/** Streak lengths worth a celebration; everyday check-ins get a quiet pop. */
+const MILESTONES = [7, 30, 66, 100, 365]
+
 export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, strength = [], today, onToggle, dragHandle, todayNote, stepsDone = [] }: Props) {
   const { locale, t } = useI18n()
   const color = habitColor(habit.color)
@@ -109,8 +112,8 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
     <Card
       id={`habit-${habit.id}`}
       className={cn(
-        "scroll-mt-24 gap-0 p-4 transition-all duration-300 hover:shadow-md target:ring-2 target:ring-emerald-500/50",
-        doneToday && color.soft
+        // done = the filled circle and today's cell, not a pastel wash over the whole card
+        "scroll-mt-24 gap-0 p-4 target:ring-2 target:ring-ring/60"
       )}
     >
       <div className="flex items-start gap-2 sm:gap-3">
@@ -139,7 +142,8 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
               bursts > 0 && doneToday && "motion-safe:animate-pop"
             )}
           />
-          {bursts > 0 && doneToday && <ConfettiBurst key={bursts} />}
+          {/* confetti only when the check-in reaches a milestone (7, 30, 66, 100, 365) */}
+          {bursts > 0 && doneToday && !miniToday && MILESTONES.includes(streak.current) && <ConfettiBurst key={bursts} count={18} distance={34} />}
         </button>
 
         <div className="min-w-0 flex-1">
@@ -200,13 +204,13 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
           )}
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs whitespace-nowrap text-muted-foreground">
             <span className={cn("inline-flex items-center gap-1 font-medium", streak.current > 0 && color.text)}>
-              <FlameIcon className={cn("size-3.5", streak.current === 0 ? "text-muted-foreground/60" : "text-orange-500")} />
+              <FlameIcon className={cn("size-3.5", streak.current === 0 ? "text-muted-foreground/60" : "text-streak")} />
               {/* no big "0": a broken streak reads as a fresh start, the record stays next to it */}
               {streak.current === 0 && streak.best > 0 ? t.habit.startToday : t.habit.streak(streak.current, streak.unit)}
             </span>
             {streak.freezesUsed !== undefined && streak.freezesUsed > 0 && (
               <span
-                className="inline-flex items-center gap-0.5 text-sky-700 dark:text-sky-400"
+                className="inline-flex items-center gap-0.5 text-info"
                 title={t.habit.freezesHint(FREEZES_PER_MONTH - streak.freezesUsed)}
                 aria-label={t.habit.freezesHint(FREEZES_PER_MONTH - streak.freezesUsed)}
               >
@@ -350,9 +354,10 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
           {t.comeback.broken(streak.best)}
         </Notice>
       ) : comebackToday ? (
-        <Notice size="sm" icon={RotateCcwIcon} tone="success" className="mt-3">
-          {t.comeback.nudge}
-        </Notice>
+        // one quiet line, not a box — it can show on several cards at once
+        <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+          <RotateCcwIcon className="size-3.5 shrink-0" aria-hidden /> {t.comeback.nudge}
+        </p>
       ) : null}
 
       {/* last 7 days — click to fix a missed check-in */}
@@ -387,7 +392,7 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
               // min-w-0: seven columns must fit a 320px phone (each day still ≥ 24px wide — WCAG 2.2 AA 2.5.8)
               className="group flex min-w-0 flex-col items-center gap-1 disabled:opacity-40"
             >
-              <span className="text-[10px] text-muted-foreground uppercase">
+              <span className="text-[11px] text-muted-foreground">
                 {formatDay(locale, date, { weekday: "short" }).slice(0, 2)}
               </span>
               <span
@@ -396,9 +401,9 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
                   isDone
                     ? cn(color.soft, color.text, isMini && "opacity-60")
                     : isPaused
-                      ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                      ? "bg-pause/15 text-warning"
                       : isFrozen || isRepaired
-                        ? "bg-sky-500/15 text-sky-700 dark:text-sky-400"
+                        ? "bg-freeze/15 text-info"
                         : "bg-muted",
                   date === today && "ring-2 ring-foreground/20 ring-offset-1 ring-offset-background"
                 )}

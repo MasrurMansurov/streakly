@@ -25,7 +25,7 @@ async function withServerAction(page: Page, fn: () => Promise<unknown>) {
 }
 
 /** dnd-kit measures layout between key presses, so give it a frame or two */
-async function keyboardMove(page: Page, habit: string, key: "ArrowLeft" | "ArrowRight") {
+async function keyboardMove(page: Page, habit: string, key: "ArrowUp" | "ArrowDown") {
   await page.getByRole("button", { name: `Reorder “${habit}”` }).focus()
   for (const k of ["Space", key, "Space"]) {
     await page.keyboard.press(k)
@@ -67,7 +67,7 @@ test("check-in for today toggles and persists", async ({ page }) => {
 test("habits can be reordered with the keyboard", async ({ page }) => {
   const original = await habitTitles(page)
 
-  await withServerAction(page, () => keyboardMove(page, original[0], "ArrowRight"))
+  await withServerAction(page, () => keyboardMove(page, original[0], "ArrowDown"))
   await expect(page.getByText(`${original[0]} dropped at position 2`)).toBeAttached()
   await expect.poll(() => habitTitles(page)).toEqual([original[1], original[0], ...original.slice(2)])
 
@@ -75,7 +75,7 @@ test("habits can be reordered with the keyboard", async ({ page }) => {
   await expect.poll(() => habitTitles(page)).toEqual([original[1], original[0], ...original.slice(2)])
 
   // restore
-  await withServerAction(page, () => keyboardMove(page, original[0], "ArrowLeft"))
+  await withServerAction(page, () => keyboardMove(page, original[0], "ArrowUp"))
   await expect.poll(() => habitTitles(page)).toEqual(original)
   await page.reload()
   await expect.poll(() => habitTitles(page)).toEqual(original)

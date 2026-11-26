@@ -13,7 +13,7 @@ import {
 } from "@dnd-kit/core"
 import {
   arrayMove,
-  rectSortingStrategy,
+  verticalListSortingStrategy,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
@@ -33,7 +33,7 @@ type Props = {
   renderHabit: (habit: Habit, dragHandle: ReactNode) => ReactNode
 }
 
-/** Habit grid with drag-and-drop reordering (mouse, touch and keyboard). */
+/** Habit list (one column) with drag-and-drop reordering (mouse, touch and keyboard: ↑/↓). */
 export function SortableHabits({ habits, onReorder, renderHabit }: Props) {
   const { t } = useI18n()
   // stable id avoids SSR/client mismatch of dnd-kit's aria attributes
@@ -75,8 +75,8 @@ export function SortableHabits({ habits, onReorder, renderHabit }: Props) {
         },
       }}
     >
-      <SortableContext items={habits.map((h) => h.id)} strategy={rectSortingStrategy}>
-        <section className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <SortableContext items={habits.map((h) => h.id)} strategy={verticalListSortingStrategy}>
+        <section className="grid grid-cols-1 gap-3">
           {habits.map((h, i) => (
             <SortableItem key={h.id} habit={h} index={i} renderHabit={renderHabit} />
           ))}

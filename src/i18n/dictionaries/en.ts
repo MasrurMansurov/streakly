@@ -205,7 +205,7 @@ export const en = {
     archivedLink: (n: number) => `${n} archived ${p(n, "habit", "habits")}`,
     makePublicPrompt: "Want to share your progress?",
     makePublicLink: "Make your profile public",
-    streakShort: (n: number, unit: "day" | "week") => `${n}${unit === "day" ? "d" : "w"}`,
+    streakShort: (n: number, unit: "day" | "week") => `${n} ${unit === "day" ? p(n, "day", "days") : p(n, "week", "weeks")}`,
   },
   habit: {
     actions: "Habit actions",
@@ -493,7 +493,7 @@ export const en = {
     text: (n: number) =>
       n > 1 ? `That's comeback #${n}. Coming back after a miss is the real habit skill.` : "Coming back after a miss is the real habit skill.",
     quick: "You didn't miss twice — that's exactly how habits stick.",
-    nudge: "Yesterday was a miss — today's check-in counts as a comeback, rewarded on its own.",
+    nudge: "Missed yesterday. Today still counts.",
     broken: (best: number) =>
       `Your record of ${best} stays yours. A new streak starts today — even the mini version counts.`,
   },

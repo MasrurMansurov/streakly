@@ -213,12 +213,13 @@ async function Friends() {
   )
 }
 
-/** One day of the feed: one row per person, their check-ins as small chips. */
+/** One day of the feed: one row per person, their check-ins as a quiet line. */
 function FeedDay({ label, items, locale, timeZone }: { label: string; items: FeedItem[]; locale: Locale; timeZone: string }) {
   const byPerson = new Map<string, FeedItem[]>()
   for (const item of items) byPerson.set(item.person.username, [...(byPerson.get(item.person.username) ?? []), item])
   const time = (iso: string) =>
-    new Intl.DateTimeFormat(intlLocale[locale], { hour: "2-digit", minute: "2-digit", timeZone }).format(new Date(iso))
+    // "8:05", "20:15" in Russian; "8:05 AM" in English — no leading zero
+    new Intl.DateTimeFormat(intlLocale[locale], { hour: "numeric", minute: "2-digit", timeZone }).format(new Date(iso))
   return (
     <section className="grid gap-2">
       <h2 className="text-sm font-medium text-muted-foreground">{label}</h2>
@@ -240,9 +241,10 @@ function FeedDay({ label, items, locale, timeZone }: { label: string; items: Fee
                     {/* newest check-in of the day */}
                     <time className="shrink-0 text-xs text-muted-foreground">{time(done[0].createdAt)}</time>
                   </div>
-                  <ul className="mt-1.5 flex flex-wrap gap-1.5">
+                  {/* plain text with a color dot per habit — a sentence, not a wall of badges */}
+                  <ul className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-sm text-muted-foreground">
                     {done.map((item, i) => (
-                      <li key={i} className="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs">
+                      <li key={i} className="inline-flex items-center gap-1.5">
                         <span className={cn("size-1.5 rounded-full", habitColor(item.habit.color).dot)} aria-hidden />
                         {item.habit.name}
                       </li>

@@ -50,14 +50,12 @@ async function Dashboard() {
 
 function DashboardSkeleton() {
   return (
-    <div className="grid gap-8">
+    <div className="mx-auto grid w-full max-w-3xl gap-8">
       <div className="grid gap-2">
         <Skeleton className="h-4 w-40" />
         <Skeleton className="h-8 w-64" />
       </div>
-      {/* matches the summary strip */}
-      <Skeleton className="h-[68px] rounded-xl" />
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3">
         {Array.from({ length: 4 }, (_, i) => (
           <Skeleton key={i} className="h-36 rounded-xl" />
         ))}

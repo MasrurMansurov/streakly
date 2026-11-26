@@ -1,6 +1,5 @@
 import { CalendarX2Icon, ClockArrowUpIcon, SmileIcon, LinkIcon, RotateCcwIcon, LightbulbIcon, type LucideIcon } from "lucide-react"
 
-import { IconTile, type IconTone } from "@/components/icon-tile"
 import { Link } from "@/components/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useI18n } from "@/i18n/client"
@@ -9,12 +8,12 @@ import { cn } from "@/lib/utils"
 
 const pct = (r: number) => Math.round(r * 100)
 
-const LOOK: Record<Insight["kind"], { icon: LucideIcon; tone: IconTone }> = {
-  pair: { icon: LinkIcon, tone: "violet" },
-  weekday: { icon: CalendarX2Icon, tone: "amber" },
-  recovery: { icon: RotateCcwIcon, tone: "emerald" },
-  plan: { icon: ClockArrowUpIcon, tone: "sky" },
-  mood: { icon: SmileIcon, tone: "rose" },
+const ICONS: Record<Insight["kind"], LucideIcon> = {
+  pair: LinkIcon,
+  weekday: CalendarX2Icon,
+  recovery: RotateCcwIcon,
+  plan: ClockArrowUpIcon,
+  mood: SmileIcon,
 }
 
 /** Two labelled bars: "with" vs "without". */
@@ -23,20 +22,19 @@ function Compare({
   b,
   labelA,
   labelB,
-  tone,
   format = (v) => `${pct(v)}%`,
 }: {
   a: number
   b: number
   labelA: string
   labelB: string
-  tone: string
   format?: (v: number) => string
 }) {
   return (
     <div className="grid gap-1.5 text-xs" aria-hidden>
       {[
-        [a, labelA, tone],
+        // one ink for every insight: the finding is the text, the bar only shows the gap
+        [a, labelA, "bg-foreground/70"],
         [b, labelB, "bg-muted-foreground/30"],
       ].map(([v, label, color]) => (
         <div key={label as string} className="grid grid-cols-[5.5rem_1fr_2.5rem] items-center gap-2">
@@ -69,24 +67,24 @@ export function InsightsCard({ insights }: { insights: Insight[] }) {
         ) : (
           <ul className="grid gap-x-8 gap-y-6 sm:grid-cols-[repeat(auto-fit,minmax(15rem,1fr))]">
             {insights.map((i) => {
-              const { icon, tone } = LOOK[i.kind]
+              const Icon = ICONS[i.kind]
               return (
                 <li key={JSON.stringify(i)} className="grid content-start gap-3">
-                  <div className="flex items-center gap-2">
-                    <IconTile icon={icon} tone={tone} size="sm" />
-                    <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{x.kinds[i.kind]}</span>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Icon className="size-4 shrink-0" aria-hidden />
+                    {x.kinds[i.kind]}
                   </div>
                   {i.kind === "pair" && (
                     <>
                       <p className="text-sm leading-relaxed">{x.pair(i.a, i.b, pct(i.withA), pct(i.withoutA))}</p>
-                      <Compare a={i.withA} b={i.withoutA} labelA={x.withLabel} labelB={x.withoutLabel} tone="bg-violet-500" />
+                      <Compare a={i.withA} b={i.withoutA} labelA={x.withLabel} labelB={x.withoutLabel} />
                       <p className="text-xs text-muted-foreground">{x.pairTip}</p>
                     </>
                   )}
                   {i.kind === "weekday" && (
                     <>
                       <p className="text-sm leading-relaxed">{x.weekday(i.habit, i.weekday, pct(i.rate), pct(i.others))}</p>
-                      <Compare a={i.others} b={i.rate} labelA={x.otherDays} labelB={x.weekdayShort[i.weekday]} tone="bg-amber-500" />
+                      <Compare a={i.others} b={i.rate} labelA={x.otherDays} labelB={x.weekdayShort[i.weekday]} />
                       <p className="text-xs text-muted-foreground">{x.weekdayTip}</p>
                     </>
                   )}
@@ -98,7 +96,6 @@ export function InsightsCard({ insights }: { insights: Insight[] }) {
                         b={i.withoutAvg / 5}
                         labelA={x.withLabel}
                         labelB={x.withoutLabel}
-                        tone="bg-rose-500"
                         format={(v) => `${Math.round(v * 50) / 10}/5`}
                       />
                       <p className="text-xs text-muted-foreground">{x.moodTip}</p>
@@ -108,7 +105,7 @@ export function InsightsCard({ insights }: { insights: Insight[] }) {
                     <>
                       <p className="text-sm leading-relaxed">{x.plan(i.habit, pct(i.rate))}</p>
                       <div className="h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden>
-                        <span className="block h-full rounded-full bg-sky-500" style={{ width: `${pct(i.rate)}%` }} />
+                        <span className="block h-full rounded-full bg-foreground/70" style={{ width: `${pct(i.rate)}%` }} />
                       </div>
                       <p className="text-xs text-muted-foreground">
                         {x.planTip}{" "}
@@ -122,7 +119,7 @@ export function InsightsCard({ insights }: { insights: Insight[] }) {
                     <>
                       <p className="text-sm leading-relaxed">{x.recovery(pct(i.rate))}</p>
                       <div className="h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden>
-                        <span className="block h-full rounded-full bg-emerald-500" style={{ width: `${pct(i.rate)}%` }} />
+                        <span className="block h-full rounded-full bg-done" style={{ width: `${pct(i.rate)}%` }} />
                       </div>
                       <p className="text-xs text-muted-foreground">{i.rate >= 0.7 ? x.recoveryGood : x.recoveryTip}</p>
                     </>
