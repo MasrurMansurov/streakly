@@ -77,8 +77,18 @@ Streakly is a habit tracker built around how habits actually stick. Instead of p
 Free, no ads, open source (MIT). You can try it without signing up.
 ```
 
-**Platforms** — отметьте: `Online`, `Android`, `iPhone`, `Windows`, `Mac`, `Linux`
-(это PWA: ставится из браузера на любое устройство). Если есть пункт `Self-Hosted` — тоже.
+**Platforms** — только `Online` и `Self-Hosted` (если есть). AlternativeTo прямо просит
+для веб-приложений не ставить Android / iPhone / Windows / Mac: у Streakly нет отдельных
+приложений в магазинах.
+
+**Platform Notes → Online Note**
+```
+Installable as an app (PWA) on Android, iOS and desktop browsers. Works offline.
+```
+
+**Company / Author** — `Masrur Mansurov` (если в списке нет — добавить нового автора, тип Individual).
+
+**Release Date** — `2026-11-24`
 
 **License** — `Free` и `Open Source`.
 
