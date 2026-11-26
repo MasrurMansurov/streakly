@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import {
   CalendarCheck2Icon,
   CheckIcon,
@@ -10,12 +11,14 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
+import { JsonLd } from "@/components/json-ld"
 import { Link } from "@/components/link"
 import { TryDemoButton } from "@/components/try-demo-button"
 import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
 import { Button } from "@/components/ui/button"
 import { getT } from "@/i18n/server"
+import { indexableMetadata, SITE_URL } from "@/lib/seo"
 import { cn } from "@/lib/utils"
 
 const FEATURE_ICONS: LucideIcon[] = [CalendarCheck2Icon, SnowflakeIcon, HandshakeIcon, LightbulbIcon, TrophyIcon, LockKeyholeIcon]
@@ -25,10 +28,43 @@ const PREVIEW_COLORS = ["bg-emerald-500", "bg-sky-500", "bg-rose-500"]
 const PREVIEW_SOFT = ["bg-emerald-500/60", "bg-sky-500/60", "bg-rose-500/60"]
 const WEEK = [true, true, false, true, true, true, false]
 
+export async function generateMetadata(): Promise<Metadata> {
+  const { locale, t } = await getT()
+  return { title: { absolute: t.meta.title }, description: t.meta.description, ...indexableMetadata(locale, "") }
+}
+
+/** Who and what this site is, for search engines (no invented ratings — WebApplication with a free offer). */
+function landingJsonLd(locale: string, description: string) {
+  const url = `${SITE_URL}/${locale}`
+  const author = { "@type": "Person", name: "Masrur Mansurov", url: "https://github.com/MasrurMansurov" }
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      { "@type": "WebSite", "@id": `${SITE_URL}/#website`, url: SITE_URL, name: "Streakly", inLanguage: ["en", "ru"] },
+      {
+        "@type": "WebApplication",
+        "@id": `${SITE_URL}/#app`,
+        name: "Streakly",
+        url,
+        description,
+        applicationCategory: "LifestyleApplication",
+        operatingSystem: "Web, Android, iOS, Windows, macOS, Linux",
+        browserRequirements: "Requires JavaScript. Installable as a PWA.",
+        isAccessibleForFree: true,
+        offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+        inLanguage: locale,
+        author,
+        sameAs: ["https://github.com/MasrurMansurov/streakly"],
+      },
+    ],
+  }
+}
+
 export default async function Home() {
-  const { t } = await getT()
+  const { locale, t } = await getT()
   return (
     <>
+      <JsonLd data={landingJsonLd(locale, t.meta.description)} />
       <SiteHeader />
       <main className="flex-1">
         <section className="mx-auto grid max-w-5xl gap-12 px-4 py-20 md:grid-cols-[1.1fr_1fr] md:items-center md:py-28">

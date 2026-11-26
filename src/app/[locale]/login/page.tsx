@@ -4,11 +4,13 @@ import { Logo } from "@/components/logo"
 import { TryDemoButton } from "@/components/try-demo-button"
 import { getT } from "@/i18n/server"
 import { getEnabledProviders } from "@/lib/auth-providers"
+import { NOINDEX } from "@/lib/seo"
 
 import { LoginForm } from "./login-form"
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: (await getT()).t.meta.signIn }
+  // a sign-in form has nothing to rank for — keep it out of search
+  return { title: (await getT()).t.meta.signIn, robots: NOINDEX }
 }
 
 export default async function LoginPage() {

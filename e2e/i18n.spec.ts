@@ -7,7 +7,7 @@ test.describe("Russian browser", () => {
     await page.goto("/")
     await expect(page).toHaveURL(/\/ru$/)
     await expect(page.locator("html")).toHaveAttribute("lang", "ru")
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Привычки, которые")
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Трекер привычек, который прощает")
   })
 
   test("login form validates in Russian", async ({ page }) => {

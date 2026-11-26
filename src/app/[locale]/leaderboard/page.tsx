@@ -14,11 +14,12 @@ import { getT } from "@/i18n/server"
 import { getCurrentUser, getLeaderboard, type LeaderboardRow } from "@/lib/data"
 import { nextRank, rankFor, RANKS } from "@/lib/ranks"
 import { createClient } from "@/lib/supabase/server"
+import { indexableMetadata } from "@/lib/seo"
 import { cn } from "@/lib/utils"
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getT()
-  return { title: t.leaderboard.title, description: t.leaderboard.subtitle }
+  const { locale, t } = await getT()
+  return { title: t.leaderboard.title, description: t.leaderboard.subtitle, ...indexableMetadata(locale, "/leaderboard") }
 }
 
 const PODIUM = ["text-amber-500", "text-zinc-400", "text-orange-700 dark:text-orange-400"]

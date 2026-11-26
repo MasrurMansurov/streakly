@@ -18,6 +18,7 @@ import { isLocale, locales } from "@/i18n"
 import { I18nProvider } from "@/i18n/client"
 import { getT } from "@/i18n/server"
 
+import { SITE_URL } from "@/lib/seo"
 import "../globals.css"
 
 // Onest for all text; Unbounded only draws the "streakly" wordmark (one weight, Latin)
@@ -32,13 +33,20 @@ export function generateStaticParams() {
 export async function generateMetadata(): Promise<Metadata> {
   const { locale, t } = await getT()
   return {
-    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+    metadataBase: new URL(SITE_URL),
     title: { default: t.meta.title, template: "%s · Streakly" },
     description: t.meta.description,
     applicationName: "Streakly",
     appleWebApp: { capable: true, title: "Streakly", statusBarStyle: "default" },
-    alternates: { languages: Object.fromEntries(locales.map((l) => [l, `/${l}`])) },
-    openGraph: { locale: locale === "ru" ? "ru_RU" : "en_US" },
+    // no alternates here: each public page declares its own canonical + hreflang (lib/seo.ts);
+    // a layout-wide map pointed every page's language versions at the landing page
+    openGraph: { siteName: "Streakly", type: "website", locale: locale === "ru" ? "ru_RU" : "en_US" },
+    twitter: { card: "summary_large_image" },
+    // Search Console / Yandex Webmaster ownership (set the tokens in the hosting env)
+    verification: {
+      ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION } : {}),
+      ...(process.env.NEXT_PUBLIC_YANDEX_VERIFICATION ? { yandex: process.env.NEXT_PUBLIC_YANDEX_VERIFICATION } : {}),
+    },
   }
 }
 

@@ -5,6 +5,7 @@ import { Suspense } from "react"
 
 import { Achievements } from "@/components/achievements"
 import { Heatmap } from "@/components/heatmap"
+import { JsonLd } from "@/components/json-ld"
 import { SiteFooter } from "@/components/site-footer"
 import { SummaryStrip } from "@/components/summary-strip"
 import { ProfileHeader } from "@/components/profile-header"
@@ -19,6 +20,7 @@ import { addDays, type ISODate } from "@/lib/dates"
 import { evaluateAchievements, type AchievementId } from "@/lib/achievements"
 import { habitColor } from "@/lib/habit-colors"
 import { bridgesFor, habitStreak } from "@/lib/streaks"
+import { indexableMetadata, NOINDEX, SITE_URL } from "@/lib/seo"
 import { cn } from "@/lib/utils"
 
 type Props = { params: Promise<{ username: string }> }
@@ -26,12 +28,14 @@ type Props = { params: Promise<{ username: string }> }
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params
   const data = await getPublicProfile(username.toLowerCase())
-  const { t } = await getT()
-  if (!data) return { title: t.publicProfile.notFound }
+  const { locale, t } = await getT()
+  if (!data) return { title: t.publicProfile.notFound, robots: NOINDEX }
   const name = data.profile.display_name || `@${data.profile.username}`
   return {
     title: t.publicProfile.metaTitle(name),
     description: data.profile.bio ?? t.publicProfile.metaDescription(name, data.habits.length),
+    // the lowercase URL is the one true address (/u/Demo redirects to it)
+    ...indexableMetadata(locale, `/u/${data.profile.username}`, `/${locale}/u/${data.profile.username}/opengraph-image`),
   }
 }
 
@@ -80,6 +84,22 @@ async function PublicProfile({ params }: Props) {
 
   return (
     <div className="grid gap-8">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "ProfilePage",
+          url: `${SITE_URL}/${locale}/u/${profile.username}`,
+          ...(profile.created_at ? { dateCreated: profile.created_at } : {}),
+          mainEntity: {
+            "@type": "Person",
+            name: profile.display_name || profile.username,
+            alternateName: `@${profile.username}`,
+            identifier: profile.username,
+            ...(profile.bio ? { description: profile.bio } : {}),
+            ...(profile.avatar_url ? { image: profile.avatar_url } : {}),
+          },
+        }}
+      />
       <ProfileHeader
         look={{
           name,

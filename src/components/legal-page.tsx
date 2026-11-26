@@ -6,11 +6,12 @@ import { LEGAL, LEGAL_UPDATED, CONTACT_URL, type LegalKind } from "@/content/leg
 import { formatDay } from "@/i18n"
 import { getT } from "@/i18n/server"
 import type { ISODate } from "@/lib/dates"
+import { indexableMetadata } from "@/lib/seo"
 
 export async function legalMetadata(kind: LegalKind): Promise<Metadata> {
   const { locale } = await getT()
   const doc = LEGAL[kind][locale]
-  return { title: doc.title, description: doc.intro, alternates: { languages: { en: `/en/${kind}`, ru: `/ru/${kind}` } } }
+  return { title: doc.title, description: doc.intro, ...indexableMetadata(locale, `/${kind}`) }
 }
 
 /** Privacy policy / terms: a calm, readable long-form page. */

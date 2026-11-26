@@ -4,8 +4,8 @@ const p = (n: number, one: string, other: string) => plural("en", n, { one, othe
 
 export const en = {
   meta: {
-    title: "Streakly — build habits that stick",
-    description: "Track daily habits, keep your streaks alive and share your progress with a public profile.",
+    title: "Free Habit Tracker, Open Source — Streakly",
+    description: "A free habit tracker with no limit on habits: forgiving streaks, steps, reminders and friends. Open source, no ads — try it without signing up.",
     dashboard: "Today",
     settings: "Settings",
     archive: "Archive",
@@ -44,9 +44,9 @@ export const en = {
   },
   landing: {
     badge: "Free · Open source · No ads",
-    titleStart: "Build habits that",
-    titleAccent: "stick",
-    subtitle: "Streakly is a simple daily habit tracker. Check in, watch your streaks grow, and share your progress.",
+    titleStart: "The habit tracker that forgives",
+    titleAccent: "a missed day",
+    subtitle: "Streakly is a free daily habit tracker with no limit on habits. Check in with one tap, keep your streak through a bad day, and build habits with friends.",
     getStarted: "Get started — it's free",
     previewTitle: "Today",
     previewStreak: "24 day streak",
@@ -428,6 +428,22 @@ export const en = {
     stepDone: (title: string) => `${title}: done`,
     stepTodo: (title: string) => `${title}: not done`,
     offline: "Steps need a connection — check off the whole habit instead",
+  },
+  demoPage: {
+    metaTitle: "Try a Habit Tracker Without Signing Up",
+    metaDescription: "Open Streakly with two months of sample habits — no email, no password. Check off today, see streaks and stats, then save it as a free account.",
+    title: "Try the habit tracker without signing up",
+    lead: "One tap opens Streakly with two months of sample habits, so you see what it looks like after weeks of use — not an empty screen.",
+    points: [
+      "No email and no password — a temporary guest account",
+      "Four sample habits with real-looking streaks, a heatmap and insights",
+      "Today is left for you: check off a habit and watch the streak grow",
+      "Like it? “Save progress” turns the demo into a free account and keeps everything",
+    ],
+    note: "Demo data is kept for 7 days. Friends, reminders and public profiles unlock after signing up.",
+    or: "Prefer a clean start?",
+    signUp: "Create a free account",
+    link: "Demo",
   },
   demo: {
     try: "Try without signing up",

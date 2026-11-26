@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { Suspense, type ReactNode } from "react"
 
 import { AttributionSave } from "@/components/attribution"
@@ -6,6 +7,10 @@ import { GuestGate } from "@/components/guest-gate"
 import { InviteClaim } from "@/components/invite-claim"
 import { PushSync } from "@/components/push-sync"
 import { SiteHeader } from "@/components/site-header"
+import { NOINDEX } from "@/lib/seo"
+
+/** The signed-in app is personal: never in search results (robots.txt also covers the main routes). */
+export const metadata: Metadata = { robots: NOINDEX }
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
