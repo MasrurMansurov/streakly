@@ -25,6 +25,9 @@ test("public pages: self canonical, en/ru/x-default, a preview image", async ({ 
     ["/ru/leaderboard", "/en/leaderboard"],
     ["/en/demo", "/en/demo"],
     ["/en/privacy", "/en/privacy"],
+    ["/ru/templates", "/en/templates"],
+    ["/ru/templates/drink-water", "/en/templates/drink-water"],
+    ["/en/habit-tracker-printable", "/en/habit-tracker-printable"],
   ] as const) {
     const h = await head(request, path)
     expect(h.status, path).toBe(200)
@@ -63,6 +66,7 @@ test("nothing to rank for → noindex; one address per profile", async ({ reques
 test("the sitemap lists only indexable pages, with x-default", async ({ request }) => {
   const xml = await (await request.get("/sitemap.xml")).text()
   expect(xml).toContain("/en/demo</loc>")
+  expect(xml).toContain("/ru/templates/journaling</loc>")
   expect(xml).toContain('hreflang="x-default"')
   expect(xml).not.toContain("/login</loc>")
   expect(xml).not.toContain("/dashboard")

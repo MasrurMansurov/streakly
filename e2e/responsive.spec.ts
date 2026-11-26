@@ -30,7 +30,7 @@ async function layoutProblems(page: Page): Promise<string[]> {
 test.describe("on a 320px phone", () => {
   test.use({ viewport: { width: 320, height: 720 }, isMobile: true, hasTouch: true })
 
-  for (const path of ["/ru", "/en", "/ru/login", "/ru/leaderboard", "/ru/privacy", "/ru/u/demo"]) {
+  for (const path of ["/ru", "/en", "/ru/login", "/ru/leaderboard", "/ru/privacy", "/ru/u/demo", "/ru/demo", "/ru/templates", "/ru/templates/workout", "/ru/habit-tracker-printable"]) {
     test(`public page ${path} fits`, async ({ page }) => {
       await page.goto(path)
       expect(await layoutProblems(page)).toEqual([])

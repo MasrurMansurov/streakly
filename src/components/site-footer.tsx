@@ -14,6 +14,9 @@ export async function SiteFooter() {
           <Link href="/demo" className="hover:text-foreground">
             {t.demoPage.link}
           </Link>
+          <Link href="/templates" className="hover:text-foreground">
+            {t.guides.link}
+          </Link>
           <Link href="/habit-tracker-printable" className="hover:text-foreground">
             {t.printable.link}
           </Link>
