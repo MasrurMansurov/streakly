@@ -145,7 +145,7 @@ export const en = {
     closing: {
       title: "Who builds Streakly",
       note: [
-        "I'm Masrur, and I make Streakly. I write the code with Claude, an AI assistant, and I decide what goes into the app.",
+        "I'm Masrur, and I make Streakly. I use Claude to build this.",
         "It's built around one idea: a missed day shouldn't wipe out a month. A freeze covers it, and you can repair yesterday.",
         "If something breaks or you have an idea, open an issue on GitHub.",
       ],
