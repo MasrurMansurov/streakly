@@ -28,6 +28,7 @@ test("public pages: self canonical, en/ru/x-default, a preview image", async ({ 
     ["/ru/templates", "/en/templates"],
     ["/ru/templates/drink-water", "/en/templates/drink-water"],
     ["/en/habit-tracker-printable", "/en/habit-tracker-printable"],
+    ["/ru/year-in-pixels", "/en/year-in-pixels"],
   ] as const) {
     const h = await head(request, path)
     expect(h.status, path).toBe(200)

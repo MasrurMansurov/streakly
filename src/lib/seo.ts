@@ -11,6 +11,7 @@ export const INDEXABLE_PATHS = [
   "",
   "/demo",
   "/habit-tracker-printable",
+  "/year-in-pixels",
   "/templates",
   ...Object.values(GUIDE_SLUGS).map((slug) => `/templates/${slug}`),
   "/leaderboard",
