@@ -61,6 +61,8 @@ test("nothing to rank for → noindex; one address per profile", async ({ reques
 
   // search-console ownership files / the IndexNow key are served as files, never redirected
   expect((await request.get("/google0000000000000000.html", { maxRedirects: 0 })).status()).not.toBe(307)
+  const key = await request.get("/26cfe6cb41188849aa98efc345f4027b.txt", { maxRedirects: 0 })
+  expect(key.status()).toBe(200) // IndexNow key (scripts/indexnow.mjs)
 })
 
 test("the sitemap lists only indexable pages, with x-default", async ({ request }) => {

@@ -1,0 +1,22 @@
+name: IndexNow
+
+# After each successful production deploy on Vercel (it reports deployments to
+# GitHub), tell Bing / Yandex about the pages in the sitemap.
+on:
+  deployment_status:
+
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    if: github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node scripts/indexnow.mjs
+        env:
+          SITE_URL: https://streakly-pied-six.vercel.app
