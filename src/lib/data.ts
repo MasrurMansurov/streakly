@@ -66,7 +66,8 @@ export async function getToday(): Promise<{ today: ISODate; timeZone: string; da
 export async function getCurrentUser() {
   const claims = await getClaims()
   if (!claims?.sub) return null
-  return { id: claims.sub, email: typeof claims.email === "string" ? claims.email : null }
+  // a guest: the no-sign-up demo (Supabase anonymous sign-in) — private, no social features
+  return { id: claims.sub, email: typeof claims.email === "string" ? claims.email : null, isGuest: claims.is_anonymous === true }
 }
 
 export async function requireUser() {

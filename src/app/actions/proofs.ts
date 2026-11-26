@@ -7,12 +7,15 @@ import { getActionT } from "@/i18n/server"
 import { getCurrentUser, getToday } from "@/lib/data"
 import { createClient } from "@/lib/supabase/server"
 import type { ActionResult } from "@/lib/validation"
+import { guestBlocked } from "@/lib/guest"
 
 const MAX_BYTES = 3 * 1024 * 1024
 const TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" }
 
 /** Attach a photo and/or a note to today's check-in in a pact. */
 export async function saveProof(form: FormData): Promise<ActionResult> {
+  const blocked = await guestBlocked()
+  if (blocked) return blocked
   const [{ t }, user, supabase] = await Promise.all([getActionT(), getCurrentUser(), createClient()])
   if (!user) return { ok: false, error: t.validation.notSignedIn }
   const pactId = String(form.get("pactId") ?? "")

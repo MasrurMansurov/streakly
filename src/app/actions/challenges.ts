@@ -8,6 +8,7 @@ import { getCurrentUser, getToday } from "@/lib/data"
 import { addDays } from "@/lib/dates"
 import { createClient } from "@/lib/supabase/server"
 import type { ActionResult } from "@/lib/validation"
+import { guestBlocked } from "@/lib/guest"
 
 const id = z.uuid()
 const createSchema = z.object({
@@ -26,6 +27,8 @@ async function setup() {
 
 /** Start a challenge today with friends you follow (they get an invite). */
 export async function createChallenge(input: CreateChallengeInput): Promise<ActionResult> {
+  const blocked = await guestBlocked()
+  if (blocked) return blocked
   const { t, user, supabase } = await setup()
   const parsed = createSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: t.challenges.invalid }
@@ -56,6 +59,8 @@ export async function createChallenge(input: CreateChallengeInput): Promise<Acti
 
 /** Join with one of your own habits. */
 export async function acceptChallenge(challengeId: string, habitId: string): Promise<ActionResult> {
+  const blocked = await guestBlocked()
+  if (blocked) return blocked
   const { t, user, supabase } = await setup()
   if (!id.safeParse(challengeId).success || !id.safeParse(habitId).success) return { ok: false, error: t.validation.invalidInput }
   if (!user) return { ok: false, error: t.validation.notSignedIn }
@@ -87,6 +92,8 @@ export async function leaveChallenge(challengeId: string): Promise<ActionResult>
 
 /** Same people, same stake, a fresh week (owner only). Members keep their habits as a suggestion — they re-accept. */
 export async function rematchChallenge(challengeId: string): Promise<ActionResult> {
+  const blocked = await guestBlocked()
+  if (blocked) return blocked
   const { t, user, supabase } = await setup()
   if (!id.safeParse(challengeId).success) return { ok: false, error: t.validation.invalidInput }
   if (!user) return { ok: false, error: t.validation.notSignedIn }

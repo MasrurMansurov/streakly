@@ -12,6 +12,7 @@ import { weeklyReview } from "@/lib/review"
 import { bridgesFor, countInWeek, habitStreak, weekStart } from "@/lib/streaks"
 import { createClient } from "@/lib/supabase/server"
 import type { ActionResult } from "@/lib/validation"
+import { guestBlocked } from "@/lib/guest"
 
 /** Is the AI letter available on this deployment (an API key is configured)? */
 export async function letterEnabled() {
@@ -20,6 +21,8 @@ export async function letterEnabled() {
 
 /** Write (once a week) a short letter about the user's week with Claude, and keep it. */
 export async function writeWeeklyLetter(): Promise<ActionResult> {
+  const blocked = await guestBlocked()
+  if (blocked) return blocked
   const [{ t }, locale] = await Promise.all([getActionT(), getActionLocale()])
   if (!process.env.ANTHROPIC_API_KEY) return { ok: false, error: t.letter.unavailable }
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 
 import { Logo } from "@/components/logo"
+import { TryDemoButton } from "@/components/try-demo-button"
 import { getT } from "@/i18n/server"
 import { getEnabledProviders } from "@/lib/auth-providers"
 
@@ -16,6 +17,7 @@ export default async function LoginPage() {
     <main className="flex flex-1 flex-col items-center justify-center gap-8 px-4 py-12">
       <Logo />
       <LoginForm providers={providers} />
+      <TryDemoButton variant="ghost" />
     </main>
   )
 }

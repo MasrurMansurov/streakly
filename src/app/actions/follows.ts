@@ -7,8 +7,11 @@ import { getActionT } from "@/i18n/server"
 import { getCurrentUser } from "@/lib/data"
 import { createClient } from "@/lib/supabase/server"
 import type { ActionResult } from "@/lib/validation"
+import { guestBlocked } from "@/lib/guest"
 
 export async function setFollowing(profileId: string, follow: boolean): Promise<ActionResult> {
+  const blocked = await guestBlocked()
+  if (blocked) return blocked
   const { t } = await getActionT()
   if (!z.uuid().safeParse(profileId).success) return { ok: false, error: t.validation.invalidInput }
   const user = await getCurrentUser()

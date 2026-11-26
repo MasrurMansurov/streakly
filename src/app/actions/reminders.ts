@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/server"
 import { locales } from "@/i18n"
 import { getActionLocale, getActionT } from "@/i18n/server"
 import type { ActionResult } from "@/lib/validation"
+import { guestBlocked } from "@/lib/guest"
 
 const settingsSchema = z.object({
   enabled: z.boolean(),
@@ -33,6 +34,8 @@ async function authed() {
 }
 
 export async function saveReminderSettings(input: z.infer<typeof settingsSchema>): Promise<ActionResult> {
+  const blocked = await guestBlocked()
+  if (blocked) return blocked
   const parsed = settingsSchema.safeParse(input)
   if (!parsed.success) {
     const { t } = await getActionT()
@@ -67,6 +70,8 @@ const turnOnSchema = z.object({
  * that reminder would silently never arrive.
  */
 export async function turnOnReminders(input: z.infer<typeof turnOnSchema>): Promise<ActionResult> {
+  const blocked = await guestBlocked()
+  if (blocked) return blocked
   const parsed = turnOnSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: (await getActionT()).t.validation.invalidInput }
 
@@ -111,6 +116,8 @@ export async function syncTimezone(timezone: string): Promise<ActionResult> {
  * subscription to whoever is signed in now.
  */
 export async function savePushSubscription(input: z.infer<typeof subscriptionSchema>): Promise<ActionResult> {
+  const blocked = await guestBlocked()
+  if (blocked) return blocked
   const parsed = subscriptionSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: (await getActionT()).t.reminders.invalidSubscription }
 
@@ -134,6 +141,8 @@ export async function removePushSubscription(endpoint: string): Promise<ActionRe
 
 /** Ask the Edge Function to send a test notification to all of the user's devices. */
 export async function sendTestNotification(): Promise<ActionResult> {
+  const blocked = await guestBlocked()
+  if (blocked) return blocked
   const { supabase } = await authed()
   const { t } = await getActionT()
 

@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/server"
 import { validationMessage } from "@/i18n"
 import { getActionT } from "@/i18n/server"
 import { profileSchema, type ActionResult, type ProfileInput } from "@/lib/validation"
+import { guestBlocked } from "@/lib/guest"
 
 export async function updateProfile(input: ProfileInput): Promise<ActionResult> {
   const { t } = await getActionT()
@@ -19,6 +20,8 @@ export async function updateProfile(input: ProfileInput): Promise<ActionResult> 
 
   const user = await getCurrentUser()
   if (!user) return { ok: false, error: t.validation.notSignedIn }
+  // a demo guest stays private (the database enforces it too)
+  if (user.isGuest && parsed.data.is_public) return { ok: false, error: t.demo.needAccount }
 
   const supabase = await createClient()
   const { data: before } = await supabase.from("profiles").select("username").eq("id", user.id).single()
@@ -49,6 +52,8 @@ export async function updateProfile(input: ProfileInput): Promise<ActionResult> 
  * Only URLs inside the user's own folder of the public "avatars" bucket are accepted.
  */
 export async function updateAvatar(url: string | null): Promise<ActionResult> {
+  const blocked = await guestBlocked()
+  if (blocked) return blocked
   const { t } = await getActionT()
   const user = await getCurrentUser()
   if (!user) return { ok: false, error: t.validation.notSignedIn }
@@ -142,6 +147,8 @@ export async function updateAppearance(input: AppearanceInput): Promise<ActionRe
 
 /** Own banner image (uploaded to the avatars bucket by the browser), or null to go back to a preset. */
 export async function updateBanner(url: string | null): Promise<ActionResult> {
+  const blocked = await guestBlocked()
+  if (blocked) return blocked
   const { t } = await getActionT()
   const user = await getCurrentUser()
   if (!user) return { ok: false, error: t.validation.notSignedIn }

@@ -174,6 +174,7 @@ export type Database = {
           description: string | null
           icon: string
           is_private: boolean
+          is_sample: boolean
           id: string
           name: string
           position: number
@@ -190,6 +191,7 @@ export type Database = {
           description?: string | null
           icon?: string
           is_private?: boolean
+          is_sample?: boolean
           id?: string
           name: string
           position?: number
@@ -206,6 +208,7 @@ export type Database = {
           description?: string | null
           icon?: string
           is_private?: boolean
+          is_sample?: boolean
           id?: string
           name?: string
           position?: number
@@ -422,6 +425,10 @@ export type Database = {
       invite_preview: {
         Args: { p_code: string }
         Returns: { inviter_name: string; inviter_username: string; inviter_avatar: string | null; habit_name: string | null; habit_color: string | null; habit_checkins_30: number | null }[]
+      }
+      seed_demo: {
+        Args: { p_today: string; p_locale?: string }
+        Returns: undefined
       }
       claim_push_subscription: {
         Args: { p_endpoint: string; p_p256dh: string; p_auth: string; p_user_agent?: string }

@@ -8,9 +8,12 @@ import { getActionT } from "@/i18n/server"
 import { getCurrentUser } from "@/lib/data"
 import { INVITE_COOKIE, isInviteCode, newInviteCode } from "@/lib/invite"
 import { createClient } from "@/lib/supabase/server"
+import { guestBlocked } from "@/lib/guest"
 
 /** This user's invite link code, optionally for one habit (reused if it exists). */
 export async function getInviteCode(habitId?: string | null): Promise<{ ok: true; code: string } | { ok: false; error: string }> {
+  const blocked = await guestBlocked()
+  if (blocked) return blocked
   const { t } = await getActionT()
   if (habitId && !z.uuid().safeParse(habitId).success) return { ok: false, error: t.validation.invalidInput }
   const user = await getCurrentUser()
@@ -42,12 +45,13 @@ export async function getInviteCode(habitId?: string | null): Promise<{ ok: true
  * before sign-up). Follows each other; with a habit attached, a pact proposal.
  */
 export async function acceptInvite(code?: string): Promise<{ inviter: string; pact: boolean } | null> {
+  const user = await getCurrentUser()
+  // a demo guest accepts after creating an account: the cookie waits until then
+  if (!user || user.isGuest) return null
   const jar = await cookies()
   const value = code ?? jar.get(INVITE_COOKIE)?.value
   if (jar.get(INVITE_COOKIE)) jar.delete(INVITE_COOKIE)
   if (!isInviteCode(value)) return null
-  const user = await getCurrentUser()
-  if (!user) return null
   const supabase = await createClient()
   const { data } = await supabase.rpc("accept_invite", { p_code: value })
   const row = data?.[0]

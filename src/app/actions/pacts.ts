@@ -7,6 +7,7 @@ import { getActionT } from "@/i18n/server"
 import { getCurrentUser } from "@/lib/data"
 import { createClient } from "@/lib/supabase/server"
 import type { ActionResult } from "@/lib/validation"
+import { guestBlocked } from "@/lib/guest"
 
 const id = z.uuid()
 
@@ -17,6 +18,8 @@ async function setup() {
 
 /** Invite someone you follow into a pact with one of your habits. */
 export async function invitePact(inviteeId: string, habitId: string): Promise<ActionResult> {
+  const blocked = await guestBlocked()
+  if (blocked) return blocked
   const { t, user, supabase } = await setup()
   if (!id.safeParse(inviteeId).success || !id.safeParse(habitId).success) return { ok: false, error: t.validation.invalidInput }
   if (!user) return { ok: false, error: t.validation.notSignedIn }
@@ -32,6 +35,8 @@ export async function invitePact(inviteeId: string, habitId: string): Promise<Ac
 
 /** Accept an invite with one of your habits. */
 export async function acceptPact(pactId: string, habitId: string): Promise<ActionResult> {
+  const blocked = await guestBlocked()
+  if (blocked) return blocked
   const { t, user, supabase } = await setup()
   if (!id.safeParse(pactId).success || !id.safeParse(habitId).success) return { ok: false, error: t.validation.invalidInput }
   if (!user) return { ok: false, error: t.validation.notSignedIn }

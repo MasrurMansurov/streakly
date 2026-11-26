@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 
 import { Link } from "@/components/link"
+import { TryDemoButton } from "@/components/try-demo-button"
 import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
 import { Button } from "@/components/ui/button"
@@ -41,9 +42,7 @@ export default async function Home() {
               <Button size="lg" className="h-11 px-5" render={<Link href="/login" />}>
                 {t.landing.getStarted}
               </Button>
-              <Button size="lg" variant="ghost" className="h-11 px-5" render={<Link href="#features" />}>
-                {t.landing.seeFeatures}
-              </Button>
+              <TryDemoButton />
             </div>
             <p className="text-sm text-muted-foreground">{t.landing.badge}</p>
           </div>
