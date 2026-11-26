@@ -9,5 +9,6 @@ const RU_SHORT = /(^|[\s(«—])((?:[ВКСУОИАЯвксуоиая]|не|ни
 
 export function typo(locale: Locale, text: string): string {
   if (locale !== "ru") return text
-  return text.replace(RU_SHORT, "$1$2 ").replace(RU_SHORT, "$1$2 ")
+  // …and a number stays with its word («5 минут», «30 дней»)
+  return text.replace(RU_SHORT, "$1$2\u00A0").replace(RU_SHORT, "$1$2\u00A0").replace(/(\d) (?=\p{L})/gu, "$1\u00A0")
 }

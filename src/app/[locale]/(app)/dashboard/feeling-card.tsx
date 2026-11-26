@@ -1,6 +1,6 @@
 "use client"
 
-import { BatteryMediumIcon, CheckIcon, SmileIcon } from "lucide-react"
+import { BatteryMediumIcon, SmileIcon } from "lucide-react"
 import { useOptimistic, useTransition } from "react"
 import { toast } from "sonner"
 
@@ -10,9 +10,6 @@ import { useI18n } from "@/i18n/client"
 import { cn } from "@/lib/utils"
 
 type Feeling = { mood: number | null; energy: number | null }
-
-const MOOD_COLORS = ["bg-rose-500", "bg-orange-500", "bg-amber-400", "bg-lime-500", "bg-emerald-500"]
-const ENERGY_COLORS = ["bg-slate-500", "bg-sky-300", "bg-sky-400", "bg-sky-500", "bg-sky-600"]
 
 /** "How are you today?" — mood and energy, one tap each. */
 export function FeelingCard({ today }: { today: Feeling }) {
@@ -27,7 +24,7 @@ export function FeelingCard({ today }: { today: Feeling }) {
       if (!res.ok) toast.error(res.error)
     })
 
-  const row = (key: "mood" | "energy", label: string, scale: string[], colors: string[], Icon: typeof SmileIcon) => (
+  const row = (key: "mood" | "energy", label: string, scale: string[], Icon: typeof SmileIcon) => (
     <div className="grid gap-1.5">
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
@@ -35,7 +32,8 @@ export function FeelingCard({ today }: { today: Feeling }) {
         </span>
         {value[key] && <span className="font-medium text-foreground">{scale[value[key]! - 1]}</span>}
       </div>
-      <div role="radiogroup" aria-label={label} className="grid grid-cols-5 gap-1.5">
+      {/* a 1–5 segmented scale: the numbers are visible, the chosen one is filled — one color, no rainbow */}
+      <div role="radiogroup" aria-label={label} className="grid grid-cols-5 rounded-lg border bg-card p-0.5">
         {scale.map((name, i) => {
           const level = i + 1
           const on = value[key] === level
@@ -49,12 +47,11 @@ export function FeelingCard({ today }: { today: Feeling }) {
               title={name}
               onClick={() => pick(key, level)}
               className={cn(
-                "flex h-7 items-center justify-center rounded-md transition",
-                on ? colors[i] : value[key] && level < value[key]! ? cn(colors[i], "opacity-35") : "bg-muted hover:bg-muted-foreground/20"
+                "h-8 rounded-md text-sm tabular-nums transition-colors duration-150",
+                on ? "bg-primary font-semibold text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
-              {/* not only color: the chosen level carries a check mark */}
-              {on && <CheckIcon className="size-4 text-foreground/80" aria-hidden />}
+              {level}
             </button>
           )
         })}
@@ -69,8 +66,8 @@ export function FeelingCard({ today }: { today: Feeling }) {
         {!value.mood && !value.energy && <span className="text-xs text-muted-foreground">{t.feeling.hint}</span>}
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        {row("mood", t.feeling.mood, t.feeling.moodScale, MOOD_COLORS, SmileIcon)}
-        {row("energy", t.feeling.energy, t.feeling.energyScale, ENERGY_COLORS, BatteryMediumIcon)}
+        {row("mood", t.feeling.mood, t.feeling.moodScale, SmileIcon)}
+        {row("energy", t.feeling.energy, t.feeling.energyScale, BatteryMediumIcon)}
       </div>
     </Card>
   )

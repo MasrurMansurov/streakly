@@ -19,6 +19,7 @@ import { getChallenges, getFriendsData, getMyHabitChoices, getPacts, searchPeopl
 import { addDays } from "@/lib/dates"
 import { habitColor } from "@/lib/habit-colors"
 import { cn } from "@/lib/utils"
+import { initials } from "@/lib/initials"
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getT()).t.meta.friends }
@@ -98,7 +99,7 @@ async function SearchResults({ searchParams }: { searchParams: Promise<{ q?: str
               <li key={p.id} className="flex min-w-0 items-center gap-3">
                 <Avatar className="size-9">
                   {p.avatarUrl && <AvatarImage src={p.avatarUrl} alt="" />}
-                  <AvatarFallback>{p.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>{initials(p.name)}</AvatarFallback>
                 </Avatar>
                 <Link href={`/u/${p.username}`} className="min-w-0 flex-1 hover:underline">
                   <div className="truncate font-medium">{p.name}</div>
@@ -172,7 +173,7 @@ async function Friends() {
               <li key={p.id} className="flex min-w-0 items-center gap-3">
                 <Avatar className="size-9">
                   {p.avatarUrl && <AvatarImage src={p.avatarUrl} alt="" />}
-                  <AvatarFallback>{p.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>{initials(p.name)}</AvatarFallback>
                 </Avatar>
                 <Link href={`/u/${p.username}`} className="min-w-0 flex-1 hover:underline">
                   <div className="truncate font-medium">{p.name}</div>
@@ -228,7 +229,7 @@ function FeedDay({ label, items, locale, timeZone }: { label: string; items: Fee
               <li key={person.username} className="flex items-start gap-3 px-4 py-3">
                 <Avatar className="size-8">
                   {person.avatarUrl && <AvatarImage src={person.avatarUrl} alt="" />}
-                  <AvatarFallback className="text-xs">{person.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback className="text-xs">{initials(person.name)}</AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline justify-between gap-3">

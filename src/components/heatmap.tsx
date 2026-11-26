@@ -3,13 +3,8 @@ import { addDays, weekdayMon0, type ISODate } from "@/lib/dates"
 import { ScrollToEnd } from "@/components/scroll-to-end"
 import { cn } from "@/lib/utils"
 
-const LEVELS = [
-  "bg-muted",
-  "bg-emerald-200 dark:bg-emerald-900",
-  "bg-emerald-400 dark:bg-emerald-700",
-  "bg-emerald-500 dark:bg-emerald-500",
-  "bg-emerald-700 dark:bg-emerald-300",
-]
+// the shared heat ramp (globals.css --heat-*), the same in charts and the year grid
+const LEVELS = ["bg-heat-0", "bg-heat-1", "bg-heat-2", "bg-heat-3", "bg-heat-4"]
 
 type Props = {
   /** completions per day */

@@ -10,7 +10,7 @@ test("demo: try without signing up, then save it as an account", async ({ browse
   const page = await ctx.newPage()
 
   await page.goto("/en")
-  await page.getByRole("button", { name: "Try without signing up" }).click()
+  await page.getByRole("button", { name: "Try without signing up" }).first().click()
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 20_000 })
 
   let converted = false

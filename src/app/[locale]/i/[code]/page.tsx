@@ -19,6 +19,7 @@ import { createPublicClient } from "@/lib/supabase/server"
 import { cn } from "@/lib/utils"
 
 import { AcceptInviteButton } from "./accept-button"
+import { initials } from "@/lib/initials"
 
 type Props = { params: Promise<{ code: string }> }
 
@@ -71,7 +72,7 @@ async function Invite({ params }: Props) {
       {!user && <InviteCapture code={code} />}
       <Avatar className="size-16">
         {invite.inviter_avatar && <AvatarImage src={invite.inviter_avatar} alt="" />}
-        <AvatarFallback className="text-lg">{invite.inviter_name.slice(0, 2).toUpperCase()}</AvatarFallback>
+        <AvatarFallback className="text-lg">{initials(invite.inviter_name)}</AvatarFallback>
       </Avatar>
       <div className="grid gap-2">
         <h1 className="text-xl font-semibold text-balance">{t.invite.title(invite.inviter_name)}</h1>

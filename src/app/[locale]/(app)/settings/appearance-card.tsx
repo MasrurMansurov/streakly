@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label"
 import { useI18n } from "@/i18n/client"
 import type { AchievementId } from "@/lib/achievements"
 import { habitColor } from "@/lib/habit-colors"
-import { ACCENTS, asAccent, asBanner, asFrame, BANNERS, FRAMES, type AccentKey, type BannerKey, type FrameKey } from "@/lib/profile-style"
+import { ACCENTS, asAccent, asBanner, asFrame, BANNERS, bannerBackground, PICKABLE_FRAMES, type AccentKey, type BannerKey, type FrameKey } from "@/lib/profile-style"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 
@@ -133,7 +133,7 @@ export function AppearanceCard({ userId, profile, earned, habits }: Props) {
       </CardHeader>
       <CardContent className="grid gap-6">
         <div className="grid gap-2">
-          <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{a.preview}</span>
+          <span className="text-sm text-muted-foreground">{a.preview}</span>
           <ProfileHeader look={look} labels={{ featured: a.featured, links: a.linksLabel }} compact />
         </div>
 
@@ -159,7 +159,7 @@ export function AppearanceCard({ userId, profile, earned, habits }: Props) {
                   "relative h-10 rounded-lg ring-offset-2 ring-offset-background transition",
                   !bannerUrl && banner === key ? "ring-2 ring-foreground" : "hover:opacity-80"
                 )}
-                style={{ background: BANNERS[key] }}
+                style={{ background: bannerBackground(key) }}
               >
                 {!bannerUrl && banner === key && <CheckIcon className="absolute inset-0 m-auto size-4 text-white drop-shadow" />}
               </button>
@@ -221,7 +221,7 @@ export function AppearanceCard({ userId, profile, earned, habits }: Props) {
           <div className="grid gap-2">
             <Label id="frame-label">{a.frame}</Label>
             <div role="radiogroup" aria-labelledby="frame-label" className="flex flex-wrap gap-2">
-              {FRAMES.map((f) => (
+              {PICKABLE_FRAMES.map((f) => (
                 <button
                   key={f}
                   type="button"

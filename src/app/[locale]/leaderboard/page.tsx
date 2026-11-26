@@ -16,6 +16,7 @@ import { nextRank, rankFor, RANKS } from "@/lib/ranks"
 import { createClient } from "@/lib/supabase/server"
 import { indexableMetadata } from "@/lib/seo"
 import { cn } from "@/lib/utils"
+import { initials } from "@/lib/initials"
 
 export async function generateMetadata(): Promise<Metadata> {
   const { locale, t } = await getT()
@@ -96,7 +97,7 @@ function Row({ row, place, t }: { row: LeaderboardRow; place: number; t: Diction
         <Link href={`/u/${row.username}`} className="flex min-w-0 items-center gap-2.5">
           <Avatar className="size-8 shrink-0">
             {row.avatarUrl && <AvatarImage src={row.avatarUrl} alt="" />}
-            <AvatarFallback className="text-xs">{row.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+            <AvatarFallback className="text-xs">{initials(row.name)}</AvatarFallback>
           </Avatar>
           <span className="min-w-0 flex-1">
             <span className="block truncate font-medium hover:underline">{row.name}</span>

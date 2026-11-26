@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useI18n } from "@/i18n/client"
 import { cn } from "@/lib/utils"
+import { initials } from "@/lib/initials"
 
 export type Person = { id: string; name: string; username: string; avatarUrl: string | null }
 
@@ -150,7 +151,7 @@ export function CreateChallengeDialog({
                       >
                         <Avatar className="size-8">
                           {p.avatarUrl && <AvatarImage src={p.avatarUrl} alt="" />}
-                          <AvatarFallback className="text-xs">{p.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                          <AvatarFallback className="text-xs">{initials(p.name)}</AvatarFallback>
                         </Avatar>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-medium">{p.name}</span>

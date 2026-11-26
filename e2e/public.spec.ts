@@ -10,7 +10,7 @@ test("landing page: try the live card, then go to sign-up", async ({ page }) => 
   await expect(page.getByText("17 days", { exact: true })).toBeVisible()
   await expect(page.getByText("Read 10 pages: 17 days")).toBeAttached() // announced once for screen readers
 
-  await page.getByRole("link", { name: "Create an account" }).click()
+  await page.getByRole("link", { name: "Create an account" }).first().click()
   await expect(page).toHaveURL(/\/login\?signup=1$/)
   await expect(page.getByRole("tab", { name: "Sign up" })).toHaveAttribute("aria-selected", "true")
 })

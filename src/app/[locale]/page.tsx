@@ -1,16 +1,8 @@
 import type { Metadata } from "next"
-import {
-  CalendarCheck2Icon,
-  CheckIcon,
-  HandshakeIcon,
-  LightbulbIcon,
-  LockKeyholeIcon,
-  SnowflakeIcon,
-  TrophyIcon,
-  type LucideIcon,
-} from "lucide-react"
+import { CheckIcon } from "lucide-react"
 
 import { JsonLd } from "@/components/json-ld"
+import { Scenes } from "@/components/landing/scenes"
 import { TodayDemo } from "@/components/landing/today-demo"
 import { Link } from "@/components/link"
 import { TryDemoButton } from "@/components/try-demo-button"
@@ -21,9 +13,6 @@ import { getT } from "@/i18n/server"
 import { indexableMetadata, SITE_URL } from "@/lib/seo"
 import { typo } from "@/lib/typography"
 
-const FEATURE_ICONS: LucideIcon[] = [CalendarCheck2Icon, SnowflakeIcon, HandshakeIcon, LightbulbIcon, TrophyIcon, LockKeyholeIcon]
-
-// the preview's habit colors (emerald, sky, rose) and a fixed last-7-days pattern
 
 export async function generateMetadata(): Promise<Metadata> {
   const { locale, t } = await getT()
@@ -102,18 +91,36 @@ export default async function Home() {
         </section>
 
         <section id="features" className="border-t">
-          <div className="mx-auto grid max-w-5xl gap-x-10 gap-y-12 px-4 py-20 sm:grid-cols-2 lg:grid-cols-3">
-            {t.landing.features.map(({ title, text }, i) => {
-              const Icon = FEATURE_ICONS[i]
-              return (
-                <div key={title} className="grid gap-2">
-                  <h2 className="flex items-center gap-2 text-base font-semibold">
-                    <Icon className="size-4 text-muted-foreground" strokeWidth={2} aria-hidden /> {title}
-                  </h2>
-                  <p className="text-sm leading-relaxed text-muted-foreground">{typo(locale, text)}</p>
-                </div>
-              )
-            })}
+          <Scenes locale={locale} />
+        </section>
+
+        <section aria-labelledby="also-title" className="border-t">
+          <div className="mx-auto grid max-w-3xl gap-5 px-4 py-16">
+            <h2 id="also-title" className="text-lg font-semibold">
+              {t.landing.alsoTitle}
+            </h2>
+            <ul className="grid gap-2.5 text-muted-foreground">
+              {t.landing.also.map((line) => (
+                <li key={line} className="flex gap-3 leading-relaxed">
+                  <span aria-hidden className="mt-[0.55em] size-1.5 shrink-0 rounded-[2px] bg-done" />
+                  {typo(locale, line)}
+                </li>
+              ))}
+            </ul>
+            <p className="text-sm text-muted-foreground">
+              {t.landing.toolsLabel}{" "}
+              <Link href="/templates" className="text-foreground underline underline-offset-4 hover:text-primary">
+                {t.guides.link}
+              </Link>
+              {" · "}
+              <Link href="/habit-tracker-printable" className="text-foreground underline underline-offset-4 hover:text-primary">
+                {t.printable.link}
+              </Link>
+              {" · "}
+              <Link href="/year-in-pixels" className="text-foreground underline underline-offset-4 hover:text-primary">
+                {t.pixels.link}
+              </Link>
+            </p>
           </div>
         </section>
 
@@ -131,7 +138,7 @@ export default async function Home() {
                 <li key={row.label} className="grid gap-1.5 rounded-xl border p-4 text-sm">
                   <span className="font-medium">{row.label}</span>
                   <span className="inline-flex items-start gap-1.5">
-                    <CheckIcon className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
+                    <CheckIcon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
                     <span>
                       <span className="sr-only">{t.landing.compareUs}: </span>
                       {row.us}
@@ -161,7 +168,7 @@ export default async function Home() {
                       <td className="px-4 py-3 text-muted-foreground">{row.them}</td>
                       <td className="px-4 py-3">
                         <span className="inline-flex items-start gap-1.5">
-                          <CheckIcon className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
+                          <CheckIcon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
                           {row.us}
                         </span>
                       </td>
@@ -193,15 +200,13 @@ export default async function Home() {
         </section>
 
         <section className="border-t">
-          <div className="mx-auto grid max-w-3xl justify-items-center gap-4 px-4 py-20 text-center">
+          <div className="mx-auto grid max-w-3xl gap-4 px-4 py-20">
             <h2 className="font-brand text-xl font-semibold tracking-[-0.01em] text-balance sm:text-2xl">{typo(locale, t.landing.ctaTitle)}</h2>
             <p className="max-w-md text-muted-foreground">{typo(locale, t.landing.ctaText)}</p>
-            <div className="flex flex-wrap justify-center gap-3">
-              <Button size="lg" className="h-11 px-5" render={<Link href="/login?signup=1" />}>
-                {t.landing.getStarted}
-              </Button>
-              <Button size="lg" variant="outline" className="h-11 px-5" render={<Link href="/demo" />}>
-                {t.demo.try}
+            <div className="flex flex-wrap gap-3">
+              <TryDemoButton variant="default" source="hero" />
+              <Button size="lg" variant="outline" className="h-11 px-5" render={<Link href="/login?signup=1" />}>
+                {t.landing.createAccount}
               </Button>
             </div>
           </div>
@@ -212,7 +217,7 @@ export default async function Home() {
             {/* initials until there's a photo (the GitHub avatar is a plain black square) */}
             <span
               aria-hidden
-              className="flex size-16 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-lg font-semibold text-white"
+              className="flex size-16 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-semibold text-primary-foreground"
             >
               MM
             </span>

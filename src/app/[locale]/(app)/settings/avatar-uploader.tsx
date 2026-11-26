@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { useI18n } from "@/i18n/client"
 import { createClient } from "@/lib/supabase/client"
+import { initials } from "@/lib/initials"
 
 const MAX_BYTES = 2 * 1024 * 1024
 const TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"]
@@ -66,7 +67,7 @@ export function AvatarUploader({ userId, avatarUrl, name }: Props) {
     <div className="flex items-center gap-4">
       <Avatar className="size-16">
         {preview && <AvatarImage src={preview} alt="" />}
-        <AvatarFallback className="text-lg">{name.slice(0, 2).toUpperCase()}</AvatarFallback>
+        <AvatarFallback className="text-lg">{initials(name)}</AvatarFallback>
       </Avatar>
       <div className="grid gap-2">
         <div className="flex flex-wrap gap-2">

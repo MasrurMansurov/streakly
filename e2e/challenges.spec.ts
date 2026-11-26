@@ -49,7 +49,7 @@ test("a weekly challenge with a stake: invite, join, standings", async ({ browse
     saved = serverAction(demo)
     await invite.getByRole("button", { name: "Join" }).click()
     await saved
-    await expect(demo.getByText("You're in — good luck!")).toBeVisible()
+    await expect(demo.getByText("You're in. Good luck.")).toBeVisible()
     const standings = challengesCard(demo)
       .getByRole("listitem")
       .filter({ has: demo.getByRole("list", { name: "Steps duel" }) })

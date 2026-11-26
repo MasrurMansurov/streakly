@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { initials } from "@/lib/initials"
 
 type Props = {
   email: string | null
@@ -40,7 +41,7 @@ export function UserMenu({ email, username, displayName, isPublic, avatarUrl }: 
         <span className="sr-only">{t.nav.accountMenu} </span>
         <Avatar className="size-8">
           {avatarUrl && <AvatarImage src={avatarUrl} alt="" />}
-          <AvatarFallback>{name.slice(0, 2).toUpperCase()}</AvatarFallback>
+          <AvatarFallback>{initials(name)}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">

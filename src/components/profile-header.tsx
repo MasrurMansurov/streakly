@@ -4,8 +4,9 @@ import type { ReactNode } from "react"
 import { AchievementBadge } from "@/components/achievement-badge"
 import type { AchievementId } from "@/lib/achievements"
 import { habitColor } from "@/lib/habit-colors"
-import { ACCENTS, asAccent, asBanner, asFrame, BANNERS, linkLabel, readableTextOn } from "@/lib/profile-style"
+import { ACCENTS, asAccent, asBanner, asFrame, bannerBackground, linkLabel, readableTextOn } from "@/lib/profile-style"
 import { cn } from "@/lib/utils"
+import { initials } from "@/lib/initials"
 
 export type ProfileLook = {
   name: string
@@ -34,28 +35,22 @@ type Props = {
   compact?: boolean
 }
 
-/** Discord-style profile header: banner, framed avatar, status, badges, pinned habit, links. */
+/** Profile header: banner with the activity-cell motif, avatar, status, badges, pinned habit, links. */
 export function ProfileHeader({ look, subtitle, labels, action, compact }: Props) {
   const accent = ACCENTS[asAccent(look.accent)]
   const frame = asFrame(look.avatarFrame)
-  const initials = look.name.slice(0, 2).toUpperCase()
+  const letters = initials(look.name)
   const avatarSize = compact ? 72 : 96
 
   const frameStyle: React.CSSProperties =
-    frame === "ring"
-      ? { boxShadow: `0 0 0 3px var(--card), 0 0 0 6px ${accent}` }
-      : frame === "glow"
-        ? { boxShadow: `0 0 0 3px var(--card), 0 0 0 5px ${accent}, 0 0 28px 6px ${accent}80` }
-        : frame === "gradient"
-          ? { background: `conic-gradient(from 210deg, ${accent}, #fbbf24, #f43f5e, #8b5cf6, ${accent})`, padding: 4 }
-          : { boxShadow: "0 0 0 4px var(--card)" }
+    frame === "ring" ? { boxShadow: `0 0 0 3px var(--card), 0 0 0 6px ${accent}` } : { boxShadow: "0 0 0 4px var(--card)" }
 
   return (
     <div className="overflow-hidden rounded-2xl border bg-card" style={{ "--accent-color": accent } as React.CSSProperties}>
       {/* banner */}
       <div
         className={cn("relative bg-cover bg-center", compact ? "h-20" : "h-28 sm:h-36")}
-        style={look.bannerUrl ? { backgroundImage: `url("${look.bannerUrl}")` } : { background: BANNERS[asBanner(look.banner)] }}
+        style={look.bannerUrl ? { backgroundImage: `url("${look.bannerUrl}")` } : { background: bannerBackground(asBanner(look.banner)) }}
         aria-hidden
       />
 
@@ -73,7 +68,7 @@ export function ProfileHeader({ look, subtitle, labels, action, compact }: Props
                 className="flex size-full items-center justify-center rounded-full text-xl font-bold"
                 style={{ background: accent, color: readableTextOn(accent) }}
               >
-                {initials}
+                {letters}
               </span>
             )}
           </div>

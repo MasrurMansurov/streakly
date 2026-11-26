@@ -17,6 +17,7 @@ import { duoStreak, type Pact } from "@/lib/pacts"
 
 import { ProofDialog } from "./proof-dialog"
 import { cn } from "@/lib/utils"
+import { initials } from "@/lib/initials"
 
 type Props = { pacts: Pact[]; byHabit: Map<string, Set<ISODate>>; today: ISODate; habits: HabitChoice[] }
 
@@ -47,7 +48,7 @@ export function PactsCard({ pacts, byHabit, today, habits }: Props) {
               <div className="flex items-center gap-3">
                 <Avatar className="size-9">
                   {pact.partner.avatarUrl && <AvatarImage src={pact.partner.avatarUrl} alt="" />}
-                  <AvatarFallback>{pact.partner.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>{initials(pact.partner.name)}</AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">{pact.partner.name}</div>

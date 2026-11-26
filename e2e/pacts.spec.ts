@@ -54,7 +54,7 @@ test("two friends start a pact, see each other's check-ins, then end it", async 
     await expect(card.getByText(/invites you to a pact — they commit to “Drink 8 glasses of water”/)).toBeVisible()
     await card.getByRole("radio", { name: "Read 10 pages" }).click()
     await card.getByRole("button", { name: "Accept" }).click()
-    await expect(demo.getByText("Pact started — good luck to you both!")).toBeVisible()
+    await expect(demo.getByText("Pact started. Good luck to you both.")).toBeVisible()
     // demo may or may not have checked in today already (other tests toggle it)
     await expect(card.getByText(/Your partner is waiting for you today\.|now it's .+'s turn\./)).toBeVisible()
 

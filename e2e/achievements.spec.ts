@@ -15,17 +15,17 @@ test("dashboard shows earned and locked achievements", async ({ page }) => {
   await signIn(page, "demo@streakly.dev", "streakly-demo")
   await page.goto("/progress")
   await expect(page.getByText("Achievements", { exact: true })).toBeVisible()
-  await expect(page.getByText(/\d of 8 unlocked/)).toBeVisible()
+  await expect(page.getByText(/\d of 8 earned/)).toBeVisible()
   // comeback bonus: returning after a miss is an achievement of its own
   await expect(page.getByRole("listitem", { name: /^Comeback:/ })).toBeVisible()
   await expect(page.getByRole("listitem", { name: /^Never miss twice:/ })).toBeVisible()
-  await expect(page.getByRole("listitem", { name: /One week: Unlocked/ })).toBeVisible()
+  await expect(page.getByRole("listitem", { name: /One week: Earned/ })).toBeVisible()
   await expect(page.getByRole("listitem", { name: /Hundred days: \d+\/100/ })).toBeVisible()
 })
 
 test("public profile shows earned badges only", async ({ page }) => {
   await page.goto("/u/demo")
-  await expect(page.getByRole("listitem", { name: /One week: Unlocked/ })).toBeVisible()
+  await expect(page.getByRole("listitem", { name: /One week: Earned/ })).toBeVisible()
   await expect(page.getByRole("listitem", { name: /Hundred days/ })).toHaveCount(0)
 })
 
@@ -40,7 +40,7 @@ test("first check-in unlocks 'First step'", async ({ page }) => {
   const done = serverAction(page)
   await page.getByRole("button", { name: `Mark "${name}" as done today` }).click()
   await done
-  await expect(page.getByText("Achievement unlocked: First step")).toBeVisible()
+  await expect(page.getByText("Achievement earned: First step")).toBeVisible()
 
   // clean up: deleting the habit removes its check-ins too
   const card = page.locator("[data-slot=card]", { has: page.locator("h3", { hasText: name }) })

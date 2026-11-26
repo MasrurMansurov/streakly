@@ -16,6 +16,7 @@ import { habitColor } from "@/lib/habit-colors"
 import { cn } from "@/lib/utils"
 
 import { CreateChallengeDialog, type Person } from "./create-challenge-dialog"
+import { initials } from "@/lib/initials"
 
 type Run = (fn: () => Promise<{ ok: boolean; error?: string; message?: string }>) => void
 
@@ -155,7 +156,7 @@ function ChallengeItem({
                   </span>
                   <Avatar className="size-7">
                     {m.avatarUrl && <AvatarImage src={m.avatarUrl} alt="" />}
-                    <AvatarFallback className="text-[10px]">{m.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                    <AvatarFallback className="text-[10px]">{initials(m.name)}</AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
