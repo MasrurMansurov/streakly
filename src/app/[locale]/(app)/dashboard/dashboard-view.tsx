@@ -59,6 +59,8 @@ type Props = {
   profile: { username: string; display_name: string | null; is_public: boolean } | null
   archivedCount: number
   todayNotes: Record<string, string>
+  /** step ids ticked today, per habit */
+  todaySteps?: Record<string, string[]>
   achievements: Achievement[]
   pacts: Pact[]
   challenges: Challenge[]
@@ -70,7 +72,7 @@ type Props = {
 
 type Toggle = { habitId: string; date: ISODate; done: boolean; mini?: boolean }
 
-export function DashboardView({ habits: serverHabits, logs, today, profile, archivedCount, todayNotes, achievements, pacts, challenges, repairs, pauses, strength, feelings }: Props) {
+export function DashboardView({ habits: serverHabits, logs, today, profile, archivedCount, todayNotes, todaySteps = {}, achievements, pacts, challenges, repairs, pauses, strength, feelings }: Props) {
   const { locale, t } = useI18n()
   const router = useRouter()
   const [createOpen, setCreateOpen] = useState(false)
@@ -435,6 +437,7 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
                 today={today}
                 onToggle={onToggle}
                 todayNote={todayNotes[h.id]}
+                stepsDone={todaySteps[h.id]}
                 dragHandle={activeHabits.length > 1 ? dragHandle : undefined}
               />
             )}
@@ -465,6 +468,7 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
                     today={today}
                     onToggle={onToggle}
                     todayNote={todayNotes[h.id]}
+                stepsDone={todaySteps[h.id]}
                   />
                 ))}
               </div>

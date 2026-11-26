@@ -41,6 +41,8 @@ import { cn } from "@/lib/utils"
 
 import { HabitFormDialog } from "./habit-form-dialog"
 
+import { HabitSteps } from "./habit-steps"
+
 type Props = {
   habit: Habit
   done: ReadonlySet<ISODate>
@@ -59,9 +61,11 @@ type Props = {
   /** drag handle rendered next to the menu (from the sortable wrapper) */
   dragHandle?: ReactNode
   todayNote?: string
+  /** ids of this habit's steps ticked today */
+  stepsDone?: string[]
 }
 
-export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, strength = [], today, onToggle, dragHandle, todayNote }: Props) {
+export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, strength = [], today, onToggle, dragHandle, todayNote, stepsDone = [] }: Props) {
   const { locale, t } = useI18n()
   const color = habitColor(habit.color)
   const target = habit.target_per_week
@@ -275,6 +279,16 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {habit.steps && habit.steps.length > 0 && (
+        <HabitSteps
+          steps={habit.steps}
+          doneIds={stepsDone}
+          state={!doneToday ? "none" : miniToday ? "mini" : "full"}
+          today={today}
+          color={color}
+        />
+      )}
 
       {doneToday && !habit.graduated_at && diffDays(createdOn, today) >= 7 && strength[0]?.week !== weekStart(today) && (
         <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-lg bg-muted/50 px-3 py-2">

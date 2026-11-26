@@ -11,6 +11,9 @@ export const authSchema = z.object({
 })
 export type AuthInput = z.infer<typeof authSchema>
 
+/** steps per habit — a routine, not a project */
+export const MAX_STEPS = 10
+
 export const habitSchema = z.object({
   name: z.string().trim().min(1, "nameRequired").max(60, "nameMax"),
   description: z.string().trim().max(200, "descriptionMax").optional().or(z.literal("")),
@@ -29,6 +32,11 @@ export const habitSchema = z.object({
   target_per_week: z.number().int().min(1).max(7),
   /** tracked as usual, but never shown to others (public profile, feed, leaderboard) */
   is_private: z.boolean().optional(),
+  /** optional steps ("water → stretch → shower"): all = full check-in, some = mini; existing ones keep their id */
+  steps: z
+    .array(z.object({ id: z.uuid().optional(), title: z.string().trim().min(1, "stepRequired").max(80, "stepMax") }))
+    .max(MAX_STEPS, "stepsMax")
+    .optional(),
 })
 export type HabitInput = z.infer<typeof habitSchema>
 

@@ -49,6 +49,20 @@ export type Database = {
         Update: { challenge_id?: string; habit_id?: string | null; invited_at?: string; joined_at?: string | null; status?: string; user_id?: string }
         Relationships: []
       }
+      habit_steps: {
+        Row: { created_at: string; habit_id: string; id: string; position: number; title: string; user_id: string }
+        Insert: { created_at?: string; habit_id: string; id?: string; position?: number; title: string; user_id?: string }
+        Update: { created_at?: string; habit_id?: string; id?: string; position?: number; title?: string; user_id?: string }
+        Relationships: [
+          { foreignKeyName: "habit_steps_habit_id_fkey"; columns: ["habit_id"]; isOneToOne: false; referencedRelation: "habits"; referencedColumns: ["id"] },
+        ]
+      }
+      habit_step_logs: {
+        Row: { created_at: string; habit_id: string; log_date: string; step_id: string; user_id: string }
+        Insert: { created_at?: string; habit_id: string; log_date: string; step_id: string; user_id?: string }
+        Update: { created_at?: string; habit_id?: string; log_date?: string; step_id?: string; user_id?: string }
+        Relationships: []
+      }
       invites: {
         Row: { code: string; created_at: string; habit_id: string | null; inviter_id: string; uses: number }
         Insert: { code: string; created_at?: string; habit_id?: string | null; inviter_id?: string; uses?: number }
@@ -425,6 +439,10 @@ export type Database = {
       invite_preview: {
         Args: { p_code: string }
         Returns: { inviter_name: string; inviter_username: string; inviter_avatar: string | null; habit_name: string | null; habit_color: string | null; habit_checkins_30: number | null }[]
+      }
+      toggle_habit_step: {
+        Args: { p_step: string; p_date: string; p_done: boolean }
+        Returns: string
       }
       seed_demo: {
         Args: { p_today: string; p_locale?: string }

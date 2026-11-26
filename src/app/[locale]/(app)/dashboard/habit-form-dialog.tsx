@@ -30,6 +30,8 @@ import { ensurePushOn, pushBlocker, type PushReadiness } from "@/lib/push-device
 import { cn } from "@/lib/utils"
 import { habitSchema, type HabitInput } from "@/lib/validation"
 
+import { StepsField } from "./steps-field"
+
 const FREQUENCIES = [7, 5, 4, 3, 2, 1] as const
 
 type Props = {
@@ -53,6 +55,7 @@ export function HabitFormDialog({ open, onOpenChange, habit }: Props) {
       color: (habit?.color as HabitColor) ?? "emerald",
       target_per_week: habit?.target_per_week ?? 7,
       is_private: habit?.is_private ?? false,
+      steps: habit?.steps?.map((s) => ({ id: s.id, title: s.title })) ?? [],
     },
   })
   const { errors } = form.formState
@@ -202,6 +205,8 @@ export function HabitFormDialog({ open, onOpenChange, habit }: Props) {
             </p>
             {errors.mini_label && <p className="text-xs text-destructive">{validationMessage(t, errors.mini_label.message)}</p>}
           </div>
+
+          <StepsField control={form.control} register={form.register} errors={errors} />
 
           <div className="grid gap-2">
             <Label id="habit-frequency">{t.habitForm.howOften}</Label>

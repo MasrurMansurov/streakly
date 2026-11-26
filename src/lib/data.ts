@@ -22,6 +22,8 @@ export type Profile = Tables<"profiles">
 export type Habit = Pick<Tables<"habits">, "id" | "name" | "description" | "color" | "position" | "target_per_week" | "created_at" | "mini_label" | "cue" | "graduated_at" | "is_private"> & {
   /** own reminder time "HH:MM" (owner only) */
   remind_at?: string | null
+  /** optional steps in order (owner only) */
+  steps?: { id: string; title: string }[]
 }
 export type HabitLog = Pick<Tables<"habit_logs">, "habit_id" | "log_date"> & { is_mini?: boolean }
 
@@ -117,11 +119,12 @@ export async function getDashboardData() {
   const [habitsRes, logs, profileRes, archivedCount, notesRes, stats, { repairs, pauses }, { data: strengthRows }, { data: moodRows }] = await Promise.all([
     supabase
       .from("habits")
-      .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue, graduated_at, is_private, habit_reminders(remind_at)")
+      .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue, graduated_at, is_private, habit_reminders(remind_at), habit_steps(id, title, position)")
       .eq("user_id", user.id) // RLS also exposes other users' *public* habits
       .is("archived_at", null)
       .order("position")
-      .order("created_at"),
+      .order("created_at")
+      .order("position", { referencedTable: "habit_steps" }),
     fetchAllLogs((from, to) =>
       supabase
         .from("habit_logs")
@@ -140,6 +143,12 @@ export async function getDashboardData() {
     supabase.from("daily_moods").select("day, mood, energy").eq("user_id", user.id).gte("day", addDays(today, -90)),
   ])
   if (habitsRes.error) throw habitsRes.error
+  // which steps are ticked today (steps exist only on some habits)
+  const { data: stepLogRows } = habitsRes.data.some((h) => h.habit_steps.length)
+    ? await supabase.from("habit_step_logs").select("habit_id, step_id").eq("user_id", user.id).eq("log_date", today)
+    : { data: [] }
+  const todaySteps: Record<string, string[]> = {}
+  for (const r of stepLogRows ?? []) (todaySteps[r.habit_id] ??= []).push(r.step_id)
   // weekly self-reports per habit, newest first
   const strength: Record<string, { week: ISODate; score: number }[]> = {}
   for (const r of strengthRows ?? []) (strength[r.habit_id] ??= []).push({ week: r.week_start as ISODate, score: r.score })
@@ -148,10 +157,12 @@ export async function getDashboardData() {
   return {
     user,
     profile: profileRes.data,
-    habits: habitsRes.data.map(({ habit_reminders, ...h }): Habit => ({
+    habits: habitsRes.data.map(({ habit_reminders, habit_steps, ...h }): Habit => ({
       ...h,
       remind_at: habit_reminders?.remind_at.slice(0, 5) ?? null,
+      steps: habit_steps.map(({ id, title }) => ({ id, title })),
     })),
+    todaySteps,
     logs,
     today,
     timeZone,

@@ -28,6 +28,39 @@ async function invalidatePublicProfile(supabase: Awaited<ReturnType<typeof creat
   updateTag("leaderboard")
 }
 
+/**
+ * Make the habit's steps match the form: existing ones (by id) are renamed /
+ * reordered, missing ones removed (with their ticks), new ones added. If today
+ * is already fully done, new steps are ticked too (the check-in trigger fills
+ * in missing step ticks), so the card stays consistent.
+ */
+async function syncSteps(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  habitId: string,
+  steps: { id?: string; title: string }[],
+  today: string
+) {
+  const { data: existing, error: readError } = await supabase.from("habit_steps").select("id").eq("habit_id", habitId)
+  if (readError) return readError
+  const keep = new Set(steps.flatMap((s) => (s.id ? [s.id] : [])))
+  const removed = (existing ?? []).map((s) => s.id).filter((id) => !keep.has(id))
+  if (removed.length) {
+    const { error } = await supabase.from("habit_steps").delete().in("id", removed)
+    if (error) return error
+  }
+  const known = new Set((existing ?? []).map((s) => s.id))
+  for (const [position, step] of steps.entries()) {
+    const { error } =
+      step.id && known.has(step.id)
+        ? await supabase.from("habit_steps").update({ title: step.title, position }).eq("id", step.id)
+        : await supabase.from("habit_steps").insert({ habit_id: habitId, title: step.title, position })
+    if (error) return error
+  }
+  // today already fully done → tick the new steps as well (same value, but fires the sync trigger)
+  const { error } = await supabase.from("habit_logs").update({ is_mini: false }).eq("habit_id", habitId).eq("log_date", today).eq("is_mini", false)
+  return error
+}
+
 /** Sets or clears a habit's own reminder time (RLS: owner only). */
 async function saveReminder(supabase: Awaited<ReturnType<typeof createClient>>, habitId: string, remindAt: string | undefined) {
   if (remindAt) {
@@ -66,6 +99,10 @@ export async function createHabit(input: HabitInput): Promise<ActionResult> {
     const reminderError = await saveReminder(supabase, created.id, parsed.data.remind_at)
     if (reminderError) return { ok: false, error: reminderError.message }
   }
+  if (parsed.data.steps?.length) {
+    const stepsError = await syncSteps(supabase, created.id, parsed.data.steps, (await getToday()).today)
+    if (stepsError) return { ok: false, error: stepsError.message }
+  }
 
   await invalidatePublicProfile(supabase, user.id)
   refresh()
@@ -92,6 +129,10 @@ export async function updateHabit(id: string, input: HabitInput): Promise<Action
   if (error) return { ok: false, error: error.message }
   const reminderError = await saveReminder(supabase, id, parsed.data.remind_at)
   if (reminderError) return { ok: false, error: reminderError.message }
+  if (parsed.data.steps) {
+    const stepsError = await syncSteps(supabase, id, parsed.data.steps, (await getToday()).today)
+    if (stepsError) return { ok: false, error: stepsError.message }
+  }
 
   await invalidatePublicProfile(supabase, user.id)
   refresh()
@@ -157,6 +198,36 @@ export async function toggleHabitLog(habitId: string, date: string, done: boolea
   }
   refresh()
   return { ok: true }
+}
+
+/**
+ * Tick / untick one step of a habit. The database settles the day: all steps →
+ * full check-in, some → mini (the streak goes on), none → no check-in.
+ */
+export async function toggleHabitStep(
+  stepId: string,
+  date: string,
+  done: boolean
+): Promise<{ ok: true; state: "full" | "mini" | "none" } | { ok: false; error: string }> {
+  const { t } = await getActionT()
+  if (!z.uuid().safeParse(stepId).success) return { ok: false, error: t.validation.invalidInput }
+  if (!isISODate(date)) return { ok: false, error: t.validation.invalidDate }
+  const { today } = await getToday()
+  if (!isCheckInDateAllowed(date, today)) {
+    return { ok: false, error: date > today ? t.validation.futureDate : t.validation.tooOldDate }
+  }
+
+  const { user, supabase } = await authed()
+  const { data: state, error } = await supabase.rpc("toggle_habit_step", { p_step: stepId, p_date: date, p_done: done })
+  if (error) return { ok: false, error: error.code === "22008" ? t.validation.tooOldDate : error.message }
+
+  await invalidatePublicProfile(supabase, user.id)
+  if (state !== "none" && date >= addDays(today, -1)) {
+    const { data: step } = await supabase.from("habit_steps").select("habit_id").eq("id", stepId).single()
+    if (step) after(() => nudgePactPartner(supabase, step.habit_id))
+  }
+  refresh()
+  return { ok: true, state: state as "full" | "mini" | "none" }
 }
 
 /** Persist a new order of the user's active habits (ids in display order). */
