@@ -60,7 +60,8 @@ test.describe("on a phone", () => {
             .filter((e) => (e as HTMLElement).offsetParent !== null && e.getAttribute("role") !== "switch")
             .filter((e) => e.getBoundingClientRect().width > 2)
             .map((e) => ({ e, r: e.getBoundingClientRect() }))
-            .filter(({ r }) => r.width < 44 || r.height < 44)
+            // the 7-day row must fit a 320px phone: each day ≥ 24px wide (WCAG 2.2 AA 2.5.8), ≥ 44px tall
+            .filter(({ e, r }) => (e.hasAttribute("data-day-cell") ? r.width < 24 || r.height < 44 : r.width < 44 || r.height < 44))
             .map(({ e, r }) => `${(e.getAttribute("aria-label") || e.textContent || e.tagName).trim().slice(0, 30)} ${Math.round(r.width)}×${Math.round(r.height)}`)
         )).map((s) => `${path}: ${s}`)
       )

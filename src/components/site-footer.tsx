@@ -10,7 +10,7 @@ export async function SiteFooter() {
         <span className="flex items-center gap-2">
           <LogoMark size={18} /> Streakly · {t.landing.footer}
         </span>
-        <nav aria-label={t.legal.nav} className="flex gap-5">
+        <nav aria-label={t.legal.nav} className="flex flex-wrap gap-x-5 gap-y-2">
           <Link href="/leaderboard" className="hover:text-foreground">
             {t.nav.leaderboard}
           </Link>

@@ -51,9 +51,9 @@ async function Settings() {
     { id: "data", label: t.settings.sections.data },
   ]
   return (
-    <div className="grid gap-6 lg:grid-cols-[11rem_1fr] lg:gap-10">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-10">
       {/* section index: a sticky list on wide screens, a scrollable row on phones */}
-      <nav aria-label={t.settings.title} className="lg:sticky lg:top-24 lg:self-start">
+      <nav aria-label={t.settings.title} className="min-w-0 lg:sticky lg:top-24 lg:self-start">
         <ul className="-mx-4 flex gap-1 overflow-x-auto px-4 text-sm lg:mx-0 lg:grid lg:px-0">
           {sections.map((s) => (
             <li key={s.id} className="shrink-0">

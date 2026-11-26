@@ -132,7 +132,6 @@ async function HabitDetail({ params }: Props) {
       )}
 
       <SummaryStrip
-        className="max-sm:grid-cols-2! max-sm:divide-x-0"
         items={[
           { label: t.habitPage.currentStreak, value: t.habit.streak(streak.current, streak.unit) },
           { label: t.habitPage.bestStreak, value: t.habit.streak(streak.best, streak.unit) },

@@ -16,7 +16,7 @@ export function SiteHeader() {
   return (
     <>
     <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4">
+      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 px-4 sm:gap-4">
         <div className="flex items-center gap-6">
           <Logo />
           {/* main sections for signed-in people (reads the session + URL) */}
@@ -26,7 +26,7 @@ export function SiteHeader() {
             </SignedIn>
           </Suspense>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
           {/* reads the current URL (usePathname) → keep it out of the static shell */}
           <Suspense fallback={<div className="h-8 w-12" />}>
             <LanguageSwitcher />

@@ -108,7 +108,7 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
         doneToday && color.soft
       )}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-2 sm:gap-3">
         <button
           type="button"
           onClick={() => {
@@ -140,7 +140,7 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className={cn("size-2 shrink-0 rounded-full", color.dot)} />
-            <h3 className="truncate font-medium">
+            <h3 className="line-clamp-2 min-w-0 font-medium [overflow-wrap:anywhere]">
               <Link href={`/habits/${habit.id}`} className="hover:underline">
                 {habit.name}
               </Link>
@@ -226,7 +226,8 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
             size="icon-sm"
             aria-label={todayNote ? t.notes.edit : t.notes.add}
             title={todayNote ?? t.notes.add}
-            className={cn(todayNote ? color.text : "text-muted-foreground")}
+            // on a phone it's in the "…" menu: three 44px buttons would leave the name ~40px
+            className={cn("max-sm:hidden", todayNote ? color.text : "text-muted-foreground")}
             onClick={() => setNoteOpen(true)}
           >
             {todayNote ? <StickyNoteIcon /> : <MessageSquarePlusIcon />}
@@ -240,6 +241,11 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
             <MoreHorizontalIcon />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            {doneToday && (
+              <DropdownMenuItem className="sm:hidden" onClick={() => setNoteOpen(true)}>
+                {todayNote ? <StickyNoteIcon /> : <MessageSquarePlusIcon />} {todayNote ? t.notes.edit : t.notes.add}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={() => setEditOpen(true)}>
               <PencilIcon /> {t.common.edit}
             </DropdownMenuItem>
@@ -329,7 +335,7 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
       ) : null}
 
       {/* last 7 days — click to fix a missed check-in */}
-      <div className="mt-4 grid grid-cols-7 gap-1.5">
+      <div className="mt-4 grid grid-cols-7 gap-1 sm:gap-1.5">
         {week.map((date) => {
           const isDone = done.has(date)
           const isMini = isDone && Boolean(mini?.has(date))
@@ -341,6 +347,7 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
             <button
               key={date}
               type="button"
+              data-day-cell=""
               disabled={beforeCreated}
               onClick={() => onToggle(habit.id, date, !isDone)}
               aria-pressed={isDone}
@@ -356,7 +363,8 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
                     ? t.habit.miniDayStatus(formatDay(locale, date, { weekday: "long", month: "short", day: "numeric" }))
                     : t.habit.dayStatus(formatDay(locale, date, { weekday: "long", month: "short", day: "numeric" }), isDone)
               }`}
-              className="group flex flex-col items-center gap-1 disabled:opacity-40"
+              // min-w-0: seven columns must fit a 320px phone (each day still ≥ 24px wide — WCAG 2.2 AA 2.5.8)
+              className="group flex min-w-0 flex-col items-center gap-1 disabled:opacity-40"
             >
               <span className="text-[10px] text-muted-foreground uppercase">
                 {formatDay(locale, date, { weekday: "short" }).slice(0, 2)}

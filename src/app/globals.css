@@ -197,11 +197,29 @@ body:has([data-tabbar]) {
 }
 
 /*
+ * A one-column grid's implicit track is `auto`: it grows to its content's
+ * min-content width, so a long name (even one that should truncate) widened
+ * whole pages on phones. Default it to minmax(0, 1fr) — any grid-cols-*
+ * utility (utilities layer) still overrides this.
+ */
+@layer base {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/*
  * Touch targets (P3 audit): on touch screens every control is at least 44×44px
  * (Apple HIG / WCAG 2.5.5); with a mouse the compact sizes stay. Inline text
  * links are unaffected (min-height doesn't apply to inline boxes). Switches
  * keep their look and get a larger invisible hit area instead.
+ *
+ * In @layer base on purpose: an explicit min-w-* / min-h-* utility on one
+ * element (e.g. the 7-day row, which must fit a 320px phone) can override it.
+ * Unlayered, it would beat every Tailwind utility. width/height utilities
+ * don't conflict — min-width/min-height always win over them anyway.
  */
+@layer base {
 @media (pointer: coarse) {
   :where(
       button:not([role="switch"]),
@@ -228,6 +246,7 @@ body:has([data-tabbar]) {
     position: absolute;
     inset: -13px -6px;
   }
+}
 }
 
 /* "Reduce motion" (P3 audit): no animations or smooth transitions; the confetti checks it too */

@@ -45,14 +45,14 @@ export default async function LeaderboardPage() {
             <Card className="items-center border-dashed py-12 text-center text-sm text-muted-foreground">{t.leaderboard.empty}</Card>
           ) : (
             <Card className="gap-0 overflow-hidden py-0">
-              <table className="w-full text-sm">
+              <table className="w-full table-fixed text-sm">
                 <thead className="border-b bg-muted/40 text-xs text-muted-foreground">
                   <tr>
                     <th scope="col" className="w-12 px-3 py-2.5 text-left font-medium">{t.leaderboard.place}</th>
                     <th scope="col" className="px-3 py-2.5 text-left font-medium">{t.leaderboard.person}</th>
-                    <th scope="col" className="hidden px-3 py-2.5 text-right font-medium sm:table-cell">{t.leaderboard.checkins}</th>
-                    <th scope="col" className="hidden px-3 py-2.5 text-right font-medium sm:table-cell">{t.leaderboard.activeDays}</th>
-                    <th scope="col" className="px-3 py-2.5 text-right font-medium">{t.leaderboard.score}</th>
+                    <th scope="col" className="hidden w-24 px-3 py-2.5 text-right font-medium sm:table-cell">{t.leaderboard.checkins}</th>
+                    <th scope="col" className="hidden w-28 px-3 py-2.5 text-right font-medium sm:table-cell">{t.leaderboard.activeDays}</th>
+                    <th scope="col" className="w-20 px-3 py-2.5 text-right font-medium">{t.leaderboard.score}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -92,11 +92,11 @@ function Row({ row, place, t }: { row: LeaderboardRow; place: number; t: Diction
       </td>
       <td className="px-3 py-2.5">
         <Link href={`/u/${row.username}`} className="flex min-w-0 items-center gap-2.5">
-          <Avatar className="size-8">
+          <Avatar className="size-8 shrink-0">
             {row.avatarUrl && <AvatarImage src={row.avatarUrl} alt="" />}
             <AvatarFallback className="text-xs">{row.name.slice(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
-          <span className="min-w-0">
+          <span className="min-w-0 flex-1">
             <span className="block truncate font-medium hover:underline">{row.name}</span>
             <span className="block truncate text-xs text-muted-foreground">
               <span className={cn("mr-1 inline-block size-1.5 rounded-full align-middle", rank.dot)} aria-hidden />

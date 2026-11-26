@@ -35,7 +35,8 @@ export function InvitePrompt({ habits }: { habits: { id: string; name: string; c
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-card px-4 py-3 text-sm">
       <UserPlusIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-      <span className="min-w-0 flex-1">{t.invite.prompt}</span>
+      {/* at least 12rem: on a phone the buttons wrap below instead of squeezing the text */}
+      <span className="min-w-48 flex-1">{t.invite.prompt}</span>
       <InviteDialog
         habits={habits}
         trigger={(open) => (

@@ -56,7 +56,7 @@ function DashboardSkeleton() {
       </div>
       {/* matches the summary strip */}
       <Skeleton className="h-[68px] rounded-xl" />
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {Array.from({ length: 4 }, (_, i) => (
           <Skeleton key={i} className="h-36 rounded-xl" />
         ))}

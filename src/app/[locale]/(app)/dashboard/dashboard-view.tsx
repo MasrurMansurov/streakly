@@ -326,7 +326,7 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
   const name = profile?.display_name || profile?.username
 
   return (
-    <div className="grid gap-8">
+    <div className="grid grid-cols-1 gap-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm text-muted-foreground">

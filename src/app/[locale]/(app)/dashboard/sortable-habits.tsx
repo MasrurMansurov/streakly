@@ -76,7 +76,7 @@ export function SortableHabits({ habits, onReorder, renderHabit }: Props) {
       }}
     >
       <SortableContext items={habits.map((h) => h.id)} strategy={rectSortingStrategy}>
-        <section className="grid gap-3 md:grid-cols-2">
+        <section className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {habits.map((h, i) => (
             <SortableItem key={h.id} habit={h} index={i} renderHabit={renderHabit} />
           ))}
