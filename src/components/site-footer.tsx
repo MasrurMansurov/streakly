@@ -1,8 +1,9 @@
 import { Link } from "@/components/link"
 import { LogoMark } from "@/components/logo"
 import { getT } from "@/i18n/server"
+import { REPO_URL } from "@/lib/seo"
 
-const GITHUB = "https://github.com/MasrurMansurov/streakly"
+const GITHUB = REPO_URL
 
 /**
  * One footer for the whole site. `full` on public pages: the product pages,

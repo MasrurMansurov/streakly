@@ -39,3 +39,26 @@ test("private pages ask to sign in", async ({ page }) => {
     await expect(page, path).toHaveURL(/\/en\/login$/)
   }
 })
+
+test("landing: honest rules instead of a comparison, one closing action", async ({ page }) => {
+  await page.goto("/en")
+  await expect(page.getByText("Typical tracker")).toHaveCount(0)
+  await expect(page.getByText(/Often limited to 3/)).toHaveCount(0)
+  await expect(page.getByRole("heading", { level: 2, name: "What Streakly does, and what it doesn't" })).toBeVisible()
+  // the rules carry their conditions
+  await expect(page.getByText(/Two misses in a row end the streak/)).toBeVisible()
+
+  const closing = page.getByRole("region", { name: "Who builds Streakly" })
+  await expect(closing.getByRole("button", { name: "Try without signing up" })).toHaveCount(1)
+  await expect(closing.getByRole("link", { name: "Report a bug or idea" })).toHaveAttribute("href", /github\.com\/MasrurMansurov\/streakly\/issues\/new$/)
+  await expect(closing.getByRole("link", { name: "Or create an account right away" })).toHaveAttribute("href", "/en/login?signup=1")
+
+  await page.goto("/ru")
+  await expect(page.getByRole("region", { name: "Кто делает Streakly" }).getByText("Масрур Мансуров")).toBeVisible()
+})
+
+test("the closing demo button starts the demo too", async ({ page }) => {
+  await page.goto("/en")
+  await page.getByRole("region", { name: "Who builds Streakly" }).getByRole("button", { name: "Try without signing up" }).click()
+  await expect(page).toHaveURL(/\/dashboard$/, { timeout: 20_000 })
+})

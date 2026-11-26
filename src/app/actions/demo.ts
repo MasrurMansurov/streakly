@@ -7,12 +7,12 @@ import { z } from "zod"
 import { getActionLocale, getActionT, localeRedirect } from "@/i18n/server"
 import { getCurrentUser } from "@/lib/data"
 import { DEFAULT_TIMEZONE, isValidTimezone, logicalToday, parseDayStart, TIMEZONE_COOKIE } from "@/lib/dates"
+import { normalizeDemoSource, type DemoSource } from "@/lib/demo-source"
 import { pwnedCount } from "@/lib/pwned"
 import { createClient } from "@/lib/supabase/server"
 import { authSchema, type ActionResult } from "@/lib/validation"
 
-const DEMO_SOURCES = ["hero", "demo-page", "login"] as const
-export type DemoSource = (typeof DEMO_SOURCES)[number]
+export type { DemoSource } from "@/lib/demo-source"
 
 /**
  * "Try without signing up" (growth plan 1.3): an anonymous Supabase user with
@@ -31,8 +31,7 @@ export async function startDemo(source?: DemoSource): Promise<ActionResult> {
   // without samples the demo is still a working (empty) app — don't block on it
   const { error: seedError } = await supabase.rpc("seed_demo", { p_today: today, p_locale: locale })
   if (seedError) console.error("seed_demo failed", seedError.message)
-  const from = DEMO_SOURCES.includes(source as DemoSource) ? source : "other"
-  await supabase.from("events").insert({ name: "demo_started", props: { from } })
+  await supabase.from("events").insert({ name: "demo_started", props: { from: normalizeDemoSource(source) } })
   return localeRedirect("/dashboard")
 }
 

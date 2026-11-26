@@ -4,6 +4,15 @@ import { GUIDE_SLUGS } from "@/content/habit-guides"
 import { locales, type Locale } from "@/i18n"
 
 /** Absolute site origin (production: NEXT_PUBLIC_SITE_URL). Moving to a custom domain = changing this one value. */
+/** The public source code (MIT). */
+export const REPO_URL = "https://github.com/MasrurMansurov/streakly"
+
+/** The maker (JSON-LD Person, the note at the end of the landing page). */
+export const AUTHOR = {
+  linkedin: "https://www.linkedin.com/in/masrur-mansurov/",
+  github: "https://github.com/MasrurMansurov",
+}
+
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "")
 
 /** Public pages that search engines should index, without the locale prefix ("" = landing). */

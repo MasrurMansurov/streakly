@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { getT } from "@/i18n/server"
 import { getArchivedCount, getToday, requireUser } from "@/lib/data"
 import { initials } from "@/lib/initials"
+import { REPO_URL } from "@/lib/seo"
 import { createClient } from "@/lib/supabase/server"
 import { isWrappedSeason } from "@/lib/wrapped-season"
 
@@ -131,7 +132,7 @@ async function Hub() {
           <Link href="/terms" className="hover:text-foreground">
             {t.legal.terms}
           </Link>
-          <a href="https://github.com/MasrurMansurov/streakly" target="_blank" rel="noreferrer" className="hover:text-foreground">
+          <a href={REPO_URL} target="_blank" rel="noreferrer" className="hover:text-foreground">
             GitHub
           </a>
         </p>

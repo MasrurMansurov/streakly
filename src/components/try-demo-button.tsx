@@ -17,7 +17,7 @@ export function TryDemoButton({
 }: {
   variant?: "outline" | "ghost" | "default"
   className?: string
-  /** where the demo was started (analytics: hero / demo page / sign-in) */
+  /** where the demo was started (analytics: hero, landing-cta, demo-page, login — lib/demo-source.ts) */
   source?: DemoSource
 }) {
   const { t } = useI18n()
