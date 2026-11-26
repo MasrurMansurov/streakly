@@ -4,6 +4,7 @@ import { UserPlusIcon, XIcon } from "lucide-react"
 import { useSyncExternalStore } from "react"
 
 import { InviteDialog } from "@/components/invite-dialog"
+import { Notice } from "@/components/notice"
 import { Button } from "@/components/ui/button"
 import { useI18n } from "@/i18n/client"
 
@@ -33,21 +34,24 @@ export function InvitePrompt({ habits }: { habits: { id: string; name: string; c
     listeners.forEach((fn) => fn())
   }
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-card px-4 py-3 text-sm">
-      <UserPlusIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-      {/* at least 12rem: on a phone the buttons wrap below instead of squeezing the text */}
-      <span className="min-w-48 flex-1">{t.invite.prompt}</span>
-      <InviteDialog
-        habits={habits}
-        trigger={(open) => (
-          <Button size="sm" onClick={open}>
-            {t.invite.promptCta}
+    <Notice
+      icon={UserPlusIcon}
+      title={t.invite.prompt}
+      action={
+        <>
+          <InviteDialog
+            habits={habits}
+            trigger={(open) => (
+              <Button size="sm" onClick={open}>
+                {t.invite.promptCta}
+              </Button>
+            )}
+          />
+          <Button variant="ghost" size="icon-sm" aria-label={t.invite.dismiss} onClick={dismiss}>
+            <XIcon aria-hidden />
           </Button>
-        )}
-      />
-      <Button variant="ghost" size="icon-sm" aria-label={t.invite.dismiss} onClick={dismiss}>
-        <XIcon aria-hidden />
-      </Button>
-    </div>
+        </>
+      }
+    />
   )
 }

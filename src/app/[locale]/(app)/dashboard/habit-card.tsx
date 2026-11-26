@@ -25,6 +25,7 @@ import {
 import type { Habit } from "@/lib/data"
 import { ConfettiBurst } from "@/components/confetti-burst"
 import { Link } from "@/components/link"
+import { Notice } from "@/components/notice"
 import { NoteDialog } from "@/components/note-dialog"
 import { formatDay } from "@/i18n"
 import { useI18n } from "@/i18n/client"
@@ -301,37 +302,43 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
       )}
 
       {!habit.graduated_at && graduationState.ready && (
-        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg bg-emerald-500/10 py-2 pr-2 pl-3 text-sm">
-          <GraduationCapIcon className="size-4 shrink-0 text-emerald-700 dark:text-emerald-400" />
-          <span className="min-w-0 flex-1">{t.strength.ready(habit.name)}</span>
-          <Button size="sm" disabled={pending} onClick={() => run(() => setGraduated(habit.id, true), t.strength.graduated)}>
-            {t.strength.graduate}
-          </Button>
-        </div>
+        <Notice
+          size="sm"
+          icon={GraduationCapIcon}
+          tone="success"
+          className="mt-3"
+          title={t.strength.ready(habit.name)}
+          action={
+            <Button size="sm" disabled={pending} onClick={() => run(() => setGraduated(habit.id, true), t.strength.graduated)}>
+              {t.strength.graduate}
+            </Button>
+          }
+        />
       )}
 
       {repair ? (
-        <div className="mt-3 flex items-center gap-2 rounded-lg bg-sky-500/10 py-1.5 pr-1.5 pl-3 text-sm" title={t.repair.hint}>
-          <WrenchIcon className="size-3.5 shrink-0 text-sky-700 dark:text-sky-400" aria-hidden />
-          <span className="min-w-0 flex-1 truncate">{t.repair.offer(repair.streak)}</span>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-7 shrink-0 text-sky-700 hover:bg-sky-500/15 dark:text-sky-300"
-            disabled={pending}
-            onClick={() => run(() => repairStreak(habit.id, repair.day), t.repair.done)}
-          >
-            {t.repair.button}
-          </Button>
-        </div>
+        <Notice
+          size="sm"
+          icon={WrenchIcon}
+          tone="info"
+          className="mt-3"
+          title={t.repair.offer(repair.streak)}
+          action={
+            <Button size="sm" variant="outline" disabled={pending} onClick={() => run(() => repairStreak(habit.id, repair.day), t.repair.done)}>
+              {t.repair.button}
+            </Button>
+          }
+        >
+          {t.repair.hint}
+        </Notice>
       ) : recentlyBroken && !doneToday ? (
-        <p className="mt-3 rounded-lg bg-muted/60 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+        <Notice size="sm" className="mt-3">
           {t.comeback.broken(streak.best)}
-        </p>
+        </Notice>
       ) : comebackToday ? (
-        <p className="mt-3 flex items-center gap-2 rounded-lg bg-teal-500/10 px-3 py-2 text-xs leading-relaxed text-teal-800 dark:text-teal-200">
-          <RotateCcwIcon className="size-3.5 shrink-0" aria-hidden /> {t.comeback.nudge}
-        </p>
+        <Notice size="sm" icon={RotateCcwIcon} tone="success" className="mt-3">
+          {t.comeback.nudge}
+        </Notice>
       ) : null}
 
       {/* last 7 days — click to fix a missed check-in */}

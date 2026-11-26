@@ -39,6 +39,7 @@ import { cn } from "@/lib/utils"
 import { Card } from "@/components/ui/card"
 import type { Habit, HabitLog } from "@/lib/data"
 import { Link } from "@/components/link"
+import { Notice } from "@/components/notice"
 import { formatDay } from "@/i18n"
 import { useI18n } from "@/i18n/client"
 import type { ISODate } from "@/lib/dates"
@@ -397,28 +398,26 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
           />
 
           {activePause && (
-            <p
+            <Notice
               role="status"
-              className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-200"
-            >
-              <TreePalmIcon className="size-4 shrink-0" />
-              <span className="flex-1">
-                {t.vacation.active[pauseReason](formatDay(locale, activePause.end_date, { month: "long", day: "numeric" }))}
-              </span>
-              <Link href="/settings#vacation" className="font-medium underline underline-offset-4">
-                {t.vacation.end[pauseReason]}
-              </Link>
-            </p>
+              icon={TreePalmIcon}
+              tone="info"
+              title={t.vacation.active[pauseReason](formatDay(locale, activePause.end_date, { month: "long", day: "numeric" }))}
+              action={
+                <Button size="sm" variant="outline" render={<Link href="/settings#vacation" />}>
+                  {t.vacation.end[pauseReason]}
+                </Button>
+              }
+            />
           )}
 
           {(!online || queue.length > 0) && (
-            <p
+            <Notice
               role="status"
-              className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-200"
-            >
-              <CloudOffIcon className="size-4 shrink-0" />
-              {online ? t.offline.syncing(queue.length) : t.offline.offline(queue.length)}
-            </p>
+              icon={CloudOffIcon}
+              tone="warning"
+              title={online ? t.offline.syncing(queue.length) : t.offline.offline(queue.length)}
+            />
           )}
 
           <SortableHabits

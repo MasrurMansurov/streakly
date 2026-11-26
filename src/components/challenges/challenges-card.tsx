@@ -117,7 +117,7 @@ function ChallengeItem({
           </div>
         </div>
         {c.stake && (
-          <span className="max-w-[55%] truncate rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs text-amber-700 dark:text-amber-300" title={c.stake}>
+          <span className="max-w-[55%] truncate rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground" title={c.stake}>
             {c.stake}
           </span>
         )}

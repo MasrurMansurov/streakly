@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Suspense } from "react"
 
 import { Link } from "@/components/link"
+import { Notice } from "@/components/notice"
 import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -135,9 +136,8 @@ async function YourPlace({ rows, t }: { rows: LeaderboardRow[]; t: Dictionary })
   const row = rows[index]
   const next = nextRank(row.score)
   return (
-    <Card className="gap-1 border-emerald-500/30 bg-emerald-500/5 p-4 text-sm">
-      <span className="font-medium">{t.leaderboard.yourPlace(index + 1, row.score)}</span>
-      {next && <span className="text-muted-foreground">{t.leaderboard.nextRank(t.leaderboard.ranks[next.rank.key], next.missing)}</span>}
-    </Card>
+    <Notice icon={TrophyIcon} tone="success" title={t.leaderboard.yourPlace(index + 1, row.score)}>
+      {next && t.leaderboard.nextRank(t.leaderboard.ranks[next.rank.key], next.missing)}
+    </Notice>
   )
 }

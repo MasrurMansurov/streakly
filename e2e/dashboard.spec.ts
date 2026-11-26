@@ -143,8 +143,12 @@ test("archive, undo, archive again and restore from the archive page", async ({ 
   // an archived habit can still be checked off on its own page
   await page.getByRole("link", { name }).click()
   await expect(page.getByText("This habit is archived: it's off the dashboard")).toBeVisible()
+  // the button flips at once (optimistic) — wait for the save itself before reloading,
+  // or under load the reload can render before the check-in is committed
+  const saved = page.waitForResponse((r) => r.request().method() === "POST" && "next-action" in r.request().headers())
   await page.getByRole("button", { name: "Check in today" }).click()
   await expect(page.getByRole("button", { name: "Done today" })).toHaveAttribute("aria-pressed", "true")
+  await saved
   await page.reload()
   await expect(page.getByRole("button", { name: "Done today" })).toBeVisible() // saved
   await page.getByRole("button", { name: "Done today" }).click() // undo

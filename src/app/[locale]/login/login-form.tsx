@@ -10,7 +10,8 @@ import { toast } from "sonner"
 import { signIn, signUp } from "@/app/actions/auth"
 import { IconTile } from "@/components/icon-tile"
 import { Link } from "@/components/link"
-import { MailCheckIcon } from "lucide-react"
+import { Notice } from "@/components/notice"
+import { CircleAlertIcon, MailCheckIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -145,8 +146,6 @@ function LinkErrorNotice() {
   const linkError = useSearchParams().get("error")
   if (!linkError) return null
   return (
-    <p role="alert" className="rounded-md bg-destructive/10 p-2 text-sm text-destructive">
-      {t.auth.linkErrors[linkError as keyof typeof t.auth.linkErrors] ?? t.auth.linkErrors.default}
-    </p>
+    <Notice role="alert" icon={CircleAlertIcon} tone="warning" title={t.auth.linkErrors[linkError as keyof typeof t.auth.linkErrors] ?? t.auth.linkErrors.default} />
   )
 }

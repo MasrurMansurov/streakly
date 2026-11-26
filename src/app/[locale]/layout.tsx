@@ -63,7 +63,8 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[lo
         <I18nProvider locale={locale}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <TooltipProvider>{children}</TooltipProvider>
-            <Toaster richColors position="bottom-right" />
+            {/* on a phone: above the bottom tab bar, not over it */}
+            <Toaster position="bottom-right" mobileOffset={{ bottom: "calc(4.75rem + env(safe-area-inset-bottom))" }} />
             <TimezoneSync />
             <AttributionCapture />
             <DayRollover />

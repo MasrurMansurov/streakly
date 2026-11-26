@@ -7,8 +7,11 @@ import { useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
 
+import { HourglassIcon } from "lucide-react"
+
 import { convertGuest } from "@/app/actions/demo"
 import { acceptInvite } from "@/app/actions/invites"
+import { Notice } from "@/components/notice"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -46,14 +49,20 @@ export function GuestBanner() {
 
   return (
     <>
-      <div role="status" className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
-        <p className="min-w-48 flex-1">
-          <span className="font-medium">{t.demo.banner}</span> <span className="text-muted-foreground">{t.demo.bannerHint}</span>
-        </p>
-        <Button size="sm" onClick={() => setOpen(true)}>
-          {t.demo.save}
-        </Button>
-      </div>
+      <Notice
+        role="status"
+        icon={HourglassIcon}
+        tone="warning"
+        className="mb-6"
+        title={t.demo.banner}
+        action={
+          <Button size="sm" onClick={() => setOpen(true)}>
+            {t.demo.save}
+          </Button>
+        }
+      >
+        {t.demo.bannerHint}
+      </Notice>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
