@@ -6,7 +6,7 @@ import { locales, type Locale } from "@/i18n"
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "")
 
 /** Public pages that search engines should index, without the locale prefix ("" = landing). */
-export const INDEXABLE_PATHS = ["", "/demo", "/leaderboard", "/privacy", "/terms"] as const
+export const INDEXABLE_PATHS = ["", "/demo", "/habit-tracker-printable", "/leaderboard", "/privacy", "/terms"] as const
 
 /**
  * The language map of one page: a self canonical, the same page in every

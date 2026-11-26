@@ -260,3 +260,31 @@ body:has([data-tabbar]) {
     scroll-behavior: auto !important;
   }
 }
+
+/*
+ * Printable habit tracker (/habit-tracker-printable): on paper only the sheet
+ * is printed — no header, form or footer — on a landscape page, shading kept.
+ */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+  body:has([data-print-sheet]) * {
+    visibility: hidden;
+  }
+  /* same prefix as the rule above, so these win on specificity */
+  body:has([data-print-sheet]) [data-print-sheet],
+  body:has([data-print-sheet]) [data-print-sheet] * {
+    visibility: visible;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  body:has([data-print-sheet]) [data-print-sheet] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    min-width: 0 !important;
+  }
+}
