@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test"
 test("landing page leads to sign in", async ({ page }) => {
   await page.goto("/")
   await expect(page.getByRole("heading", { level: 1 })).toContainText("The habit tracker that forgives")
-  await page.getByRole("link", { name: /get started/i }).click()
+  await page.getByRole("link", { name: /get started/i }).first().click()
   await expect(page).toHaveURL(/\/login$/)
   await expect(page.getByText("Welcome back")).toBeVisible()
 })

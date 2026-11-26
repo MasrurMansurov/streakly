@@ -132,6 +132,96 @@ export default async function Home() {
             })}
           </div>
         </section>
+
+        <section aria-labelledby="compare-title" className="border-t">
+          <div className="mx-auto grid max-w-3xl gap-6 px-4 py-20">
+            <div className="grid gap-2">
+              <h2 id="compare-title" className="text-2xl font-semibold tracking-tight text-balance">
+                {t.landing.compareTitle}
+              </h2>
+              <p className="text-muted-foreground">{t.landing.compareLead}</p>
+            </div>
+            {/* phones: one card per row, Streakly's answer first (a table would hide that column off-screen) */}
+            <ul className="grid gap-2 sm:hidden">
+              {t.landing.compareRows.map((row) => (
+                <li key={row.label} className="grid gap-1.5 rounded-xl border p-4 text-sm">
+                  <span className="font-medium">{row.label}</span>
+                  <span className="inline-flex items-start gap-1.5">
+                    <CheckIcon className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
+                    <span>
+                      <span className="sr-only">{t.landing.compareUs}: </span>
+                      {row.us}
+                    </span>
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {t.landing.compareThem}: {row.them}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="hidden overflow-hidden rounded-xl border sm:block">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
+                  <tr>
+                    <th scope="col" className="w-1/3 px-4 py-2.5 font-medium">
+                      <span className="sr-only">{t.landing.compareTitle}</span>
+                    </th>
+                    <th scope="col" className="px-4 py-2.5 font-medium">{t.landing.compareThem}</th>
+                    <th scope="col" className="px-4 py-2.5 font-medium text-foreground">{t.landing.compareUs}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {t.landing.compareRows.map((row) => (
+                    <tr key={row.label}>
+                      <th scope="row" className="px-4 py-3 text-left font-medium">{row.label}</th>
+                      <td className="px-4 py-3 text-muted-foreground">{row.them}</td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-start gap-1.5">
+                          <CheckIcon className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
+                          {row.us}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="faq-title" className="border-t">
+          <div className="mx-auto grid max-w-3xl gap-6 px-4 py-20">
+            <h2 id="faq-title" className="text-2xl font-semibold tracking-tight">
+              {t.landing.faqTitle}
+            </h2>
+            <div className="divide-y rounded-xl border">
+              {t.landing.faq.map(({ q, a }) => (
+                <details key={q} className="group px-4 py-3 open:pb-4">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium [&::-webkit-details-marker]:hidden">
+                    {q}
+                    <span aria-hidden className="text-muted-foreground transition-transform group-open:rotate-45">+</span>
+                  </summary>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{a}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="border-t">
+          <div className="mx-auto grid max-w-3xl justify-items-center gap-4 px-4 py-20 text-center">
+            <h2 className="text-2xl font-semibold tracking-tight text-balance">{t.landing.ctaTitle}</h2>
+            <p className="max-w-md text-muted-foreground">{t.landing.ctaText}</p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Button size="lg" className="h-11 px-5" render={<Link href="/login?signup=1" />}>
+                {t.landing.getStarted}
+              </Button>
+              <Button size="lg" variant="outline" className="h-11 px-5" render={<Link href="/demo" />}>
+                {t.demo.try}
+              </Button>
+            </div>
+          </div>
+        </section>
       </main>
       <SiteFooter />
     </>
