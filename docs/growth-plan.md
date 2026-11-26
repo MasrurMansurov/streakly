@@ -75,9 +75,13 @@
   не считаются регистрациями; колонка `from_demo` — сколько пришло через демо.
 - Нужна настройка Supabase: Authentication → Allow anonymous sign-ins (включено).
 
-### 1.4 ⬜ Бесплатные каталоги и README (S, без кода)
-- AlternativeTo (Habitica / Loop / Streaks alternative), pwastore.io, PWA List, темы GitHub,
-  README с GIF и кнопкой «Deploy to Vercel». Тексты готовлю я, публикуете вы.
+### 1.4 🟡 Бесплатные каталоги и README (S, без кода)
+- ✅ README: GIF отметки, кнопки «Попробовать без регистрации» и «Deploy to Vercel»,
+  новые скриншоты (итоги года, приглашение), раздел «Try, invite, share», цифры тестов.
+- ✅ Тексты и пошаговые инструкции: `docs/directories.md` — GitHub (описание, сайт, темы),
+  AlternativeTo (+ «альтернатива» на страницах конкурентов), pwastore.io, pwa.rocks.
+  PWA List закрыт с мая 2025 — убран.
+- ⬜ Публикация — от аккаунта владельца (вы).
 
 ## Этап 2 — «Итоги 2026» к сезону годовых итогов (до ~12 декабря)
 

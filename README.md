@@ -24,7 +24,16 @@
 </p>
 
 <p align="center">
-  Try it with the demo account: <code>demo@streakly.dev</code> / <code>streakly-demo</code> — or sign in with Google.
+  <a href="https://streakly-pied-six.vercel.app/en"><b>▶ Try it without signing up</b></a> — two months of sample habits, no email needed.<br/>
+  <sub>Or sign in as <code>demo@streakly.dev</code> / <code>streakly-demo</code> to see a full profile with friends.</sub>
+</p>
+
+<p align="center">
+  <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FMasrurMansurov%2Fstreakly&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY&envDescription=Your%20Supabase%20project%20URL%20and%20publishable%20key&envLink=https%3A%2F%2Fgithub.com%2FMasrurMansurov%2Fstreakly%23getting-started&project-name=streakly&repository-name=streakly"><img src="https://vercel.com/button" alt="Deploy with Vercel" /></a>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/checkin.gif" alt="Checking off a habit: the streak grows from 39 to 40 days" width="72%" />
 </p>
 
 <p align="center">
@@ -39,6 +48,10 @@
   <img src="docs/screenshots/share-card.png" alt="Shareable monthly card" width="32%" />
   <img src="docs/screenshots/leaderboard.png" alt="Leaderboard with ranks" width="32%" />
   <img src="docs/screenshots/public-profile.png" alt="Public profile" width="32%" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/wrapped.png" alt="Year in review: your type" width="24%" />
+  <img src="docs/screenshots/invite.png" alt="An invite link for someone without an account" width="36%" />
 </p>
 
 ---
@@ -95,6 +108,12 @@ research review of retention mechanics (Duolingo, Strava, Wordle…) and habit-f
 - **Insights** from the last 12 weeks — habits that go together ("on days you run, you read 85% vs 40%"), a habit's weak weekday, your "never miss twice" recovery rate, and a nudge to add a plan to a struggling habit.
 - **Activity heatmap** (26 weeks), a 30-day chart, a 12-month heatmap per habit, **achievements** drawn as CSS medals.
 
+### Try, invite, share
+- **Try without signing up** — one tap on the landing page starts a temporary guest (Supabase anonymous sign-in) with two months of sample habits. "Save progress" turns it into an account and keeps what you did; a guest stays private and can't reach other people. Unsaved guests are deleted after 7 days.
+- **Invite links** — "Invite a friend" makes a personal link (optionally with one habit). The page shows who invites and to which habit, with a link preview for Telegram / WhatsApp / X; after sign-up you follow each other and a pact proposal is waiting.
+- **Year in review** — story-style screens (check-ins, best streak, favorite habit, best month and weekday, comebacks, your year in pixels) ending with a personality label — *Marathoner*, *Comeback kid*, *Early bird*… Shared as a 9:16 image with numbers only, never habit names. Newcomers get "your first N days".
+- **First-party analytics** — where people come from (UTM / referrer, first touch) and a growth funnel in SQL: sign-ups → activated → week-2 retention → invited / shared. No third-party trackers.
+
 ### Social
 - **Find people** by name or @username and follow public profiles; a 7-day feed of their check-ins.
 - **Pacts** — invite someone you follow: each commits one habit, the duo streak grows only on days you *both* check in, and your partner gets a push ("your turn" / "you both did it").
@@ -123,7 +142,7 @@ research review of retention mechanics (Duolingo, Strava, Wordle…) and habit-f
 |---|---|
 | Framework | **Next.js 16** — App Router, Server Actions, Cache Components (`"use cache"`, `cacheTag`/`updateTag`), Partial Prefetching, `proxy.ts`, `next/og` |
 | Language | TypeScript (strict) |
-| UI | Tailwind CSS v4, shadcn/ui on Base UI, lucide-react, Recharts, dnd-kit, sonner, next-themes; fonts Unbounded + Onest |
+| UI | Tailwind CSS v4, shadcn/ui on Base UI, lucide-react, dnd-kit, sonner, next-themes; charts in plain CSS; fonts Unbounded + Onest |
 | Forms | react-hook-form + zod — the same schemas validate on the client and in Server Actions |
 | Backend | **Supabase** — Postgres with Row Level Security, Auth (email + Google), Storage, Edge Functions (Deno), `pg_cron`, `pg_net`, Vault |
 | Push | Web Push (VAPID) from an Edge Function; a service worker for notifications, actions and offline |
@@ -142,10 +161,12 @@ src/
 │   │   │                       #   habits/[id], archive, settings
 │   │   ├── leaderboard/        # public, cached
 │   │   ├── u/[username]/       # public profile + generated OG image
+│   │   ├── i/[code]/           # invite link page + its link preview
 │   │   ├── login/ privacy/ terms/
 │   ├── actions/                # Server Actions — each re-checks the session, validates with zod
 │   ├── api/checkin/            # one-tap check-in for notification buttons (same-origin only)
 │   ├── api/share-card/         # PNG / emoji text share card (next/og)
+│   ├── api/wrapped-card/       # 9:16 year-in-review story image
 │   └── auth/callback/          # email confirmation & OAuth → session
 ├── components/                 # app nav + tab bar, heatmap, medals, dialogs, shadcn/ui
 ├── i18n/                       # typed dictionaries (en, ru), plurals, server/client helpers
@@ -157,7 +178,7 @@ src/
     ├── ranks.ts offline-queue.ts csv.ts dates.ts …                             ┘
     └── supabase/               # server, browser, proxy and public clients + generated types
 supabase/
-├── migrations/                 # schema, RLS policies, functions, triggers, cron (27 migrations)
+├── migrations/                 # schema, RLS policies, functions, triggers, cron (39 migrations)
 └── functions/send-reminders/   # Web Push: daily reminders, pact nudges, test pushes
 public/sw.js                    # service worker: push, notification actions, offline cache
 ```
@@ -181,13 +202,15 @@ auth.users ─1:1─ profiles (username, display_name, bio, avatar_url, is_publi
                    ├─1:n─ daily_moods (day, mood, energy)
                    ├─1:1─ reminder_settings (time, timezone, locale, enabled)
                    ├─1:n─ habit_reminders (own time per habit, owner-only)
-                   └─1:n─ push_subscriptions (endpoint, keys)
+                   ├─1:n─ push_subscriptions (endpoint, keys)
+                   ├─1:n─ invites (code, optional habit, uses)          personal invite links
+                   └─1:1─ user_attribution (source, ref, landing)  ·  events (growth funnel)
 ```
 
 ### How some of it works
 - **Streaks are pure functions.** Freezes, repairs and vacation days are "bridges" that keep a run alive without counting as check-ins. The same code runs on the dashboard, habit page, public profile and share cards.
 - **Caching.** Public profiles and the leaderboard are fetched with a cookie-less client inside `"use cache"` and invalidated with `updateTag` when the owner changes data. Signed-in pages render at request time behind `<Suspense>`; guests get public pages straight from the CDN — the proxy doesn't even run for them.
-- **Reminders.** `pg_cron` calls the `send-reminders` Edge Function every 15 minutes with a token from Vault. It finds users whose local reminder time just passed, claims the day atomically (no double sends), builds the message (streak at risk → if-then plan → list) and sends Web Push with a one-tap action. Habits with their own time are handled the same way, one push per habit, claimed per habit per day. VAPID keys are generated inside the database and never leave Vault.
+- **Reminders.** `pg_cron` calls the `send-reminders` Edge Function every minute with a token from Vault. It finds users whose local reminder time just passed, claims the day atomically (no double sends), builds the message (streak at risk → if-then plan → list) and sends Web Push with a one-tap action. Habits with their own time are handled the same way, one push per habit, claimed per habit per day. VAPID keys are generated inside the database and never leave Vault.
 - **One-tap check-in.** The notification action is handled by the service worker, which calls `POST /api/checkin` with the user's cookies; the route accepts same-origin requests only, marks today in the user's timezone, refreshes the public profile cache and nudges a pact partner via `after()`.
 - **Offline.** Static assets are cache-first, pages network-first with the last good copy as a fallback. Check-ins made offline go to a device queue (last toggle per habit/day wins) and are replayed in order when the browser is back online.
 - **Share cards** are rendered with `next/og` (Satori) using the brand fonts with separate Latin and Cyrillic subsets.
@@ -200,12 +223,13 @@ Security is enforced in Postgres, not in the UI:
 - **`security definer` only when needed, and minimal:** `my_pacts()` and `my_challenges()` reveal other members' dates only for the one habit they committed, only to fellow members; `follow_counts()` returns two numbers; `delete_my_account()` deletes only `auth.uid()`. Aggregates like `leaderboard()` and `achievement_stats()` are `security invoker`, so RLS applies.
 - **Inputs that reach PostgREST filters are validated** (UUIDs) or reduced to a safe character set (people search).
 - **Secrets** (VAPID keys, the cron token) live in Supabase Vault; nothing sensitive is in env vars or the repo.
+- **Demo guests** (anonymous sign-in) are held back by *restrictive* RLS policies — no follows, invites, pacts, challenges, uploads, push or AI letters, no public profile — and the same checks inside the `security definer` functions they could reach.
 - Usernames are generated from the OAuth name, never from the email. Data export and account deletion are one click in Settings.
 
 ## Testing & CI
 
-- **55 unit tests** (Vitest) for the pure logic: streaks, freezes, repairs, vacation bridges, insights, weekly review, duo streaks, ranks, share summaries, the offline queue, CSV.
-- **54 end-to-end scenarios** (Playwright; 64 runs across a desktop and a phone profile) against a real build — including two-user pacts, data isolation between users, offline check-ins, the notification check-in endpoint, vacation mode, Google sign-in redirect and the share card. The same suite runs against production with `E2E_BASE_URL`.
+- **121 unit tests** (Vitest) for the pure logic: streaks, freezes, repairs, vacation bridges, comebacks, insights, weekly review, duo streaks, ranks, share summaries, year in review, attribution, the offline queue, CSV — including TS ↔ SQL parity of the streak rules.
+- **78 end-to-end runs** (Playwright) against a real build — two-user pacts, data isolation, offline check-ins, the notification check-in endpoint, vacation mode, invite links, the no-sign-up demo, accessibility (axe, WCAG 2.2 AA, both themes) and a 320px phone layout check on every page. The same suite runs against production with `E2E_BASE_URL`.
 - **GitHub Actions** runs lint, typecheck, unit tests and a production build on every push.
 
 ```bash
@@ -233,7 +257,8 @@ npm run dev
    supabase functions deploy send-reminders --no-verify-jwt
    ```
    If you fork, change the project URL in `20261124000600_schedule_reminders.sql` and `SITE_URL` in the function.
-3. **Google sign-in** (optional) — create an OAuth client (*Web application*) in Google Cloud with the redirect URI `https://<project-ref>.supabase.co/auth/v1/callback`, then enable Google in Supabase → Authentication → Sign In / Providers. The button appears on the login page automatically — no env var or redeploy. Add your site's `/auth/callback` to Supabase → URL Configuration → Redirect URLs.
+3. **"Try without signing up"** (optional) — enable Supabase → Authentication → Sign In / Providers → *Allow anonymous sign-ins*. Without it the button shows a friendly "unavailable" message.
+4. **Google sign-in** (optional) — create an OAuth client (*Web application*) in Google Cloud with the redirect URI `https://<project-ref>.supabase.co/auth/v1/callback`, then enable Google in Supabase → Authentication → Sign In / Providers. The button appears on the login page automatically — no env var or redeploy. Add your site's `/auth/callback` to Supabase → URL Configuration → Redirect URLs.
 
 | Env var | |
 |---|---|
@@ -244,14 +269,20 @@ npm run dev
 
 ## Deployment
 
+The **Deploy with Vercel** button at the top clones the repo and asks for the two Supabase env vars; apply the migrations to your Supabase project as described above.
+
 Vercel deploys `main` automatically. Functions run in `fra1` (see `vercel.json`) next to the Supabase database in Frankfurt — every query stays in-region. Set the env vars above in the Vercel project; enable Web Analytics and Speed Insights in the dashboard if you want them.
 
 ## Roadmap
 
-Done in the latest rounds — research-backed retention features: one-tap check-ins from notifications, mini versions, streak repair & vacation mode, if-then plans, share cards and "My year in habits", Google sign-in, the Progress page and phone tab bar; challenges with soft stakes, and proof with a shared daily moment in pacts.
+Done in the latest rounds: a no-sign-up demo, invite links, the year in review, first-party growth analytics, per-habit reminders with sound, private habits, comeback bonuses, a 320px-proof phone layout — on top of one-tap check-ins from notifications, mini versions, streak repair & vacation mode, if-then plans, challenges with soft stakes and pacts with a shared daily moment.
 
 Next:
-- [ ] A **Telegram bot** for check-ins (a widget substitute for the web)
+- [ ] High-fives and nudges in the friends feed
+- [ ] A light shared streak with up to 5 friends (no photo needed)
+- [ ] "Fresh start" prompts and an open "January without misses" challenge
+- [ ] Squads of 5–6 with a weekly comparison
+- [ ] A **Telegram bot** for check-ins
 
 ## License & credits
 
