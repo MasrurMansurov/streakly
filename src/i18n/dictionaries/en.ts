@@ -454,6 +454,14 @@ export const en = {
     stepTodo: (title: string) => `${title}: not done`,
     offline: "Steps need a connection — check off the whole habit instead",
   },
+  author: {
+    eyebrow: "Made by",
+    name: "Masrur Mansurov",
+    role: "Developer",
+    text: "I build Streakly on my own: free, open source and without ads, because a habit tracker shouldn't charge you for keeping a promise to yourself. Feedback and ideas are always welcome.",
+    linkedin: "LinkedIn",
+    github: "GitHub",
+  },
   guides: {
     indexMetaTitle: "Habit Templates — Free Habit Ideas With Plans",
     indexMetaDescription: "Free habit templates with if-then plans, mini versions and steps: water, reading, walking, workouts, meditation, sleep, languages, journaling.",
