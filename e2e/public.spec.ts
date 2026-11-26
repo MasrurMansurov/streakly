@@ -1,11 +1,18 @@
 import { expect, test } from "@playwright/test"
 
-test("landing page leads to sign in", async ({ page }) => {
+test("landing page: try the live card, then go to sign-up", async ({ page }) => {
   await page.goto("/")
   await expect(page.getByRole("heading", { level: 1 })).toContainText("The habit tracker that forgives")
-  await page.getByRole("link", { name: /get started/i }).first().click()
-  await expect(page).toHaveURL(/\/login$/)
-  await expect(page.getByText("Welcome back")).toBeVisible()
+  // the hero card works without an account: a check-off grows the streak
+  const read = page.getByRole("button", { name: "Check off “Read 10 pages”" })
+  await read.click()
+  await expect(page.getByRole("button", { name: "Undo “Read 10 pages”" })).toHaveAttribute("aria-pressed", "true")
+  await expect(page.getByText("17 days", { exact: true })).toBeVisible()
+  await expect(page.getByText("Read 10 pages: 17 days")).toBeAttached() // announced once for screen readers
+
+  await page.getByRole("link", { name: "Create an account" }).click()
+  await expect(page).toHaveURL(/\/login\?signup=1$/)
+  await expect(page.getByRole("tab", { name: "Sign up" })).toHaveAttribute("aria-selected", "true")
 })
 
 test("protected pages redirect to login", async ({ page }) => {

@@ -4,13 +4,22 @@ import { PlayIcon } from "lucide-react"
 import { useTransition } from "react"
 import { toast } from "sonner"
 
-import { startDemo } from "@/app/actions/demo"
+import { startDemo, type DemoSource } from "@/app/actions/demo"
 import { Button } from "@/components/ui/button"
 import { useI18n } from "@/i18n/client"
 import { cn } from "@/lib/utils"
 
 /** "Try without signing up": a temporary guest with two months of sample habits. */
-export function TryDemoButton({ variant = "outline", className }: { variant?: "outline" | "ghost" | "default"; className?: string }) {
+export function TryDemoButton({
+  variant = "outline",
+  className,
+  source,
+}: {
+  variant?: "outline" | "ghost" | "default"
+  className?: string
+  /** where the demo was started (analytics: hero / demo page / sign-in) */
+  source?: DemoSource
+}) {
   const { t } = useI18n()
   const [pending, start] = useTransition()
   return (
@@ -23,7 +32,7 @@ export function TryDemoButton({ variant = "outline", className }: { variant?: "o
       onClick={() =>
         start(async () => {
           // success redirects to the Today screen; we only get here on error
-          const res = await startDemo()
+          const res = await startDemo(source)
           if (!res.ok) toast.error(res.error)
         })
       }

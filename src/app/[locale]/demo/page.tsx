@@ -32,7 +32,7 @@ export default async function DemoPage() {
             ))}
           </ul>
           <div className="flex flex-wrap items-center gap-3">
-            <TryDemoButton variant="default" />
+            <TryDemoButton variant="default" source="demo-page" />
           </div>
           <p className="text-sm text-muted-foreground">{t.demoPage.note}</p>
           <p className="text-sm">

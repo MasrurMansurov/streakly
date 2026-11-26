@@ -9,7 +9,7 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/dashboard",
     scope: "/",
     display: "standalone",
-    background_color: "#ffffff",
+    background_color: "#f9fcfa", // matches --background (splash screen of the installed app)
     theme_color: "#10b981",
     categories: ["productivity", "lifestyle", "health"],
     icons: [

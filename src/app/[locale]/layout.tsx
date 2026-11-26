@@ -23,7 +23,8 @@ import "../globals.css"
 
 // Onest for all text; Unbounded only draws the "streakly" wordmark (one weight, Latin)
 const onest = Onest({ variable: "--font-sans", subsets: ["latin", "cyrillic"] })
-const unbounded = Unbounded({ variable: "--font-unbounded", subsets: ["latin"], weight: ["600"] })
+// the brand face: the logo and the landing page's headings (Cyrillic too — Russian H1)
+const unbounded = Unbounded({ variable: "--font-unbounded", subsets: ["latin", "cyrillic"], weight: ["600"] })
 
 /** Prerender every page once per language. */
 export function generateStaticParams() {
@@ -52,8 +53,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+    { media: "(prefers-color-scheme: light)", color: "#f9fcfa" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0e0d" },
   ],
 }
 

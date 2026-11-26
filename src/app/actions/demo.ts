@@ -11,11 +11,14 @@ import { pwnedCount } from "@/lib/pwned"
 import { createClient } from "@/lib/supabase/server"
 import { authSchema, type ActionResult } from "@/lib/validation"
 
+const DEMO_SOURCES = ["hero", "demo-page", "login"] as const
+export type DemoSource = (typeof DEMO_SOURCES)[number]
+
 /**
  * "Try without signing up" (growth plan 1.3): an anonymous Supabase user with
  * ~60 days of sample habits, so the app shows what it looks like in use.
  */
-export async function startDemo(): Promise<ActionResult> {
+export async function startDemo(source?: DemoSource): Promise<ActionResult> {
   const [{ t }, locale] = await Promise.all([getActionT(), getActionLocale()])
   if (await getCurrentUser()) return localeRedirect("/dashboard")
 
@@ -28,7 +31,8 @@ export async function startDemo(): Promise<ActionResult> {
   // without samples the demo is still a working (empty) app — don't block on it
   const { error: seedError } = await supabase.rpc("seed_demo", { p_today: today, p_locale: locale })
   if (seedError) console.error("seed_demo failed", seedError.message)
-  await supabase.from("events").insert({ name: "demo_started" })
+  const from = DEMO_SOURCES.includes(source as DemoSource) ? source : "other"
+  await supabase.from("events").insert({ name: "demo_started", props: { from } })
   return localeRedirect("/dashboard")
 }
 
