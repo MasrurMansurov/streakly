@@ -1,8 +1,11 @@
 import { CalendarX2Icon, ClockArrowUpIcon, SmileIcon, LinkIcon, RotateCcwIcon, LightbulbIcon, type LucideIcon } from "lucide-react"
 
+import { DotCompare } from "@/components/dot-compare"
 import { Link } from "@/components/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useI18n } from "@/i18n/client"
+import { intlLocale } from "@/i18n"
+import { habitColor } from "@/lib/habit-colors"
 import type { Insight } from "@/lib/insights"
 import { cn } from "@/lib/utils"
 
@@ -49,9 +52,10 @@ function Compare({
   )
 }
 
-export function InsightsCard({ insights }: { insights: Insight[] }) {
-  const { t } = useI18n()
+export function InsightsCard({ insights, habitColors = {} }: { insights: Insight[]; habitColors?: Record<string, string> }) {
+  const { t, locale } = useI18n()
   const x = t.insights
+  const one = new Intl.NumberFormat(intlLocale[locale], { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
   return (
     <Card>
@@ -90,15 +94,23 @@ export function InsightsCard({ insights }: { insights: Insight[] }) {
                   )}
                   {i.kind === "mood" && (
                     <>
-                      <p className="text-sm leading-relaxed">{x.mood(i.habit, i.metric, i.withAvg, i.withoutAvg)}</p>
-                      <Compare
-                        a={i.withAvg / 5}
-                        b={i.withoutAvg / 5}
-                        labelA={x.withLabel}
-                        labelB={x.withoutLabel}
-                        format={(v) => `${Math.round(v * 50) / 10}/5`}
+                      <p className="text-sm leading-relaxed">
+                        {x.mood(i.habit, i.metric, one.format(i.withAvg), one.format(i.withoutAvg), i.withAvg > i.withoutAvg)}
+                      </p>
+                      <DotCompare
+                        withAvg={i.withAvg}
+                        withoutAvg={i.withoutAvg}
+                        nWith={i.nWith}
+                        nWithout={i.nWithout}
+                        dotClass={habitColor(habitColors[i.habitId] ?? "emerald").dot}
+                        labels={{ with: t.feelingCompare.with, without: t.feelingCompare.without, days: t.feelingCompare.days, format: (v) => one.format(v) }}
                       />
-                      <p className="text-xs text-muted-foreground">{x.moodTip}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {t.feelingCompare.caveat}{" "}
+                        <Link href={`/habits/${i.habitId}`} className="font-medium text-foreground underline underline-offset-4">
+                          {x.moodMore}
+                        </Link>
+                      </p>
                     </>
                   )}
                   {i.kind === "plan" && (

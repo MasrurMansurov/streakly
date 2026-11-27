@@ -263,7 +263,7 @@ export async function getHabitDetail(id: string) {
   const since = addDays(today, -370)
 
   // one wave: every query is scoped to the user, so nothing leaks if the habit isn't theirs
-  const [{ data: row }, logs, { data: notes }, { repairs, pauses }, { data: strengthRows }] = await Promise.all([
+  const [{ data: row }, logs, { data: notes }, { repairs, pauses }, { data: strengthRows }, { data: moodRows }] = await Promise.all([
     supabase
       .from("habits")
       .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue, graduated_at, is_private, archived_at, habit_reminders(remind_at)")
@@ -289,6 +289,8 @@ export async function getHabitDetail(id: string) {
       .eq("user_id", user.id)
       .order("week_start", { ascending: false })
       .limit(12),
+    // ratings for the "how you felt" comparison (12 weeks + the next-day pairs)
+    supabase.from("daily_moods").select("day, mood, energy").eq("user_id", user.id).gte("day", addDays(today, -86)),
   ])
   if (!row) return null
   const { habit_reminders, ...rest } = row
@@ -302,6 +304,7 @@ export async function getHabitDetail(id: string) {
     repairs: repairs.filter((r) => r.habit_id === id),
     pauses,
     notes: Object.fromEntries((notes ?? []).map((n) => [n.log_date, n.note])),
+    feelings: new Map((moodRows ?? []).map((m) => [m.day as ISODate, { mood: m.mood, energy: m.energy }])),
   }
 }
 

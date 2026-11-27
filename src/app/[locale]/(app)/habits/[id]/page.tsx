@@ -32,10 +32,11 @@ import { comebackDays, isQuickComeback } from "@/lib/comeback"
 
 import { SummaryStrip } from "@/components/summary-strip"
 import { ArchivedCheckIn } from "./archived-check-in"
+import { FeelingCompareCard } from "./feeling-compare-card"
 import { HabitActions } from "./habit-actions"
 import { NotesList } from "./notes-list"
 
-type Props = { params: Promise<{ id: string }> }
+type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ lag?: string }> }
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getT()).t.meta.habit }
@@ -43,7 +44,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 const A_MONDAY = "2026-11-23"
 
-export default async function HabitPage({ params }: Props) {
+export default async function HabitPage({ params, searchParams }: Props) {
   const { t } = await getT()
   return (
     <div className="grid gap-6">
@@ -51,19 +52,19 @@ export default async function HabitPage({ params }: Props) {
         <ArrowLeftIcon /> {t.common.dashboard}
       </Button>
       <Suspense fallback={<HabitSkeleton />}>
-        <HabitDetail params={params} />
+        <HabitDetail params={params} searchParams={searchParams} />
       </Suspense>
     </div>
   )
 }
 
-async function HabitDetail({ params }: Props) {
-  const { id } = await params
+async function HabitDetail({ params, searchParams }: Props) {
+  const [{ id }, { lag }] = await Promise.all([params, searchParams])
   const [data, { locale, t }] = await Promise.all([getHabitDetail(id), getT()])
   const weekdays = Array.from({ length: 7 }, (_, i) => formatDay(locale, addDays(A_MONDAY, i), { weekday: "short" }))
   if (!data) notFound()
 
-  const { habit, logs, today, notes, repairs, pauses, strength } = data
+  const { habit, logs, today, notes, repairs, pauses, strength, feelings } = data
   const color = habitColor(habit.color)
   const target = habit.target_per_week
   const createdOn = habit.created_at.slice(0, 10)
@@ -155,6 +156,17 @@ async function HabitDetail({ params }: Props) {
         today={today}
         completion28={completionRate(done, today, 28, createdOn, target, bridges)}
         graduated={Boolean(habit.graduated_at)}
+      />
+
+      <FeelingCompareCard
+        habit={{ id: habit.id, name: habit.name, color: habit.color, createdOn: createdOn as ISODate }}
+        done={done}
+        feelings={feelings}
+        excluded={bridges}
+        today={today}
+        lag={lag === "1" ? 1 : 0}
+        t={t}
+        locale={locale}
       />
 
       <Card>

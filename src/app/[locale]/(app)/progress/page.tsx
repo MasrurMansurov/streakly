@@ -38,7 +38,7 @@ export default function ProgressPage() {
 }
 
 async function Progress() {
-  const [{ habits, logs, today, stats, feelings }, letter] = await Promise.all([getDashboardData(), getWeeklyLetter()])
+  const [{ habits, logs, today, stats, feelings, repairs, pauses }, letter] = await Promise.all([getDashboardData(), getWeeklyLetter()])
   // the AI letter appears only when an API key is configured
   const letterCard = process.env.ANTHROPIC_API_KEY ? <LetterCard letter={letter} /> : null
   return (
@@ -47,6 +47,8 @@ async function Progress() {
       logs={logs}
       today={today}
       feelings={feelings}
+      repairs={repairs}
+      pauses={pauses}
       achievements={evaluateAchievements(stats)}
       letter={letterCard}
     />

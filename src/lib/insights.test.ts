@@ -55,8 +55,10 @@ describe("findInsights", () => {
       const d = addDays(today, -i)
       feelings.set(d, { mood: run.has(d) ? 4 : 3, energy: null })
     }
-    const insight = findInsights([habit("Run", run, 4)], today, 3, feelings).find((x) => x.kind === "mood")
-    expect(insight).toEqual({ kind: "mood", habit: "Run", metric: "mood", withAvg: 4, withoutAvg: 3 })
+    const insight = findInsights([habit("Run", run)], today, 3, feelings).find((x) => x.kind === "mood")
+    expect(insight).toMatchObject({ kind: "mood", habit: "Run", metric: "mood", withAvg: 4, withoutAvg: 3, nWith: 15, nWithout: 15 })
+    // a few-times-a-week habit: its "without" days are simply off days — not compared on Progress
+    expect(findInsights([habit("Run", run, 4)], today, 3, feelings).some((x) => x.kind === "mood")).toBe(false)
   })
 
   it("stays quiet without enough data", () => {

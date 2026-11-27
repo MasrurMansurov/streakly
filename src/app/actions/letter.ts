@@ -46,6 +46,7 @@ export async function writeWeeklyLetter(): Promise<ActionResult> {
     createdOn: h.created_at.slice(0, 10) as ISODate,
     done: byHabit.get(h.id)!,
     hasPlan: Boolean(h.cue),
+    excluded: bridgesFor(h.id, data.repairs, data.pauses),
   }))
   const feelings = new Map(Object.entries(data.feelings) as [ISODate, DayFeeling][])
   const thisWeek = [...feelings].filter(([d]) => d >= week).map(([, f]) => f)

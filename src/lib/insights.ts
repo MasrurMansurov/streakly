@@ -1,5 +1,8 @@
 import { addDays, weekdayMon0, type ISODate } from "./dates"
+import { benjaminiYekutieli, compareFeeling, permutationP, seededRandom, type DayFeeling, type Metric } from "./feeling-compare"
 import type { Target } from "./streaks"
+
+export type { DayFeeling } from "./feeling-compare"
 
 export type InsightHabit = {
   id: string
@@ -9,6 +12,10 @@ export type InsightHabit = {
   done: ReadonlySet<ISODate>
   /** has an if-then plan (cue) */
   hasPlan?: boolean
+  /** private habits never surface on their own in Progress */
+  isPrivate?: boolean
+  /** paused / repaired days — left out of the "how you felt" comparison */
+  excluded?: ReadonlySet<ISODate>
 }
 
 export type Insight =
@@ -20,10 +27,12 @@ export type Insight =
   | { kind: "recovery"; rate: number; slips: number }
   /** a habit that struggles and has no if-then plan yet */
   | { kind: "plan"; habitId: string; habit: string; rate: number }
-  /** on days with this habit, mood/energy (1–5) is noticeably higher */
-  | { kind: "mood"; habit: string; metric: "mood" | "energy"; withAvg: number; withoutAvg: number }
-
-export type DayFeeling = { mood: number | null; energy: number | null }
+  /**
+   * mood/energy (1–5) was clearly different on days with this habit — higher or
+   * lower, adjusted for weekdays, and still standing after the multiple-testing
+   * correction (see moodLink)
+   */
+  | { kind: "mood"; habitId: string; habit: string; metric: Metric; withAvg: number; withoutAvg: number; nWith: number; nWithout: number }
 
 export const INSIGHT_WINDOW = 84 // 12 weeks
 const MIN_SUPPORT = 6 // days on each side of a comparison
@@ -122,27 +131,40 @@ function needsPlan(habits: InsightHabit[], today: ISODate): Extract<Insight, { k
   return found
 }
 
-/** The habit whose days come with the biggest lift in mood or energy (≥ 0.5 on a 1–5 scale). */
+/**
+ * At most one clear "how you felt" pattern. Every near-daily, non-private habit
+ * is compared for mood and for energy (same day, adjusted for weekdays); a
+ * pattern is shown only if it is "clear" on its own AND survives a permutation
+ * test (shuffling the habit's days within each weekday) with the
+ * Benjamini–Yekutieli correction across all those comparisons. Without the
+ * correction, picking the biggest of many noisy gaps "finds" something in
+ * about half of all users with no real link at all.
+ */
 function moodLink(habits: InsightHabit[], feelings: ReadonlyMap<ISODate, DayFeeling>, today: ISODate) {
+  if (feelings.size === 0) return null
+  const tests = habits
+    .filter((h) => h.target >= 5 && !h.isPrivate)
+    .flatMap((h) =>
+      (["mood", "energy"] as const).map((metric) => {
+        const input = { id: h.id, createdOn: h.createdOn, done: h.done, feelings, today, excluded: h.excluded, metric, lag: 0 as const }
+        return { h, metric, input, result: compareFeeling(input) }
+      })
+    )
+  // the permutation test only for candidates that could be shown anyway (a costly
+  // test for the rest would change nothing: they keep p = 1, which is conservative)
+  const p = tests.map((t) =>
+    t.result.level === "clear" ? permutationP(t.input, seededRandom(`${t.h.id}|${t.metric}|${today}|perm`)) : 1
+  )
+  const survivors = benjaminiYekutieli(p)
   let best: Extract<Insight, { kind: "mood" }> | null = null
-  for (const metric of ["mood", "energy"] as const) {
-    for (const h of habits) {
-      const withH: number[] = []
-      const without: number[] = []
-      for (const d of activeDays(h, today)) {
-        const v = feelings.get(d)?.[metric]
-        if (v == null) continue
-        ;(h.done.has(d) ? withH : without).push(v)
-      }
-      if (withH.length < MIN_SUPPORT || without.length < MIN_SUPPORT) continue
-      const avg = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length
-      const w = avg(withH)
-      const wo = avg(without)
-      if (w - wo >= 0.5 && (!best || w - wo > best.withAvg - best.withoutAvg)) {
-        best = { kind: "mood", habit: h.name, metric, withAvg: Math.round(w * 10) / 10, withoutAvg: Math.round(wo * 10) / 10 }
-      }
-    }
-  }
+  let bestGap = 0
+  tests.forEach((t, i) => {
+    const r = t.result
+    if (!survivors.has(i) || r.level !== "clear") return
+    if (Math.abs(r.diff) <= bestGap) return
+    bestGap = Math.abs(r.diff)
+    best = { kind: "mood", habitId: t.h.id, habit: t.h.name, metric: t.metric, withAvg: r.withAvg, withoutAvg: r.withoutAvg, nWith: r.nWith, nWithout: r.nWithout }
+  })
   return best
 }
 

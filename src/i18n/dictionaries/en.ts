@@ -884,7 +884,7 @@ export const en = {
     moodScale: ["Awful", "Low", "Okay", "Good", "Great"],
     energyScale: ["Drained", "Tired", "Okay", "Energized", "Full of energy"],
     saved: "Saved — this powers your insights",
-    hint: "One tap each. Streakly will show which habits lift how you feel.",
+    hint: "One tap each. In a couple of weeks, each habit's page shows how you felt with and without it.",
   },
   strength: {
     ask: "How automatic does it feel now?",
@@ -956,17 +956,40 @@ export const en = {
     notFound: "This invite is no longer available",
     habitArchived: "habit archived",
   },
+  feelingCompare: {
+    title: "How you felt",
+    subtitle: "Last 12 weeks, days with and without this habit",
+    sameDay: "Same day",
+    nextDay: "Next day",
+    lagLabel: "Compare with",
+    with: "with",
+    without: "without",
+    days: (n: number) => `${n} ${p(n, "day", "days")}`,
+    noRatings: "Rate how you feel on the Today screen — after a couple of weeks, the comparison appears here.",
+    notEnough: (n: number, side: "with" | "without", habit: string) =>
+      `Not enough days yet. ${n} more ${p(n, "day", "days")} ${side === "with" ? "with" : "without"} “${habit}” and we can compare.`,
+    early: "Early look. Numbers will settle after 14 days on each side.",
+    skewed: (habit: string) => `“${habit}” is almost always on the same weekdays, so a fair comparison isn't possible yet.`,
+    clear: (metric: "mood" | "energy", habit: string, higher: boolean, lag: 0 | 1, w: string, wo: string) =>
+      lag === 0
+        ? `${metric === "mood" ? "Mood" : "Energy"} was ${higher ? "higher" : "lower"} on days with “${habit}”: ${w} vs ${wo}.`
+        : `The day after “${habit}”, ${metric === "mood" ? "mood" : "energy"} was ${higher ? "higher" : "lower"}: ${w} vs ${wo}.`,
+    unclear: (w: string, wo: string) => `No clear difference yet: ${w} vs ${wo}.`,
+    same: "About the same either way.",
+    caveat: "This shows what tends to happen together, not what causes what. Good days can make a habit easier, too.",
+    tryIt: "Want to check? Alternate days with and without it for two weeks.",
+  },
   insights: {
     title: "Insights",
     subtitle: "Patterns Streakly found in your last 12 weeks",
     empty: "Keep checking in — after a few weeks Streakly will show which habits help each other and where you slip.",
-    kinds: { pair: "Habits that go together", weekday: "Weak spot", recovery: "Never miss twice", plan: "Needs a plan", mood: "Feels good" },
+    kinds: { pair: "Habits that go together", weekday: "Weak spot", recovery: "Never miss twice", plan: "Needs a plan", mood: "Goes with how you feel" },
     pair: (a: string, b: string, w: number, wo: number) =>
       `On days you do “${a}”, you also do “${b}” ${w}% of the time — vs ${wo}% when you skip it.`,
     plan: (habit: string, rate: number) => `“${habit}” is at ${rate}% of its goal over the last 4 weeks.`,
-    mood: (habit: string, metric: "mood" | "energy", w: number, wo: number) =>
-      `On days with “${habit}” your ${metric === "mood" ? "mood" : "energy"} is ${w} of 5 — vs ${wo} without it.`,
-    moodTip: "Worth protecting this one on busy days.",
+    mood: (habit: string, metric: "mood" | "energy", w: string, wo: string, higher: boolean) =>
+      `${metric === "mood" ? "Mood" : "Energy"} was ${higher ? "higher" : "lower"} on days with “${habit}”: ${w} vs ${wo} out of 5.`,
+    moodMore: "See the comparison",
     planTip: "Give it an if-then plan — tie it to a moment that already happens every day (“after my morning coffee”).",
     planCta: "Add a plan",
     pairTip: "Stack them: do one right after the other.",
