@@ -1,8 +1,10 @@
 "use client"
 
 import {
+  BellRingIcon,
   ChevronRightIcon,
   GraduationCapIcon,
+  HandIcon,
   CircleCheckIcon,
   CloudOffIcon,
   TreePalmIcon,
@@ -66,11 +68,13 @@ type Props = {
   pauses: Pause[]
   strength: Record<string, { week: ISODate; score: number }[]>
   feelings: Record<ISODate, DayFeeling>
+  /** who gave a high five / a nudge lately (names) */
+  cheers?: { highFives: string[]; nudges: string[] }
 }
 
 type Toggle = { habitId: string; date: ISODate; done: boolean; mini?: boolean }
 
-export function DashboardView({ habits: serverHabits, logs, today, profile, archivedCount, todayNotes, todaySteps = {}, achievements, pacts, challenges, repairs, pauses, strength, feelings }: Props) {
+export function DashboardView({ habits: serverHabits, logs, today, profile, archivedCount, todayNotes, todaySteps = {}, achievements, pacts, challenges, repairs, pauses, strength, feelings, cheers }: Props) {
   const { locale, t } = useI18n()
   const router = useRouter()
   const [createOpen, setCreateOpen] = useState(false)
@@ -366,6 +370,24 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
         </div>
       </div>
       <ShareDialog open={shareOpen} onOpenChange={setShareOpen} />
+
+      {/* friends: one quiet line, not a notification center */}
+      {cheers && (cheers.highFives.length > 0 || (cheers.nudges.length > 0 && leftToday > 0)) && (
+        <div className="-mt-4 grid gap-1 text-sm text-muted-foreground">
+          {cheers.highFives.length > 0 && (
+            <p className="flex items-center gap-2">
+              <HandIcon className="size-4 shrink-0 -rotate-12 text-streak" fill="currentColor" aria-hidden />
+              {t.cheers.highFives(cheers.highFives)}
+            </p>
+          )}
+          {cheers.nudges.length > 0 && leftToday > 0 && (
+            <p className="flex items-center gap-2">
+              <BellRingIcon className="size-4 shrink-0" aria-hidden />
+              {t.cheers.nudges(cheers.nudges)}
+            </p>
+          )}
+        </div>
+      )}
 
       {habits.length === 0 ? (
         <Card className="gap-5 px-4 py-6 sm:px-6">

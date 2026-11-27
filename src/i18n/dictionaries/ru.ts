@@ -407,6 +407,20 @@ export const ru: Dictionary = {
     empty: "За последние 30 дней отметок пока нет.",
     counter: (n: number) => `${n}/280`,
   },
+  cheers: {
+    highFive: (name: string) => `Дать пять: ${name}`,
+    nudge: (name: string) => `Подбодрить: ${name}`,
+    nudged: (name: string) => `Напоминание отправлено: ${name}`,
+    nudgedAlready: (name: string) => `Сегодня вы уже подбадривали: ${name}`,
+    highFives: (names: string[]) =>
+      names.length === 1
+        ? `${names[0]} даёт вам пять`
+        : names.length === 2
+          ? `${names[0]} и ${names[1]} дают вам пять`
+          : `${names[0]} и ещё ${names.length - 1} дают вам пять`,
+    nudges: (names: string[]) => (names.length === 1 ? `${names[0]} болеет за вас` : `${names[0]} и ещё ${names.length - 1} болеют за вас`),
+    received: (n: number) => `Получено «дай пять»: ${n}`,
+  },
   friends: {
     title: "Друзья",
     subtitle: "Отметки людей, на которых вы подписаны, за 7 дней.",

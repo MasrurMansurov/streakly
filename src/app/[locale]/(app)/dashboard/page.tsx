@@ -5,7 +5,7 @@ import { Suspense } from "react"
 
 import { Skeleton } from "@/components/ui/skeleton"
 import { evaluateAchievements } from "@/lib/achievements"
-import { getChallenges, getDashboardData, getPacts } from "@/lib/data"
+import { getChallenges, getDashboardData, getPacts, getRecentCheers } from "@/lib/data"
 
 import { DashboardView } from "./dashboard-view"
 
@@ -22,11 +22,12 @@ export default function DashboardPage() {
 }
 
 async function Dashboard() {
-  const [{ habits, logs, today, profile, archivedCount, todayNotes, todaySteps, stats, repairs, pauses, strength, feelings }, pacts, challenges] =
+  const [{ habits, logs, today, profile, archivedCount, todayNotes, todaySteps, stats, repairs, pauses, strength, feelings }, pacts, challenges, cheers] =
     await Promise.all([
     getDashboardData(),
     getPacts(),
     getChallenges(),
+    getRecentCheers(),
   ])
   return (
     <DashboardView
@@ -44,6 +45,7 @@ async function Dashboard() {
       pauses={pauses}
       strength={strength}
       feelings={feelings}
+      cheers={cheers}
     />
   )
 }

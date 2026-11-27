@@ -1,10 +1,11 @@
 "use client"
 
-import { HandshakeIcon, MoreHorizontalIcon, UserMinusIcon } from "lucide-react"
+import { BellRingIcon, HandshakeIcon, MoreHorizontalIcon, UserMinusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 
+import { sendNudge } from "@/app/actions/cheers"
 import { setFollowing } from "@/app/actions/follows"
 import { invitePact } from "@/app/actions/pacts"
 import { HabitPicker, type HabitChoice } from "@/components/habit-picker"
@@ -13,13 +14,21 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useI18n } from "@/i18n/client"
 
-type Props = { profileId: string; name: string; habits: HabitChoice[]; inPact: boolean }
+type Props = {
+  profileId: string
+  name: string
+  habits: HabitChoice[]
+  inPact: boolean
+  /** no check-in from them today and no nudge from you yet */
+  canNudge: boolean
+}
 
 /**
- * The actions for one person you follow — a quiet "…" instead of two outlined
- * buttons repeated on every row: start a pact (unless you're in one), unfollow.
+ * The actions for one person you follow — a quiet "…" instead of buttons
+ * repeated on every row: nudge (if they haven't checked in today), start a pact
+ * (unless you're in one), unfollow.
  */
-export function PersonMenu({ profileId, name, habits, inPact }: Props) {
+export function PersonMenu({ profileId, name, habits, inPact, canNudge }: Props) {
   const { t } = useI18n()
   const router = useRouter()
   const [pactOpen, setPactOpen] = useState(false)
@@ -32,6 +41,13 @@ export function PersonMenu({ profileId, name, habits, inPact }: Props) {
       if (!res.ok) return void toast.error(res.error)
       toast.success(res.message)
       setPactOpen(false)
+    })
+
+  const nudge = () =>
+    start(async () => {
+      const res = await sendNudge(profileId, name)
+      if (!res.ok) return void toast.error(res.error)
+      if (res.message) toast.success(res.message)
     })
 
   const unfollow = () =>
@@ -49,6 +65,11 @@ export function PersonMenu({ profileId, name, habits, inPact }: Props) {
           <MoreHorizontalIcon />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          {canNudge && (
+            <DropdownMenuItem onClick={nudge}>
+              <BellRingIcon /> {t.cheers.nudge(name)}
+            </DropdownMenuItem>
+          )}
           {!inPact && (
             <DropdownMenuItem onClick={() => setPactOpen(true)}>
               <HandshakeIcon /> {t.pacts.inviteTitle(name)}

@@ -404,6 +404,21 @@ export const en = {
     empty: "No check-ins in the last 30 days yet.",
     counter: (n: number) => `${n}/280`,
   },
+  cheers: {
+    highFive: (name: string) => `High five to ${name}`,
+    nudge: (name: string) => `Nudge ${name}`,
+    nudged: (name: string) => `Nudge sent to ${name}`,
+    nudgedAlready: (name: string) => `You already nudged ${name} today`,
+    /** the Today line: who gave you a high five lately */
+    highFives: (names: string[]) =>
+      names.length === 1
+        ? `${names[0]} gave you a high five`
+        : names.length === 2
+          ? `${names[0]} and ${names[1]} gave you a high five`
+          : `${names[0]} and ${names.length - 1} others gave you a high five`,
+    nudges: (names: string[]) => (names.length === 1 ? `${names[0]} is cheering you on` : `${names[0]} and ${names.length - 1} more are cheering you on`),
+    received: (n: number) => `${n} ${p(n, "high five", "high fives")} received`,
+  },
   friends: {
     title: "Friends",
     subtitle: "Check-ins from people you follow, last 7 days.",

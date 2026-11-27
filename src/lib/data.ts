@@ -323,10 +323,14 @@ export type FeedItem = {
   date: string
   createdAt: string
   habit: { name: string; color: string }
-  person: { username: string; name: string; avatarUrl: string | null }
+  person: { id: string; username: string; name: string; avatarUrl: string | null }
 }
 
-/** People the user follows (only those still public) and their check-ins from the last 7 days. */
+/**
+ * People the user follows (only those still public), their check-ins from the
+ * last 7 days, and the cheers the user already sent: high fives as
+ * "personId:day", today's nudges as person ids.
+ */
 export async function getFriendsData() {
   const user = await requireUser()
   const [{ today, timeZone }, supabase] = await Promise.all([getToday(), createClient()])
@@ -337,10 +341,10 @@ export async function getFriendsData() {
     .eq("follower_id", user.id)
     .order("created_at", { ascending: false })
   const ids = (follows ?? []).map((f) => f.following_id)
-  if (ids.length === 0) return { people: [], feed: [] as FeedItem[], today, timeZone }
+  if (ids.length === 0) return { people: [], feed: [] as FeedItem[], today, timeZone, highFived: new Set<string>(), nudgedToday: new Set<string>() }
 
   // RLS hides profiles that went private, so they simply drop out
-  const [{ data: profiles }, { data: logs }] = await Promise.all([
+  const [{ data: profiles }, { data: logs }, { data: sent }] = await Promise.all([
     supabase.from("profiles").select("id, username, display_name, avatar_url, status").in("id", ids),
     supabase
       .from("habit_logs")
@@ -349,6 +353,7 @@ export async function getFriendsData() {
       .gte("log_date", addDays(today, -6))
       .order("created_at", { ascending: false })
       .limit(100),
+    supabase.from("cheers").select("to_id, kind, day").eq("from_id", user.id).gte("day", addDays(today, -6)),
   ])
 
   const byId = new Map((profiles ?? []).map((p) => [p.id, p]))
@@ -365,11 +370,23 @@ export async function getFriendsData() {
         date: l.log_date,
         createdAt: l.created_at,
         habit: { name: l.habits.name, color: l.habits.color },
-        person: { username: p.username, name: p.display_name || p.username, avatarUrl: p.avatar_url },
+        person: { id: p.id, username: p.username, name: p.display_name || p.username, avatarUrl: p.avatar_url },
       },
     ]
   })
-  return { people, feed, today, timeZone }
+  const highFived = new Set((sent ?? []).filter((c) => c.kind === "high_five").map((c) => `${c.to_id}:${c.day}`))
+  const nudgedToday = new Set((sent ?? []).filter((c) => c.kind === "nudge" && c.day === today).map((c) => c.to_id))
+  return { people, feed, today, timeZone, highFived, nudgedToday }
+}
+
+/** Who gave the user a high five or a nudge in the last day and a half (names, newest first, no repeats). */
+export async function getRecentCheers(): Promise<{ highFives: string[]; nudges: string[] }> {
+  // the session first: it makes the render dynamic before the client touches the clock
+  await requireUser()
+  const supabase = await createClient()
+  const { data } = await supabase.rpc("my_recent_cheers")
+  const names = (kind: string) => [...new Set((data ?? []).filter((c) => c.kind === kind).map((c) => c.from_name))]
+  return { highFives: names("high_five"), nudges: names("nudge") }
 }
 
 /** Follow state between the viewer and a profile, plus public counters. */

@@ -6,6 +6,7 @@
 //   - pg_cron every minute      → { action: "send" }            auth: x-cron-token (Vault secret)
 //   - the app ("Send test")     → { action: "test" }            auth: the user's JWT
 //   - the app (pact check-in)   → { action: "pact", habitId }   auth: the user's JWT
+//   - the app (high five/nudge) → { action: "cheer", cheerId }  auth: the user's JWT
 //   - pg_cron daily             → { action: "cleanup" }         auth: x-cron-token
 //   - setup / diagnostics       → { action: "setup" | "selftest" | "send", dryRun? }  auth: x-cron-token
 //
@@ -150,41 +151,49 @@ const ruPlural = (n: number, one: string, few: string, many: string) => {
 /** Notification texts (kept in sync with src/i18n/dictionaries → push). */
 const TEXT = {
   en: {
-    title: "Keep your streak alive 🔥",
+    title: "Keep your streak alive",
     one: (name: string) => `“${name}” is still waiting for you today.`,
     many: (n: number, names: string) => `${n} habits left today: ${names}`,
     testTitle: "Streakly",
-    testBody: "Reminders are on. See you tonight! 🔥",
+    testBody: "Reminders are on. See you tonight.",
     riskTitle: (n: number) => `Your ${n}-day streak is at risk`,
     risk: (name: string, n: number) => `“${name}” — ${n} days in a row. One check-in today keeps it going.`,
     checkIn: (name: string) => `✓ ${name}`,
     done: "Done:",
     cue: (cue: string, name: string) => `${cue} → time for “${name}”.`,
     pactTurnTitle: "Your pact partner checked in",
-    pactTurn: (name: string, habit: string) => `${name} is done with “${habit}”. Your turn — keep your shared streak going!`,
+    pactTurn: (name: string, habit: string) => `${name} is done with “${habit}”. Your turn — keep your shared streak going.`,
     pactBothTitle: "You both did it today",
     pactBoth: (name: string) => `${name} checked in too — your shared streak grows.`,
+    highFiveTitle: (name: string) => `${name} gave you a high five`,
+    highFive: "For your check-ins.",
+    nudgeTitle: (name: string) => `${name} is cheering you on`,
+    nudge: "No check-in yet today. One small step counts.",
     comebackTitle: "A good day to come back",
-    comeback: (name: string) => `Yesterday was a miss — check in “${name}” today and it counts as a comeback 💪`,
+    comeback: (name: string) => `Yesterday was a miss — check in “${name}” today and it counts as a comeback.`,
   },
   ru: {
-    title: "Не прерывайте серию 🔥",
+    title: "Не прерывайте серию",
     one: (name: string) => `«${name}» ещё ждёт вас сегодня.`,
     many: (n: number, names: string) =>
       `На сегодня ${ruPlural(n, "осталась", "осталось", "осталось")} ${n} ${ruPlural(n, "привычка", "привычки", "привычек")}: ${names}`,
     testTitle: "Streakly",
-    testBody: "Напоминания включены. До вечера! 🔥",
+    testBody: "Напоминания включены. До вечера.",
     riskTitle: (n: number) => `Серия ${n} ${ruPlural(n, "день", "дня", "дней")} под угрозой`,
     risk: (name: string, n: number) => `«${name}» — ${n} ${ruPlural(n, "день", "дня", "дней")} подряд. Одна отметка сегодня — и серия продолжится.`,
     checkIn: (name: string) => `✓ ${name}`,
     done: "Отмечено:",
     cue: (cue: string, name: string) => `${cue} → пора: «${name}».`,
     pactTurnTitle: "Партнёр по пакту отметился",
-    pactTurn: (name: string, habit: string) => `${name}: «${habit}» — готово. Ваша очередь, чтобы сохранить общую серию!`,
-    pactBothTitle: "Сегодня вы оба справились",
-    pactBoth: (name: string) => `${name} — отметка есть. Общая серия растёт!`,
+    pactTurn: (name: string, habit: string) => `${name}: «${habit}» — готово. Ваша очередь, чтобы сохранить общую серию.`,
+    pactBothTitle: "Сегодня отметились оба",
+    pactBoth: (name: string) => `${name} — отметка есть. Общая серия растёт.`,
+    highFiveTitle: (name: string) => `${name} даёт вам пять`,
+    highFive: "За ваши отметки.",
+    nudgeTitle: (name: string) => `${name} болеет за вас`,
+    nudge: "Сегодня отметок ещё нет. Хватит и маленького шага.",
     comebackTitle: "Отличный день, чтобы вернуться",
-    comeback: (name: string) => `Вчера был пропуск — отметьте «${name}» сегодня, и это засчитается как возвращение 💪`,
+    comeback: (name: string) => `Вчера был пропуск — отметьте «${name}» сегодня, и это засчитается как возвращение.`,
   },
 } satisfies Record<Locale, unknown>
 
@@ -390,6 +399,42 @@ async function runPactNudge(userId: string, habitId: string) {
 }
 
 /**
+ * The caller just sent a high five or a nudge (a row in public.cheers, created
+ * by the app under RLS). Tell the recipient — unless they turned reminders off,
+ * are on a pause, or (for a nudge) have already checked in today.
+ */
+async function runCheer(userId: string, cheerId: string) {
+  // only the sender's own, freshly created cheer — no pushes out of thin air
+  const [cheer] = await sql<{ to_id: string; kind: "high_five" | "nudge"; from_name: string }[]>`
+    select c.to_id, c.kind, coalesce(nullif(p.display_name, ''), p.username) as from_name
+    from public.cheers c join public.profiles p on p.id = c.from_id
+    where c.id = ${cheerId} and c.from_id = ${userId} and c.created_at > now() - interval '5 minutes'`
+  if (!cheer) return { sent: 0, reason: "not found" }
+
+  const [rs] = await sql<{ enabled: boolean; locale: string; local_date: string }[]>`
+    select rs.enabled, rs.locale, public.logical_date(rs.timezone, u.raw_user_meta_data -> 'day_start')::text as local_date
+    from public.reminder_settings rs join auth.users u on u.id = rs.user_id
+    where rs.user_id = ${cheer.to_id}`
+  if (!rs?.enabled) return { sent: 0, reason: "reminders off" }
+  const [paused] = await sql`
+    select 1 from public.pauses where user_id = ${cheer.to_id} and ${rs.local_date}::date between start_date and end_date`
+  if (paused) return { sent: 0, reason: "paused" }
+  if (cheer.kind === "nudge") {
+    const [done] = await sql`select 1 from public.habit_logs where user_id = ${cheer.to_id} and log_date = ${rs.local_date}::date`
+    if (done) return { sent: 0, reason: "already checked in" }
+  }
+
+  const locale = asLocale(rs.locale)
+  const t = TEXT[locale]
+  const payload: Payload =
+    cheer.kind === "high_five"
+      ? { title: t.highFiveTitle(cheer.from_name), body: t.highFive, url: `/${locale}/dashboard`, tag: `cheer-${userId}` }
+      : { title: t.nudgeTitle(cheer.from_name), body: t.nudge, url: `/${locale}/dashboard`, tag: `cheer-${userId}` }
+  const subs = await sql<Sub[]>`select id, endpoint, p256dh, auth from public.push_subscriptions where user_id = ${cheer.to_id}`
+  return await push(subs, payload)
+}
+
+/**
  * Pact proof photos are kept for 30 days, and removed as soon as their pact is
  * gone. Storage objects can only be deleted through the Storage API.
  */
@@ -502,6 +547,14 @@ Deno.serve(async (req) => {
       const { habitId } = body
       if (typeof habitId !== "string" || !/^[0-9a-f-]{36}$/i.test(habitId)) return json({ error: "bad habitId" }, 400)
       return json(await runPactNudge(userId, habitId))
+    }
+
+    if (action === "cheer") {
+      const userId = await userIdFromJwt(req)
+      if (!userId) return json({ error: "unauthorized" }, 401)
+      const { cheerId } = body
+      if (typeof cheerId !== "string" || !/^[0-9a-f-]{36}$/i.test(cheerId)) return json({ error: "bad cheerId" }, 400)
+      return json(await runCheer(userId, cheerId))
     }
 
     if (!(await isCron(req))) return json({ error: "unauthorized" }, 401)

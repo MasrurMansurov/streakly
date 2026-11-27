@@ -105,6 +105,48 @@ export type Database = {
         Update: { created_at?: string; habit_id?: string; score?: number; user_id?: string; week_start?: string }
         Relationships: []
       }
+      cheers: {
+        Row: {
+          created_at: string
+          day: string
+          from_id: string
+          id: string
+          kind: string
+          to_id: string
+        }
+        Insert: {
+          created_at?: string
+          day: string
+          from_id?: string
+          id?: string
+          kind: string
+          to_id: string
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          from_id?: string
+          id?: string
+          kind?: string
+          to_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cheers_from_id_fkey"
+            columns: ["from_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cheers_to_id_fkey"
+            columns: ["to_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_moods: {
         Row: { day: string; energy: number | null; mood: number | null; updated_at: string; user_id: string }
         Insert: { day: string; energy?: number | null; mood?: number | null; updated_at?: string; user_id?: string }
@@ -483,6 +525,14 @@ export type Database = {
           status: string
           title: string
           username: string
+        }[]
+      }
+      my_recent_cheers: {
+        Args: never
+        Returns: {
+          created_at: string
+          from_name: string
+          kind: string
         }[]
       }
       pacts_with_partner_proof: {

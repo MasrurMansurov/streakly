@@ -5,6 +5,7 @@ import { Suspense } from "react"
 import { ChallengesCard } from "@/components/challenges/challenges-card"
 import { FollowButton } from "@/components/follow-button"
 import { FriendsTabs } from "@/components/friends-tabs"
+import { HighFiveButton } from "@/components/high-five-button"
 import { IconTile } from "@/components/icon-tile"
 import { PersonMenu } from "@/components/person-menu"
 import { InviteDialog } from "@/components/invite-dialog"
@@ -120,7 +121,7 @@ async function SearchResults({ searchParams }: { searchParams: Promise<{ q?: str
 }
 
 async function Friends() {
-  const [{ people, feed, today, timeZone }, { locale, t }, pacts, myHabits, challenges] = await Promise.all([
+  const [{ people, feed, today, timeZone, highFived, nudgedToday }, { locale, t }, pacts, myHabits, challenges] = await Promise.all([
     getFriendsData(),
     getT(),
     getPacts(),
@@ -147,6 +148,9 @@ async function Friends() {
       </div>
     )
   }
+
+  // a nudge only makes sense for someone with no check-in today
+  const checkedInToday = new Set(feed.filter((f) => f.date === today).map((f) => f.person.id))
 
   // group the feed by day, newest first
   const days = new Map<string, FeedItem[]>()
@@ -183,7 +187,13 @@ async function Friends() {
                     {p.status ? p.status : `@${p.username}`}
                   </div>
                 </Link>
-                <PersonMenu profileId={p.id} name={p.name} habits={myHabits} inPact={inPact.has(p.username)} />
+                <PersonMenu
+                  profileId={p.id}
+                  name={p.name}
+                  habits={myHabits}
+                  inPact={inPact.has(p.username)}
+                  canNudge={!checkedInToday.has(p.id) && !nudgedToday.has(p.id)}
+                />
               </li>
             ))}
           </ul>
@@ -195,7 +205,17 @@ async function Friends() {
       ) : (
         <>
           {[...days].slice(0, 3).map(([date, items]) => (
-            <FeedDay key={date} label={dayLabel(date)} items={items} locale={locale} timeZone={timeZone} />
+            <FeedDay
+              key={date}
+              date={date}
+              label={dayLabel(date)}
+              items={items}
+              locale={locale}
+              timeZone={timeZone}
+              highFived={highFived}
+              // high fives are for fresh check-ins: today and yesterday
+              cheerable={date >= addDays(today, -1)}
+            />
           ))}
           {days.size > 3 && (
             <details className="group grid gap-6">
@@ -204,7 +224,17 @@ async function Friends() {
               </summary>
               <div className="mt-6 grid gap-6">
                 {[...days].slice(3).map(([date, items]) => (
-                  <FeedDay key={date} label={dayLabel(date)} items={items} locale={locale} timeZone={timeZone} />
+                  <FeedDay
+              key={date}
+              date={date}
+              label={dayLabel(date)}
+              items={items}
+              locale={locale}
+              timeZone={timeZone}
+              highFived={highFived}
+              // high fives are for fresh check-ins: today and yesterday
+              cheerable={date >= addDays(today, -1)}
+            />
                 ))}
               </div>
             </details>
@@ -215,8 +245,24 @@ async function Friends() {
   )
 }
 
-/** One day of the feed: one row per person, their check-ins as a quiet line. */
-function FeedDay({ label, items, locale, timeZone }: { label: string; items: FeedItem[]; locale: Locale; timeZone: string }) {
+/** One day of the feed: one row per person, their check-ins as a quiet line, and a high five. */
+function FeedDay({
+  date,
+  label,
+  items,
+  locale,
+  timeZone,
+  highFived,
+  cheerable,
+}: {
+  date: string
+  label: string
+  items: FeedItem[]
+  locale: Locale
+  timeZone: string
+  highFived: Set<string>
+  cheerable: boolean
+}) {
   const byPerson = new Map<string, FeedItem[]>()
   for (const item of items) byPerson.set(item.person.username, [...(byPerson.get(item.person.username) ?? []), item])
   const time = (iso: string) =>
@@ -253,6 +299,9 @@ function FeedDay({ label, items, locale, timeZone }: { label: string; items: Fee
                     ))}
                   </ul>
                 </div>
+                {cheerable && (
+                  <HighFiveButton toId={person.id} name={person.name} day={date} given={highFived.has(`${person.id}:${date}`)} />
+                )}
               </li>
             )
           })}
