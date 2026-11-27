@@ -20,7 +20,8 @@ export const config = {
     // 1. URLs without a language prefix → redirect to /en or /ru
     //    (files from public/ pass through: images, and .txt / .html / .xml for search-console
     //    ownership files and the IndexNow key — a redirect would make them fail)
-    "/((?!en(?:/|$)|ru(?:/|$)|auth/|api/|robots\\.txt|sitemap\\.xml|_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|html|xml)$).*)",
+    //    (and the platform's own /_vercel/* — analytics scripts — is never ours to touch)
+    "/((?!en(?:/|$)|ru(?:/|$)|auth/|api/|_vercel/|robots\\.txt|sitemap\\.xml|_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|html|xml)$).*)",
     // 2. app pages: auth guard + session refresh (keep in sync with PROTECTED_PREFIXES)
     "/(en|ru)/(dashboard|progress|settings|archive|habits|friends|me|wrapped)/:path*",
     // 3. public pages only for signed-in visitors (session refresh, /login → /dashboard).
