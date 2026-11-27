@@ -419,6 +419,15 @@ export const en = {
     nudges: (names: string[]) => (names.length === 1 ? `${names[0]} is cheering you on` : `${names[0]} and ${names.length - 1} more are cheering you on`),
     received: (n: number) => `${n} ${p(n, "high five", "high fives")} received`,
   },
+  shared: {
+    title: "Shared streaks",
+    subtitle: "Days you and a friend both checked in something. For people who follow each other.",
+    days: (n: number) => `${n} ${p(n, "day", "days")} together`,
+    both: "You both checked in today",
+    yourTurn: "Your turn today",
+    waiting: (name: string) => `Waiting for ${name}`,
+    start: "Check in on the same day to start one",
+  },
   friends: {
     title: "Friends",
     subtitle: "Check-ins from people you follow, last 7 days.",

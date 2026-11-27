@@ -41,8 +41,9 @@ test("a high five in the feed reaches the friend, and can be taken back", async 
     await expect(five()).toHaveAttribute("aria-pressed", "true")
 
     // the friend sees who — even though the sender's profile is private
+    // (the newest name comes first; real people may have sent high fives too)
     await demo.goto("/dashboard")
-    await expect(demo.getByText("E2E Tester gave you a high five")).toBeVisible()
+    await expect(demo.getByText(/^E2E Tester( and .+)? gave you a high five$/)).toBeVisible()
 
     // tap again: taken back
     const undone = serverAction(tester)
@@ -51,8 +52,16 @@ test("a high five in the feed reaches the friend, and can be taken back", async 
     await tester.reload()
     await expect(five()).toHaveAttribute("aria-pressed", "false")
     await demo.reload()
-    await expect(demo.getByText("E2E Tester gave you a high five")).toHaveCount(0)
+    await expect(demo.getByText(/^E2E Tester( and .+)? gave you a high five$/)).toHaveCount(0)
   } finally {
+    // never leave a high five behind, even if a step above failed
+    await tester.goto("/friends")
+    const left = tester.getByRole("button", { name: "High five to Demo User", pressed: true })
+    if (await left.count()) {
+      const undone = serverAction(tester)
+      await left.first().click()
+      await undone
+    }
     await tester.goto("/u/demo")
     const unfollowed = serverAction(tester)
     await tester.getByRole("button", { name: "Following" }).click()

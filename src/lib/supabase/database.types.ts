@@ -482,6 +482,15 @@ export type Database = {
         Args: { p_code: string }
         Returns: { inviter_name: string; inviter_username: string; inviter_avatar: string | null; habit_name: string | null; habit_color: string | null; habit_checkins_30: number | null }[]
       }
+      shared_streaks: {
+        Args: { p_today: string }
+        Returns: {
+          friend_id: string
+          friend_today: boolean
+          me_today: boolean
+          streak: number
+        }[]
+      }
       toggle_habit_step: {
         Args: { p_step: string; p_date: string; p_done: boolean }
         Returns: string

@@ -341,10 +341,11 @@ export async function getFriendsData() {
     .eq("follower_id", user.id)
     .order("created_at", { ascending: false })
   const ids = (follows ?? []).map((f) => f.following_id)
-  if (ids.length === 0) return { people: [], feed: [] as FeedItem[], today, timeZone, highFived: new Set<string>(), nudgedToday: new Set<string>() }
+  if (ids.length === 0)
+    return { people: [], feed: [] as FeedItem[], today, timeZone, highFived: new Set<string>(), nudgedToday: new Set<string>(), sharedStreaks: [] }
 
   // RLS hides profiles that went private, so they simply drop out
-  const [{ data: profiles }, { data: logs }, { data: sent }] = await Promise.all([
+  const [{ data: profiles }, { data: logs }, { data: sent }, { data: shared }] = await Promise.all([
     supabase.from("profiles").select("id, username, display_name, avatar_url, status").in("id", ids),
     supabase
       .from("habit_logs")
@@ -354,6 +355,8 @@ export async function getFriendsData() {
       .order("created_at", { ascending: false })
       .limit(100),
     supabase.from("cheers").select("to_id, kind, day").eq("from_id", user.id).gte("day", addDays(today, -6)),
+    // shared streaks with people who follow back (growth plan 3.2)
+    supabase.rpc("shared_streaks", { p_today: today }),
   ])
 
   const byId = new Map((profiles ?? []).map((p) => [p.id, p]))
@@ -375,8 +378,16 @@ export async function getFriendsData() {
     ]
   })
   const highFived = new Set((sent ?? []).filter((c) => c.kind === "high_five").map((c) => `${c.to_id}:${c.day}`))
+  // up to five, longest first; only people still in the list (public, followed)
+  const sharedStreaks = (shared ?? [])
+    .flatMap((r) => {
+      const person = people.find((p) => p.id === r.friend_id)
+      return person ? [{ person, streak: r.streak, meToday: r.me_today, friendToday: r.friend_today }] : []
+    })
+    .sort((a, b) => b.streak - a.streak)
+    .slice(0, 5)
   const nudgedToday = new Set((sent ?? []).filter((c) => c.kind === "nudge" && c.day === today).map((c) => c.to_id))
-  return { people, feed, today, timeZone, highFived, nudgedToday }
+  return { people, feed, today, timeZone, highFived, nudgedToday, sharedStreaks }
 }
 
 /** Who gave the user a high five or a nudge in the last day and a half (names, newest first, no repeats). */

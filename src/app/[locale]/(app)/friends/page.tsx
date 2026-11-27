@@ -8,6 +8,7 @@ import { FriendsTabs } from "@/components/friends-tabs"
 import { HighFiveButton } from "@/components/high-five-button"
 import { IconTile } from "@/components/icon-tile"
 import { PersonMenu } from "@/components/person-menu"
+import { SharedStreaksCard } from "@/components/shared-streaks-card"
 import { InviteDialog } from "@/components/invite-dialog"
 import { Link } from "@/components/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -121,7 +122,7 @@ async function SearchResults({ searchParams }: { searchParams: Promise<{ q?: str
 }
 
 async function Friends() {
-  const [{ people, feed, today, timeZone, highFived, nudgedToday }, { locale, t }, pacts, myHabits, challenges] = await Promise.all([
+  const [{ people, feed, today, timeZone, highFived, nudgedToday, sharedStreaks }, { locale, t }, pacts, myHabits, challenges] = await Promise.all([
     getFriendsData(),
     getT(),
     getPacts(),
@@ -166,6 +167,7 @@ async function Friends() {
 
   return (
     <div className="grid gap-6">
+      <SharedStreaksCard rows={sharedStreaks} locale={locale} />
       {challengesCard}
       <Card>
         <CardHeader>
