@@ -7,3 +7,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## Streakly: design rules (read before any UI change)
+
+The UI must never look AI-generated or template-made. Follow
+`docs/design/PRINCIPLES.md` (tokens, type, layout, motion) and
+`docs/design/VOICE.md` (copy in EN/RU), and run `npm run lint:design`.

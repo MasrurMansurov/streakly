@@ -87,7 +87,7 @@ async function Invite({ params }: Props) {
             <span className="block font-medium break-words">{invite.habit_name}</span>
             {invite.habit_checkins_30 !== null && (
               <span className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                <FlameIcon className="size-3.5 text-orange-500" aria-hidden /> {t.invite.recent(invite.habit_checkins_30)}
+                <FlameIcon className="size-3.5 text-streak" aria-hidden /> {t.invite.recent(invite.habit_checkins_30)}
               </span>
             )}
           </span>

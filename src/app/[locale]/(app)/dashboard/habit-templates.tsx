@@ -58,7 +58,7 @@ export function HabitTemplates() {
               "group flex items-center gap-3 rounded-xl border bg-card p-3 text-left transition outline-none",
               "hover:border-foreground/20 hover:shadow-sm focus-visible:ring-3 focus-visible:ring-ring/50",
               "disabled:cursor-default",
-              done && "border-emerald-500/40 bg-emerald-500/5"
+              done && "border-done/40 bg-done-soft"
             )}
           >
             <IconTile icon={icon} tone={TONE[color]} />
@@ -71,7 +71,7 @@ export function HabitTemplates() {
             <span
               className={cn(
                 "flex size-7 shrink-0 items-center justify-center rounded-full border transition",
-                done ? "border-transparent bg-emerald-500 text-white" : "text-muted-foreground group-hover:bg-muted"
+                done ? "border-transparent bg-done text-white dark:text-background" : "text-muted-foreground group-hover:bg-muted"
               )}
             >
               {done ? <CheckIcon className="size-4" /> : <PlusIcon className="size-4" />}

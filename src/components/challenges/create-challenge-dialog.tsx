@@ -146,7 +146,7 @@ export function CreateChallengeDialog({
                         onClick={() => toggle(p.id)}
                         className={cn(
                           "flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition",
-                          on ? "border-emerald-500/50 bg-emerald-500/5" : "hover:bg-muted"
+                          on ? "border-done/50 bg-done-soft" : "hover:bg-muted"
                         )}
                       >
                         <Avatar className="size-8">
@@ -160,7 +160,7 @@ export function CreateChallengeDialog({
                         <span
                           className={cn(
                             "flex size-5 items-center justify-center rounded-full border",
-                            on && "border-transparent bg-emerald-500 text-white"
+                            on && "border-transparent bg-done text-white dark:text-background"
                           )}
                         >
                           {on && <CheckIcon className="size-3.5" strokeWidth={3} />}

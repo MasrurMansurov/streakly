@@ -74,7 +74,7 @@ export function ArchivedCheckIn({ habitId, color, today, createdOn, done }: Prop
                 onClick={() => set(date, !isDone)}
                 className="group flex flex-col items-center gap-1 disabled:opacity-40"
               >
-                <span className="text-[10px] text-muted-foreground uppercase">{short}</span>
+                <span className="text-[11px] text-muted-foreground">{short}</span>
                 <span
                   className={cn(
                     "flex h-6 w-full items-center justify-center rounded-md transition group-enabled:group-hover:opacity-80",

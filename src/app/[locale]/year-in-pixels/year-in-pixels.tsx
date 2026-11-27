@@ -133,7 +133,7 @@ export function YearInPixels({ initialYear }: { initialYear: number }) {
                     <th
                       key={i}
                       scope="col"
-                      className="font-medium text-zinc-500 uppercase"
+                      className="font-medium text-zinc-500"
                     >
                       {m}
                     </th>

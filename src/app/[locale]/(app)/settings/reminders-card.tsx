@@ -268,7 +268,7 @@ export function RemindersCard({ initial }: { initial: ReminderSettings }) {
         {enabled && !blocked && (
           <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
             {deviceSubscribed ? (
-              <span className="inline-flex items-center gap-1.5 text-sm text-emerald-700 dark:text-emerald-400">
+              <span className="inline-flex items-center gap-1.5 text-sm text-primary">
                 <CheckCircle2Icon className="size-4" /> {t.reminders.thisBrowser}
               </span>
             ) : (

@@ -142,7 +142,7 @@ async function HabitDetail({ params }: Props) {
 
       {target >= 7 && comebacks.length > 0 && (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
-          <RotateCcwIcon className="size-4 text-teal-700 dark:text-teal-400" aria-hidden />
+          <RotateCcwIcon className="size-4 text-primary" aria-hidden />
           {t.habitPage.comebacks(comebacks.length, quickComebacks)}
         </p>
       )}
@@ -273,7 +273,7 @@ function StrengthCard({
             <div className="flex h-16 items-end gap-1.5" role="img" aria-label={`${t.strength.weeks}: ${weeks.map((w) => w.score).join(", ")}`}>
               {weeks.map((w) => (
                 <div key={w.week} className="flex h-full flex-1 flex-col justify-end" title={`${formatDay(locale, w.week)}: ${w.score}/5`}>
-                  <div className="rounded-sm bg-emerald-500/80" style={{ height: `${(w.score / 5) * 100}%` }} />
+                  <div className="rounded-sm bg-done/80" style={{ height: `${(w.score / 5) * 100}%` }} />
                 </div>
               ))}
             </div>

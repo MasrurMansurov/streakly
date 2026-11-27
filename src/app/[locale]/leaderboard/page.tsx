@@ -24,8 +24,6 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t.leaderboard.title, description: t.leaderboard.subtitle, ...indexableMetadata(locale, "/leaderboard") }
 }
 
-const PODIUM = ["text-amber-500", "text-zinc-400", "text-orange-700 dark:text-orange-400"]
-
 export default async function LeaderboardPage() {
   const [{ t }, rows] = await Promise.all([getT(), getLeaderboard()])
   return (
@@ -96,7 +94,8 @@ function Row({ row, place, t }: { row: LeaderboardRow; place: number; t: Diction
   return (
     <tr className="transition-colors hover:bg-muted/40">
       <td className="px-3 py-2.5 tabular-nums">
-        {place <= 3 ? <TrophyIcon className={cn("size-4", PODIUM[place - 1])} aria-label={`#${place}`} /> : place}
+        {/* the place is a number in the brand face; only the leader gets a mark */}
+        {place === 1 ? <TrophyIcon className="size-4 text-streak" aria-label="#1" /> : <span className="font-brand tabular-nums">{place}</span>}
       </td>
       <td className="px-3 py-2.5">
         <Link href={`/u/${row.username}`} className="flex min-w-0 items-center gap-2.5">

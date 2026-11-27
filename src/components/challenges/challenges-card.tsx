@@ -152,7 +152,7 @@ function ChallengeItem({
               return (
                 <li key={m.id} className={cn("flex items-center gap-2.5 text-sm", m.status === "invited" && "opacity-60")}>
                   <span className="w-5 shrink-0 text-center text-xs text-muted-foreground tabular-nums">
-                    {m.place === 1 && c.phase !== "upcoming" ? <TrophyIcon className="mx-auto size-4 text-amber-500" aria-label="1" /> : m.place ?? ""}
+                    {m.place === 1 && c.phase !== "upcoming" ? <TrophyIcon className="mx-auto size-4 text-streak" aria-label="1" /> : m.place ?? ""}
                   </span>
                   <Avatar className="size-7">
                     {m.avatarUrl && <AvatarImage src={m.avatarUrl} alt="" />}
@@ -160,12 +160,12 @@ function ChallengeItem({
                   </Avatar>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <span className={cn("truncate font-medium", m.isMe && "text-emerald-700 dark:text-emerald-400")}>
+                      <span className={cn("truncate font-medium", m.isMe && "text-primary")}>
                         {m.name}
                         {m.isMe && <span className="font-normal text-muted-foreground"> ({x.you})</span>}
                       </span>
                       {m.doneToday && c.phase === "active" && (
-                        <span title={x.doneToday} className="flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+                        <span title={x.doneToday} className="flex size-4 shrink-0 items-center justify-center rounded-full bg-done text-white dark:text-background">
                           <CheckIcon className="size-3" strokeWidth={3} aria-label={x.doneToday} />
                         </span>
                       )}

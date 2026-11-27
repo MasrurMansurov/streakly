@@ -115,7 +115,7 @@ function ActivePact({ pact, mine, today }: { pact: Pact; mine: Set<ISODate> | un
   return (
     <>
       <div className="flex items-baseline gap-2">
-        <FlameIcon className={cn("size-5 self-center", s.current > 0 ? "text-orange-500" : "text-muted-foreground/50")} />
+        <FlameIcon className={cn("size-5 self-center", s.current > 0 ? "text-streak" : "text-muted-foreground/50")} />
         <span className="font-heading text-2xl font-semibold">{s.current}</span>
         <span className="text-sm text-muted-foreground">{t.pacts.duoUnit(s.current)}</span>
         <span className="ml-auto text-xs text-muted-foreground">{t.pacts.best(s.best)}</span>
@@ -124,7 +124,7 @@ function ActivePact({ pact, mine, today }: { pact: Pact; mine: Set<ISODate> | un
         {rows.map((r) => (
           <li key={r.who} className="flex items-center gap-2">
             {r.done ? (
-              <span className="flex size-4 items-center justify-center rounded-full bg-emerald-500 text-white">
+              <span className="flex size-4 items-center justify-center rounded-full bg-done text-white dark:text-background">
                 <CheckIcon className="size-3" strokeWidth={3} />
               </span>
             ) : (
@@ -132,7 +132,7 @@ function ActivePact({ pact, mine, today }: { pact: Pact; mine: Set<ISODate> | un
             )}
             <span className="font-medium">{r.who}</span>
             <span className="min-w-0 truncate text-muted-foreground">· {r.habit}</span>
-            <span className={cn("ml-auto shrink-0 text-xs", r.done ? "text-emerald-700 dark:text-emerald-400" : "text-muted-foreground")}>
+            <span className={cn("ml-auto shrink-0 text-xs", r.done ? "text-primary" : "text-muted-foreground")}>
               {r.done ? t.pacts.doneToday : t.pacts.notYet}
             </span>
           </li>
@@ -142,7 +142,7 @@ function ActivePact({ pact, mine, today }: { pact: Pact; mine: Set<ISODate> | un
       <p
         className={cn(
           "rounded-md px-2.5 py-1.5 text-xs",
-          s.meToday && s.partnerToday ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-muted text-muted-foreground"
+          s.meToday && s.partnerToday ? "bg-done-soft text-primary" : "bg-muted text-muted-foreground"
         )}
       >
         {s.meToday && s.partnerToday

@@ -34,7 +34,7 @@ export async function LegalPage({ kind }: { kind: LegalKind }) {
             <section key={s.heading} className="grid gap-3">
               <h2 className="text-lg font-semibold">{s.heading}</h2>
               {s.items && (
-                <ul className="grid list-disc gap-2 pl-5 leading-relaxed marker:text-emerald-500">
+                <ul className="grid list-disc gap-2 pl-5 leading-relaxed marker:text-done">
                   {s.items.map((item) => (
                     <li key={item}>{item}</li>
                   ))}
@@ -49,7 +49,7 @@ export async function LegalPage({ kind }: { kind: LegalKind }) {
           ))}
           <p className="rounded-xl border bg-card p-4 text-sm">
             {t.legal.contact}{" "}
-            <a href={CONTACT_URL} target="_blank" rel="noreferrer" className="font-medium text-emerald-700 underline underline-offset-4 dark:text-emerald-400">
+            <a href={CONTACT_URL} target="_blank" rel="noreferrer" className="font-medium text-primary underline underline-offset-4">
               GitHub Issues
             </a>
           </p>

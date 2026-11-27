@@ -26,7 +26,7 @@ export default async function DemoPage() {
           <ul className="grid gap-3">
             {t.demoPage.points.map((point) => (
               <li key={point} className="flex gap-3">
-                <CheckIcon className="mt-0.5 size-5 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
+                <CheckIcon className="mt-0.5 size-5 shrink-0 text-done" aria-hidden />
                 <span>{point}</span>
               </li>
             ))}

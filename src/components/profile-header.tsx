@@ -117,7 +117,7 @@ export function ProfileHeader({ look, subtitle, labels, action, compact }: Props
                   <span className={cn("size-2 shrink-0 rounded-full", habitColor(look.featured.color).dot)} />
                   <span className="truncate font-medium">{look.featured.name}</span>
                   <span className="inline-flex shrink-0 items-center gap-0.5 text-muted-foreground">
-                    <FlameIcon className="size-3.5 text-orange-500" /> {look.featured.streak}
+                    <FlameIcon className="size-3.5 text-streak" /> {look.featured.streak}
                   </span>
                 </span>
               )}

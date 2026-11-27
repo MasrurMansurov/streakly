@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "lint:design": "node scripts/lint-design.mjs",
     "test": "vitest run",
     "typecheck": "next typegen && tsc --noEmit",
     "e2e": "playwright test"

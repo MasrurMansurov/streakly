@@ -8,9 +8,9 @@ type Tone = "neutral" | "success" | "warning" | "info"
 /** Color lives in the icon only — the surface stays neutral (no tinted boxes, no colored borders). */
 const ICON_TONE: Record<Tone, string> = {
   neutral: "text-muted-foreground",
-  success: "text-emerald-600 dark:text-emerald-400",
-  warning: "text-amber-600 dark:text-amber-400",
-  info: "text-sky-600 dark:text-sky-400",
+  success: "text-done",
+  warning: "text-warning",
+  info: "text-info",
 }
 
 /**

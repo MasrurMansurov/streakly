@@ -116,7 +116,7 @@ export default async function GuidePage({ params }: Props) {
             <ul className="grid gap-3">
               {g.pitfalls.map((p) => (
                 <li key={p.t} className="flex gap-3">
-                  <LightbulbIcon className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+                  <LightbulbIcon className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden />
                   <span>
                     <span className="font-medium">{p.t}.</span> <span className="text-muted-foreground">{p.d}</span>
                   </span>
