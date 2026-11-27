@@ -11,6 +11,7 @@ import { locales } from "@/i18n"
 import { getActionLocale, getActionT } from "@/i18n/server"
 import type { ActionResult } from "@/lib/validation"
 import { guestBlocked } from "@/lib/guest"
+import { dbFailure } from "@/lib/action-error"
 
 const settingsSchema = z.object({
   enabled: z.boolean(),
@@ -53,7 +54,7 @@ export async function saveReminderSettings(input: z.infer<typeof settingsSchema>
     locale: parsed.data.locale ?? (await getActionLocale()),
     updated_at: new Date().toISOString(),
   })
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: dbFailure((await getActionT()).t, error) }
 
   refresh()
   return { ok: true }
@@ -86,7 +87,7 @@ export async function turnOnReminders(input: z.infer<typeof turnOnSchema>): Prom
     : await supabase
         .from("reminder_settings")
         .insert({ user_id: user.id, enabled: true, timezone: parsed.data.timezone, locale })
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: dbFailure((await getActionT()).t, error) }
   refresh()
   return { ok: true }
 }
@@ -106,7 +107,7 @@ export async function syncTimezone(timezone: string): Promise<ActionResult> {
     .update({ timezone, updated_at: new Date().toISOString() })
     .eq("user_id", user.id)
     .neq("timezone", timezone)
-  return error ? { ok: false, error: error.message } : { ok: true }
+  return error ? { ok: false, error: dbFailure((await getActionT()).t, error) } : { ok: true }
 }
 
 /**
@@ -128,14 +129,14 @@ export async function savePushSubscription(input: z.infer<typeof subscriptionSch
     p_auth: parsed.data.auth,
     p_user_agent: parsed.data.userAgent,
   })
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: dbFailure((await getActionT()).t, error) }
   return { ok: true }
 }
 
 export async function removePushSubscription(endpoint: string): Promise<ActionResult> {
   const { user, supabase } = await authed()
   const { error } = await supabase.from("push_subscriptions").delete().eq("endpoint", endpoint).eq("user_id", user.id)
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: dbFailure((await getActionT()).t, error) }
   return { ok: true }
 }
 

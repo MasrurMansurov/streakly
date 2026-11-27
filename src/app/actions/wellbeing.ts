@@ -8,6 +8,7 @@ import { getCurrentUser, getToday } from "@/lib/data"
 import { weekStart } from "@/lib/streaks"
 import { createClient } from "@/lib/supabase/server"
 import type { ActionResult } from "@/lib/validation"
+import { dbFailure } from "@/lib/action-error"
 
 const level = z.number().int().min(1).max(5)
 
@@ -27,7 +28,7 @@ export async function saveFeeling(input: { mood?: number; energy?: number }): Pr
   const { error } = await supabase
     .from("daily_moods")
     .upsert({ user_id: user.id, day: today, ...parsed.data, updated_at: new Date().toISOString() }, { onConflict: "user_id,day" })
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: dbFailure(t, error) }
   refresh()
   return { ok: true, message: t.feeling.saved }
 }
@@ -40,7 +41,7 @@ export async function rateStrength(habitId: string, score: number): Promise<Acti
   const { error } = await supabase
     .from("habit_strength")
     .upsert({ habit_id: habitId, user_id: user.id, week_start: weekStart(today), score }, { onConflict: "habit_id,week_start" })
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: dbFailure(t, error) }
   refresh()
   return { ok: true, message: t.strength.thanks }
 }
@@ -55,7 +56,7 @@ export async function setGraduated(habitId: string, graduated: boolean): Promise
     .update({ graduated_at: graduated ? new Date().toISOString() : null })
     .eq("id", habitId)
     .eq("user_id", user.id)
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: dbFailure(t, error) }
   const { data: profile } = await supabase.from("profiles").select("username").eq("id", user.id).single()
   if (profile) updateTag(`profile:${profile.username}`)
   refresh()

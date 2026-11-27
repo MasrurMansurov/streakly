@@ -9,6 +9,7 @@ import { addDays } from "@/lib/dates"
 import { createClient } from "@/lib/supabase/server"
 import type { ActionResult } from "@/lib/validation"
 import { guestBlocked } from "@/lib/guest"
+import { dbFailure } from "@/lib/action-error"
 
 const id = z.uuid()
 const createSchema = z.object({
@@ -70,7 +71,7 @@ export async function acceptChallenge(challengeId: string, habitId: string): Pro
     .eq("challenge_id", challengeId)
     .eq("user_id", user.id)
     .select("challenge_id")
-  if (error) return { ok: false, error: error.code === "42501" ? t.challenges.notAllowed : error.message }
+  if (error) return { ok: false, error: error.code === "42501" ? t.challenges.notAllowed : dbFailure(t, error) }
   if (!data?.length) return { ok: false, error: t.challenges.notFound }
   refresh()
   return { ok: true, message: t.challenges.joined }
@@ -85,7 +86,7 @@ export async function leaveChallenge(challengeId: string): Promise<ActionResult>
   const { error } = own
     ? await supabase.from("challenges").delete().eq("id", challengeId)
     : await supabase.from("challenge_members").delete().eq("challenge_id", challengeId).eq("user_id", user.id)
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: dbFailure(t, error) }
   refresh()
   return { ok: true }
 }

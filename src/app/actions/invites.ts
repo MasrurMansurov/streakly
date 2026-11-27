@@ -9,6 +9,7 @@ import { getCurrentUser } from "@/lib/data"
 import { INVITE_COOKIE, isInviteCode, newInviteCode } from "@/lib/invite"
 import { createClient } from "@/lib/supabase/server"
 import { guestBlocked } from "@/lib/guest"
+import { dbFailure } from "@/lib/action-error"
 
 /** This user's invite link code, optionally for one habit (reused if it exists). */
 export async function getInviteCode(habitId?: string | null): Promise<{ ok: true; code: string } | { ok: false; error: string }> {
@@ -32,7 +33,7 @@ export async function getInviteCode(habitId?: string | null): Promise<{ ok: true
     const code = newInviteCode()
     const { error } = await supabase.from("invites").insert({ code, habit_id: habitId ?? null })
     if (!error) return { ok: true, code }
-    if (error.code !== "23505") return { ok: false, error: error.message }
+    if (error.code !== "23505") return { ok: false, error: dbFailure(t, error) }
     // 23505 on (inviter, habit): created meanwhile in another tab → read it; else a code clash → retry
     const existing = await find()
     if (existing) return { ok: true, code: existing }

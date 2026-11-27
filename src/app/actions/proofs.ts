@@ -8,6 +8,7 @@ import { getCurrentUser, getToday } from "@/lib/data"
 import { createClient } from "@/lib/supabase/server"
 import type { ActionResult } from "@/lib/validation"
 import { guestBlocked } from "@/lib/guest"
+import { dbFailure } from "@/lib/action-error"
 
 const MAX_BYTES = 3 * 1024 * 1024
 const TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" }
@@ -48,7 +49,7 @@ export async function saveProof(form: FormData): Promise<ActionResult> {
     : await supabase.from("pact_proofs").insert({ pact_id: pactId, day: today, ...row })
   if (error) {
     if (file && photoPath) await supabase.storage.from("proofs").remove([photoPath])
-    return { ok: false, error: error.code === "42501" ? t.proof.notCheckedIn : error.message }
+    return { ok: false, error: error.code === "42501" ? t.proof.notCheckedIn : dbFailure(t, error) }
   }
   // replaced photo → remove the old file
   if (file && existing?.photo_path) await supabase.storage.from("proofs").remove([existing.photo_path])

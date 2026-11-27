@@ -8,6 +8,7 @@ import { getCurrentUser } from "@/lib/data"
 import { createClient } from "@/lib/supabase/server"
 import type { ActionResult } from "@/lib/validation"
 import { guestBlocked } from "@/lib/guest"
+import { dbFailure } from "@/lib/action-error"
 
 export async function setFollowing(profileId: string, follow: boolean): Promise<ActionResult> {
   const blocked = await guestBlocked()
@@ -26,7 +27,7 @@ export async function setFollowing(profileId: string, follow: boolean): Promise<
   // 23505: already following — fine
   if (error && error.code !== "23505") {
     // RLS rejects following a private profile
-    return { ok: false, error: error.code === "42501" ? t.friends.privateProfile : error.message }
+    return { ok: false, error: error.code === "42501" ? t.friends.privateProfile : dbFailure(t, error) }
   }
   refresh()
   return { ok: true }

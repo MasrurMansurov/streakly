@@ -12,6 +12,7 @@ import { validationMessage } from "@/i18n"
 import { getActionT } from "@/i18n/server"
 import { profileSchema, type ActionResult, type ProfileInput } from "@/lib/validation"
 import { guestBlocked } from "@/lib/guest"
+import { dbFailure } from "@/lib/action-error"
 
 export async function updateProfile(input: ProfileInput): Promise<ActionResult> {
   const { t } = await getActionT()
@@ -38,7 +39,7 @@ export async function updateProfile(input: ProfileInput): Promise<ActionResult> 
 
   if (error) {
     if (error.code === "23505") return { ok: false, error: t.settings.usernameTaken }
-    return { ok: false, error: error.message }
+    return { ok: false, error: dbFailure(t, error) }
   }
 
   if (before) updateTag(`profile:${before.username}`)
@@ -71,7 +72,7 @@ export async function updateAvatar(url: string | null): Promise<ActionResult> {
     .eq("id", user.id)
     .select("username")
     .single()
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: dbFailure(t, error) }
 
   // remove older files from the user's folder
   const keep = url?.slice(prefix.length)
@@ -139,7 +140,11 @@ export async function updateAppearance(input: AppearanceInput): Promise<ActionRe
     .eq("id", user.id)
     .select("username")
     .single()
-  if (error) return { ok: false, error: error.message }
+  if (error) {
+    // never show a raw database message; the details go to the server log
+    console.error("updateAppearance failed", error.code, error.message)
+    return { ok: false, error: t.common.somethingWrong }
+  }
   updateTag(`profile:${profile.username}`)
   refresh()
   return { ok: true, message: t.appearance.saved }
@@ -163,7 +168,7 @@ export async function updateBanner(url: string | null): Promise<ActionResult> {
     .eq("id", user.id)
     .select("username")
     .single()
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: dbFailure(t, error) }
 
   const keep = url?.slice(prefix.length)
   const { data: files } = await supabase.storage.from("avatars").list(user.id)

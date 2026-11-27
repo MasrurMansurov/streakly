@@ -13,6 +13,7 @@ import { bridgesFor, countInWeek, habitStreak, weekStart } from "@/lib/streaks"
 import { createClient } from "@/lib/supabase/server"
 import type { ActionResult } from "@/lib/validation"
 import { guestBlocked } from "@/lib/guest"
+import { dbFailure } from "@/lib/action-error"
 
 /** Is the AI letter available on this deployment (an API key is configured)? */
 export async function letterEnabled() {
@@ -95,7 +96,7 @@ export async function writeWeeklyLetter(): Promise<ActionResult> {
   }
 
   const { error } = await supabase.from("weekly_letters").insert({ week_start: week, locale, body: body.slice(0, 4000) })
-  if (error && error.code !== "23505") return { ok: false, error: error.message }
+  if (error && error.code !== "23505") return { ok: false, error: dbFailure(t, error) }
   refresh()
   return { ok: true }
 }

@@ -58,6 +58,8 @@ test("one main navigation: three sections on desktop, four tabs on phones", asyn
 test("the first Tab reaches the skip link, which jumps to the page", async ({ page, isMobile }) => {
   test.skip(isMobile, "keyboard")
   await page.goto("/en/templates")
+  // under a busy test run the first key can land before the page is ready
+  await page.waitForLoadState("load")
   await page.keyboard.press("Tab")
   const skip = page.getByRole("link", { name: "Skip to content" })
   await expect(skip).toBeFocused()

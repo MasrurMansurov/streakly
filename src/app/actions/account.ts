@@ -6,6 +6,7 @@ import { getActionT } from "@/i18n/server"
 import { toCsv } from "@/lib/csv"
 import { getCurrentUser } from "@/lib/data"
 import { createClient } from "@/lib/supabase/server"
+import { dbFailure } from "@/lib/action-error"
 
 const PAGE = 1000
 
@@ -90,7 +91,7 @@ export async function deleteMyAccount(confirm: string): Promise<{ ok: true } | {
   if (photos.length) await supabase.storage.from("proofs").remove(photos)
 
   const { error } = await supabase.rpc("delete_my_account")
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: dbFailure(t, error) }
 
   await supabase.auth.signOut({ scope: "local" }) // clears the session cookies
   updateTag(`profile:${profile.username}`)

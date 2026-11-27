@@ -6,6 +6,7 @@ import { pwnedCount } from "@/lib/pwned"
 import { createClient } from "@/lib/supabase/server"
 import { getActionLocale, getActionT, localeRedirect } from "@/i18n/server"
 import { authSchema, type ActionResult, type AuthInput } from "@/lib/validation"
+import { dbFailure } from "@/lib/action-error"
 
 export async function signIn(input: AuthInput): Promise<ActionResult> {
   const parsed = authSchema.safeParse(input)
@@ -14,7 +15,7 @@ export async function signIn(input: AuthInput): Promise<ActionResult> {
 
   const supabase = await createClient()
   const { error } = await supabase.auth.signInWithPassword(parsed.data)
-  if (error) return { ok: false, error: error.code === "invalid_credentials" ? t.auth.invalidCredentials : error.message }
+  if (error) return { ok: false, error: error.code === "invalid_credentials" ? t.auth.invalidCredentials : dbFailure(t, error) }
 
   return localeRedirect("/dashboard")
 }
@@ -32,7 +33,7 @@ export async function signUp(input: AuthInput): Promise<ActionResult> {
     ...parsed.data,
     options: { emailRedirectTo: `${origin}/auth/callback?next=/${await getActionLocale()}/dashboard` },
   })
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: dbFailure(t, error) }
 
   // "Confirm email" disabled in Supabase → we already have a session
   if (data.session) return localeRedirect("/dashboard")

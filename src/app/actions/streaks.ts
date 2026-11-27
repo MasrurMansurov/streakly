@@ -9,6 +9,7 @@ import { addDays, isISODate } from "@/lib/dates"
 import { PAUSE_REASONS, type PauseReason } from "@/lib/pause"
 import { createClient } from "@/lib/supabase/server"
 import type { ActionResult } from "@/lib/validation"
+import { dbFailure } from "@/lib/action-error"
 
 async function setup() {
   const [{ t }, user, supabase] = await Promise.all([getActionT(), getCurrentUser(), createClient()])
@@ -31,7 +32,7 @@ export async function repairStreak(habitId: string, day: string): Promise<Action
   const { error } = await supabase.from("habit_repairs").insert({ habit_id: habitId, day })
   if (error) {
     if (error.code === "23505") return { ok: false, error: t.repair.used }
-    return { ok: false, error: error.code === "42501" ? t.repair.tooOld : error.message }
+    return { ok: false, error: error.code === "42501" ? t.repair.tooOld : dbFailure(t, error) }
   }
   await invalidateProfile(supabase, user.id)
   refresh()
@@ -70,7 +71,7 @@ export async function startPause(endDate: string, reason: PauseReason = "vacatio
   if (active?.length) return { ok: false, error: t.vacation.alreadyOn }
 
   const { error } = await supabase.from("pauses").insert({ start_date: today, end_date: endDate, reason })
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: dbFailure(t, error) }
   await invalidateProfile(supabase, user.id)
   refresh()
   return { ok: true, message: t.vacation.started[reason] }
@@ -89,7 +90,7 @@ export async function endPause(id: string): Promise<ActionResult> {
     pause.start_date >= today
       ? await supabase.from("pauses").delete().eq("id", id)
       : await supabase.from("pauses").update({ end_date: addDays(today, -1) }).eq("id", id)
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: dbFailure(t, error) }
   await invalidateProfile(supabase, user.id)
   refresh()
   return { ok: true, message: t.vacation.ended }

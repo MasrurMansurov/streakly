@@ -12,6 +12,7 @@ import { getActionT } from "@/i18n/server"
 import { nudgePactPartner } from "@/lib/pact-nudge"
 import { createClient } from "@/lib/supabase/server"
 import { habitSchema, type ActionResult, type HabitInput } from "@/lib/validation"
+import { dbFailure } from "@/lib/action-error"
 
 /** Every action re-checks the session itself — never trust the client. */
 async function authed() {
@@ -94,7 +95,7 @@ export async function createHabit(input: HabitInput): Promise<ActionResult> {
     })
     .select("id")
     .single()
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: dbFailure((await getActionT()).t, error) }
   if (parsed.data.remind_at) {
     const reminderError = await saveReminder(supabase, created.id, parsed.data.remind_at)
     if (reminderError) return { ok: false, error: reminderError.message }
@@ -126,7 +127,7 @@ export async function updateHabit(id: string, input: HabitInput): Promise<Action
       ...(parsed.data.is_private === undefined ? {} : { is_private: parsed.data.is_private }),
     })
     .eq("id", id)
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: dbFailure((await getActionT()).t, error) }
   const reminderError = await saveReminder(supabase, id, parsed.data.remind_at)
   if (reminderError) return { ok: false, error: reminderError.message }
   if (parsed.data.steps) {
@@ -145,7 +146,7 @@ export async function archiveHabit(id: string): Promise<ActionResult> {
     .from("habits")
     .update({ archived_at: new Date().toISOString() })
     .eq("id", id)
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: dbFailure((await getActionT()).t, error) }
 
   await invalidatePublicProfile(supabase, user.id)
   refresh()
@@ -155,7 +156,7 @@ export async function archiveHabit(id: string): Promise<ActionResult> {
 export async function deleteHabit(id: string): Promise<ActionResult> {
   const { user, supabase } = await authed()
   const { error } = await supabase.from("habits").delete().eq("id", id)
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: dbFailure((await getActionT()).t, error) }
 
   await invalidatePublicProfile(supabase, user.id)
   refresh()
@@ -189,7 +190,7 @@ export async function toggleHabitLog(habitId: string, date: string, done: boolea
   if (error?.code === "23505") {
     ;({ error } = await supabase.from("habit_logs").update({ is_mini: mini }).eq("habit_id", habitId).eq("log_date", date))
   }
-  if (error) return { ok: false, error: error.code === "22008" ? t.validation.tooOldDate : error.message }
+  if (error) return { ok: false, error: error.code === "22008" ? t.validation.tooOldDate : dbFailure(t, error) }
 
   await invalidatePublicProfile(supabase, user.id)
   if (done && date >= addDays(today, -1)) {
@@ -219,7 +220,7 @@ export async function toggleHabitStep(
 
   const { user, supabase } = await authed()
   const { data: state, error } = await supabase.rpc("toggle_habit_step", { p_step: stepId, p_date: date, p_done: done })
-  if (error) return { ok: false, error: error.code === "22008" ? t.validation.tooOldDate : error.message }
+  if (error) return { ok: false, error: error.code === "22008" ? t.validation.tooOldDate : dbFailure(t, error) }
 
   await invalidatePublicProfile(supabase, user.id)
   if (state !== "none" && date >= addDays(today, -1)) {
@@ -241,7 +242,7 @@ export async function reorderHabits(ids: string[]): Promise<ActionResult> {
     parsed.data.map((id, position) => supabase.from("habits").update({ position }).eq("id", id))
   )
   const failed = results.find((r) => r.error)
-  if (failed?.error) return { ok: false, error: failed.error.message }
+  if (failed?.error) return { ok: false, error: dbFailure((await getActionT()).t, failed.error) }
 
   await invalidatePublicProfile(supabase, user.id)
   refresh()
@@ -261,7 +262,7 @@ export async function restoreHabit(id: string): Promise<ActionResult> {
     .from("habits")
     .update({ archived_at: null, position: count ?? 0 })
     .eq("id", id)
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: dbFailure((await getActionT()).t, error) }
 
   await invalidatePublicProfile(supabase, user.id)
   refresh()
@@ -284,7 +285,7 @@ export async function saveNote(habitId: string, date: string, note: string): Pro
   if (error) {
     // 23503: the day isn't checked off (notes belong to a check-in)
     if (error.code === "23503") return { ok: false, error: t.notes.checkInFirst }
-    return { ok: false, error: error.message }
+    return { ok: false, error: dbFailure(t, error) }
   }
   refresh()
   return { ok: true, message: text ? t.notes.saved : t.notes.removed }

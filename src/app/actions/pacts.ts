@@ -8,6 +8,7 @@ import { getCurrentUser } from "@/lib/data"
 import { createClient } from "@/lib/supabase/server"
 import type { ActionResult } from "@/lib/validation"
 import { guestBlocked } from "@/lib/guest"
+import { dbFailure } from "@/lib/action-error"
 
 const id = z.uuid()
 
@@ -27,7 +28,7 @@ export async function invitePact(inviteeId: string, habitId: string): Promise<Ac
   const { error } = await supabase.from("pacts").insert({ invitee_id: inviteeId, inviter_habit_id: habitId })
   if (error) {
     if (error.code === "23505") return { ok: false, error: t.pacts.exists }
-    return { ok: false, error: error.code === "42501" ? t.pacts.notAllowed : error.message }
+    return { ok: false, error: error.code === "42501" ? t.pacts.notAllowed : dbFailure(t, error) }
   }
   refresh()
   return { ok: true, message: t.pacts.invited }
@@ -47,7 +48,7 @@ export async function acceptPact(pactId: string, habitId: string): Promise<Actio
     .eq("id", pactId)
     .eq("invitee_id", user.id)
     .select("id")
-  if (error) return { ok: false, error: error.code === "42501" ? t.pacts.notAllowed : error.message }
+  if (error) return { ok: false, error: error.code === "42501" ? t.pacts.notAllowed : dbFailure(t, error) }
   if (!data?.length) return { ok: false, error: t.pacts.notFound }
   refresh()
   return { ok: true, message: t.pacts.accepted }
@@ -65,7 +66,7 @@ export async function leavePact(pactId: string): Promise<ActionResult> {
   if (files?.length) await supabase.storage.from("proofs").remove(files.map((f) => `${folder}/${f.name}`))
 
   const { error } = await supabase.from("pacts").delete().eq("id", pactId)
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: dbFailure(t, error) }
   refresh()
   return { ok: true }
 }
