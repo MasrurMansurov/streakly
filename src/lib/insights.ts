@@ -1,5 +1,6 @@
 import { addDays, weekdayMon0, type ISODate } from "./dates"
-import { benjaminiYekutieli, compareFeeling, permutationP, seededRandom, type DayFeeling, type Metric } from "./feeling-compare"
+import { compareFeeling, permutationP, type DayFeeling, type Metric } from "./feeling-compare"
+import { benjaminiYekutieli, seededRandom, shuffle, weekdayAdjustedDiff, withinWeekdayPermutationP, type WeekdayRow } from "./stats"
 import type { Target } from "./streaks"
 
 export type { DayFeeling } from "./feeling-compare"
@@ -48,50 +49,104 @@ function activeDays(h: InsightHabit, today: ISODate): ISODate[] {
   return out
 }
 
+/**
+ * "Doing a goes with doing b": b's rate on days with a vs. without a, compared
+ * within each weekday (two habits that both live on weekdays are linked by the
+ * calendar, not by each other) and kept only if a permutation test survives the
+ * Benjamini–Yekutieli correction across all pairs. Without this, independent
+ * habits "went together" for ~28% of people, and calendar-bound ones always.
+ */
 function pairs(habits: InsightHabit[], today: ISODate): Extract<Insight, { kind: "pair" }>[] {
-  const best = new Map<string, { insight: Extract<Insight, { kind: "pair" }>; score: number }>()
+  const tests: { a: InsightHabit; b: InsightHabit; rows: WeekdayRow[]; pWith: number; pWithout: number; gap: number; n: number }[] = []
   for (const a of habits) {
     for (const b of habits) {
-      if (a === b || b.target < 5) continue // "b" must be a near-daily habit, otherwise "not done" is expected
-      const days = activeDays(a, today).filter((d) => d >= b.createdOn)
-      const withA = days.filter((d) => a.done.has(d))
-      const withoutA = days.filter((d) => !a.done.has(d))
+      if (a === b || b.target < 5 || a.isPrivate || b.isPrivate) continue // "b" must be near-daily, otherwise "not done" is expected
+      const all = activeDays(a, today)
+        .filter((d) => d >= b.createdOn && !a.excluded?.has(d) && !b.excluded?.has(d))
+        .map((d) => ({ weekday: weekdayMon0(d), done: a.done.has(d), value: b.done.has(d) ? 1 : 0 }))
+      // only weekdays with days both with and without a are comparable
+      const on = new Set(all.filter((r) => r.done).map((r) => r.weekday))
+      const off = new Set(all.filter((r) => !r.done).map((r) => r.weekday))
+      const rows = all.filter((r) => on.has(r.weekday) && off.has(r.weekday))
+      const withA = rows.filter((r) => r.done)
+      const withoutA = rows.filter((r) => !r.done)
       if (withA.length < MIN_SUPPORT || withoutA.length < MIN_SUPPORT) continue
-      const pWith = withA.filter((d) => b.done.has(d)).length / withA.length
-      const pWithout = withoutA.filter((d) => b.done.has(d)).length / withoutA.length
-      const gap = pWith - pWithout
-      if (gap < MIN_GAP) continue
-      const score = gap * Math.sqrt(Math.min(withA.length, withoutA.length))
-      const key = [a.id, b.id].sort().join("|")
-      if ((best.get(key)?.score ?? -1) < score) {
-        best.set(key, { insight: { kind: "pair", a: a.name, b: b.name, withA: pWith, withoutA: pWithout }, score })
-      }
+      const { diff } = weekdayAdjustedDiff(rows)
+      tests.push({
+        a,
+        b,
+        rows,
+        pWith: withA.filter((r) => r.value).length / withA.length,
+        pWithout: withoutA.filter((r) => r.value).length / withoutA.length,
+        gap: Number.isFinite(diff) ? diff : 0,
+        n: Math.min(withA.length, withoutA.length),
+      })
     }
   }
+  // the costly test only where the gap is big enough to show at all (the rest keep p = 1)
+  const p = tests.map((x) => (x.gap >= MIN_GAP ? withinWeekdayPermutationP(x.rows, seededRandom(`${x.a.id}|${x.b.id}|${today}|pair`), { rounds: 999, alternative: "greater" }) : 1))
+  const survivors = benjaminiYekutieli(p)
+  const best = new Map<string, { insight: Extract<Insight, { kind: "pair" }>; score: number }>()
+  tests.forEach((x, i) => {
+    if (!survivors.has(i) || x.gap < MIN_GAP) return
+    const score = x.gap * Math.sqrt(x.n)
+    const key = [x.a.id, x.b.id].sort().join("|")
+    if ((best.get(key)?.score ?? -1) < score) {
+      best.set(key, { insight: { kind: "pair", a: x.a.name, b: x.b.name, withA: x.pWith, withoutA: x.pWithout }, score })
+    }
+  })
   return [...best.values()].sort((x, y) => y.score - x.score).map((x) => x.insight)
 }
 
+/**
+ * A daily habit that slips on one weekday. The weakest of seven weekdays always
+ * looks weak by chance (this fired for ~80% of people whose habits don't depend
+ * on the weekday at all), so the test asks: is the gap between the weakest
+ * weekday and the rest bigger than shuffling the habit's days around would give?
+ * Then the Benjamini–Yekutieli correction across habits.
+ */
 function weakWeekday(habits: InsightHabit[], today: ISODate): Extract<Insight, { kind: "weekday" }> | null {
-  let found: Extract<Insight, { kind: "weekday" }> | null = null
-  for (const h of habits) {
-    if (h.target < 7) continue
+  const worst = (days: readonly ISODate[], done: readonly boolean[]) => {
     const total = Array(7).fill(0)
     const hit = Array(7).fill(0)
-    for (const d of activeDays(h, today)) {
+    days.forEach((d, i) => {
       const w = weekdayMon0(d)
       total[w]++
-      if (h.done.has(d)) hit[w]++
-    }
-    if (total.some((n) => n < 4)) continue // need ~a month of data
+      if (done[i]) hit[w]++
+    })
+    let best = { weekday: 0, rate: 0, others: 0, gap: -Infinity }
     for (let w = 0; w < 7; w++) {
-      const rate = hit[w] / total[w]
       const othersTotal = total.reduce((s, n, i) => (i === w ? s : s + n), 0)
+      const rate = hit[w] / total[w]
       const others = hit.reduce((s, n, i) => (i === w ? s : s + n), 0) / othersTotal
-      if (others - rate >= MIN_GAP && (!found || others - rate > found.others - found.rate)) {
-        found = { kind: "weekday", habit: h.name, weekday: w, rate, others }
-      }
+      if (others - rate > best.gap) best = { weekday: w, rate, others, gap: others - rate }
     }
+    return { ...best, total }
   }
+
+  const tests = habits
+    .filter((h) => h.target >= 7 && !h.isPrivate)
+    .map((h) => {
+      const days = activeDays(h, today).filter((d) => !h.excluded?.has(d))
+      const done = days.map((d) => h.done.has(d))
+      return { h, days, done, observed: worst(days, done) }
+    })
+    .filter((x) => x.observed.total.every((n: number) => n >= 4)) // ~a month of every weekday
+  const p = tests.map((x) => {
+    if (x.observed.gap < MIN_GAP) return 1
+    const random = seededRandom(`${x.h.id}|${today}|weekday`)
+    const rounds = 999
+    let atLeast = 0
+    for (let k = 0; k < rounds; k++) if (worst(x.days, shuffle(x.done.slice(), random)).gap >= x.observed.gap - 1e-12) atLeast++
+    return (atLeast + 1) / (rounds + 1)
+  })
+  const survivors = benjaminiYekutieli(p)
+  let found: Extract<Insight, { kind: "weekday" }> | null = null
+  tests.forEach((x, i) => {
+    const o = x.observed
+    if (!survivors.has(i) || o.gap < MIN_GAP) return
+    if (!found || o.gap > found.others - found.rate) found = { kind: "weekday", habit: x.h.name, weekday: o.weekday, rate: o.rate, others: o.others }
+  })
   return found
 }
 

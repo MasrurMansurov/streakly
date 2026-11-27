@@ -6,6 +6,8 @@ const PORT = 3100
 
 export default defineConfig({
   testDir: "./e2e",
+  // the shared tester account starts every run clean (a half-failed test can't poison the next ones)
+  globalSetup: "./e2e/global-setup.ts",
   fullyParallel: false, // tests share the demo account
   workers: 1,
   // real network round trips to Supabase: allow for the occasional slow refresh

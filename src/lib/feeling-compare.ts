@@ -1,4 +1,7 @@
 import { addDays, weekdayMon0, type ISODate } from "./dates"
+import { seededRandom, weekdayAdjustedDiff, withinWeekdayPermutationP } from "./stats"
+
+export { benjaminiYekutieli, seededRandom } from "./stats"
 
 /**
  * "How you felt on days with vs. without a habit" — an honest n-of-1 comparison.
@@ -82,30 +85,6 @@ export function comparePairs(input: Omit<CompareInput, "id">): Pair[] {
   return out
 }
 
-/** Weekday-adjusted difference (with − without) and how many weekdays could be compared. */
-function adjustedDiff(pairs: readonly Pair[]): { diff: number; weekdays: number } {
-  const sum = [Array(7).fill(0), Array(7).fill(0)] // [without, with]
-  const n = [Array(7).fill(0), Array(7).fill(0)]
-  for (const p of pairs) {
-    const k = p.done ? 1 : 0
-    sum[k][p.weekday] += p.value
-    n[k][p.weekday]++
-  }
-  let num = 0
-  let den = 0
-  let weekdays = 0
-  for (let w = 0; w < 7; w++) {
-    const a = n[1][w]
-    const b = n[0][w]
-    if (a === 0 || b === 0) continue
-    const weight = (a * b) / (a + b)
-    num += weight * (sum[1][w] / a - sum[0][w] / b)
-    den += weight
-    weekdays++
-  }
-  return { diff: den ? num / den : NaN, weekdays }
-}
-
 function mean(xs: readonly number[]): number {
   return xs.reduce((s, x) => s + x, 0) / xs.length
 }
@@ -123,19 +102,6 @@ export function cliffsDelta(withValues: readonly number[], withoutValues: readon
   return (gt - lt) / (withValues.length * withoutValues.length)
 }
 
-/** A small, fast, seeded generator (mulberry32) — the same data gives the same interval. */
-export function seededRandom(seed: string): () => number {
-  let h = 1779033703 ^ seed.length
-  for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 3432918353)
-  let a = (h ^ (h >>> 16)) >>> 0
-  return () => {
-    a = (a + 0x6d2b79f5) | 0
-    let t = Math.imul(a ^ (a >>> 15), 1 | a)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
-
 /** 90% percentile interval of the weekday-adjusted difference, resampling whole weeks. */
 function blockBootstrap(pairs: readonly Pair[], random: () => number, rounds = BOOTSTRAP): [number, number] {
   const blocks: Pair[][] = []
@@ -144,7 +110,7 @@ function blockBootstrap(pairs: readonly Pair[], random: () => number, rounds = B
   for (let r = 0; r < rounds; r++) {
     const sample: Pair[] = []
     for (let b = 0; b < blocks.length; b++) sample.push(...blocks[Math.floor(random() * blocks.length)])
-    const { diff } = adjustedDiff(sample)
+    const { diff } = weekdayAdjustedDiff(sample)
     if (Number.isFinite(diff)) diffs.push(diff)
   }
   if (diffs.length < rounds / 2) return [-Infinity, Infinity] // too unstable to say anything
@@ -178,7 +144,7 @@ export function compareFeeling(input: CompareInput, options: { rounds?: number }
   const nWith = withValues.length
   const nWithout = withoutValues.length
 
-  const { diff, weekdays } = adjustedDiff(pairs)
+  const { diff, weekdays } = weekdayAdjustedDiff(pairs)
   // enough days overall, but not on comparable weekdays: the habit sits on the same days of the week
   if (weekdays < MIN_WEEKDAYS || !Number.isFinite(diff) || Math.min(nWith, nWithout) < MIN_DAYS) {
     return { level: "skewed", nWith, nWithout }
@@ -215,43 +181,5 @@ export function compareFeeling(input: CompareInput, options: { rounds?: number }
  * is broken). Two-sided.
  */
 export function permutationP(input: Omit<CompareInput, "id">, random: () => number, rounds = 1999): number {
-  const pairs = comparePairs(input)
-  const observed = Math.abs(adjustedDiff(pairs).diff)
-  if (!Number.isFinite(observed)) return 1
-  const byWeekday: Pair[][] = Array.from({ length: 7 }, () => [])
-  for (const p of pairs) byWeekday[p.weekday].push(p)
-  let atLeast = 0
-  const flags = byWeekday.map((g) => g.map((p) => p.done))
-  for (let r = 0; r < rounds; r++) {
-    const shuffled: Pair[] = []
-    for (let w = 0; w < 7; w++) {
-      const f = flags[w].slice()
-      for (let i = f.length - 1; i > 0; i--) {
-        const j = Math.floor(random() * (i + 1))
-        ;[f[i], f[j]] = [f[j], f[i]]
-      }
-      byWeekday[w].forEach((p, i) => shuffled.push({ ...p, done: f[i] }))
-    }
-    const d = Math.abs(adjustedDiff(shuffled).diff)
-    if (Number.isFinite(d) && d >= observed - 1e-12) atLeast++
-  }
-  return (atLeast + 1) / (rounds + 1)
-}
-
-/**
- * Benjamini–Yekutieli: which of `m` tests survive at false-discovery rate `q`
- * under any dependence between them (habits and metrics are not independent).
- * Returns the indexes of the survivors.
- */
-export function benjaminiYekutieli(pValues: readonly number[], q = 0.1): Set<number> {
-  const m = pValues.length
-  if (m === 0) return new Set()
-  let harmonic = 0
-  for (let i = 1; i <= m; i++) harmonic += 1 / i
-  const order = pValues.map((p, i) => ({ p, i })).sort((a, b) => a.p - b.p)
-  let cut = -1
-  order.forEach(({ p }, k) => {
-    if (p <= ((k + 1) / (m * harmonic)) * q) cut = k
-  })
-  return new Set(order.slice(0, cut + 1).map((x) => x.i))
+  return withinWeekdayPermutationP(comparePairs(input), random, { rounds, alternative: "two-sided" })
 }

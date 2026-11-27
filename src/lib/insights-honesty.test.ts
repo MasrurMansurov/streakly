@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { addDays, type ISODate } from "./dates"
+import { addDays, weekdayMon0, type ISODate } from "./dates"
 import { seededRandom, type DayFeeling } from "./feeling-compare"
 import { findInsights, type InsightHabit } from "./insights"
 
@@ -74,4 +74,29 @@ describe("the mood pattern on Progress is honest", () => {
     expect(findInsights([{ ...h, isPrivate: false }], TODAY, 3, feelings).some((x) => x.kind === "mood")).toBe(true)
     expect(findInsights([{ ...h, isPrivate: true }], TODAY, 3, feelings).some((x) => x.kind === "mood")).toBe(false)
   })
+
+  // the same honesty for the other two patterns: habits that don't depend on
+  // each other, or on the weekday, must (almost) never be presented as if they did
+  it("independent habits never 'go together'; calendar-bound ones don't either; no made-up weak weekday", () => {
+    const runs = 100
+    const false_ = { pairIndependent: 0, pairCalendar: 0, weekday: 0 }
+    for (const calendar of [false, true]) {
+      for (let s = 0; s < runs; s++) {
+        const r = seededRandom(`${calendar}-${s}`)
+        const habits: InsightHabit[] = Array.from({ length: 5 }, (_, k) => ({ id: `h${k}`, name: `H${k}`, target: 7, createdOn: addDays(TODAY, -84), done: new Set<ISODate>() }))
+        const rates = habits.map(() => 0.5 + r() * 0.4)
+        for (let i = 1; i <= 84; i++) {
+          const d = addDays(TODAY, -i)
+          // in the calendar world, habits 0 and 1 both live on weekdays — linked by the calendar only
+          habits.forEach((h, k) => r() < (calendar && k <= 1 ? (weekdayMon0(d) <= 4 ? 0.9 : 0.1) : rates[k]) && (h.done as Set<ISODate>).add(d))
+        }
+        const found = findInsights(habits, TODAY, 10)
+        if (found.some((x) => x.kind === "pair")) false_[calendar ? "pairCalendar" : "pairIndependent"]++
+        if (!calendar && found.some((x) => x.kind === "weekday")) false_.weekday++
+      }
+    }
+    expect(false_.pairIndependent / runs).toBeLessThanOrEqual(0.05)
+    expect(false_.pairCalendar / runs).toBeLessThanOrEqual(0.05)
+    expect(false_.weekday / runs).toBeLessThanOrEqual(0.05)
+  }, 120_000)
 })

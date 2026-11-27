@@ -43,7 +43,10 @@ export async function POST(request: NextRequest) {
   const { error } = await supabase
     .from("habit_logs")
     .upsert({ habit_id: habitId, log_date: today }, { onConflict: "habit_id,log_date", ignoreDuplicates: true })
-  if (error) return Response.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error("one-tap check-in failed", error.code, error.message)
+    return Response.json({ error: "check-in failed" }, { status: 500 })
+  }
 
   // how many habits are still due today (for the app-icon badge)
   const weekAgo = addDays(today, -7)
