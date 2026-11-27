@@ -94,9 +94,15 @@ export type Database = {
         Relationships: []
       }
       habit_repairs: {
-        Row: { created_at: string; day: string; habit_id: string; user_id: string }
-        Insert: { created_at?: string; day: string; habit_id: string; user_id?: string }
-        Update: { created_at?: string; day?: string; habit_id?: string; user_id?: string }
+        Row: { created_at: string; day: string; gift: boolean; habit_id: string; user_id: string }
+        Insert: { created_at?: string; day: string; gift?: boolean; habit_id: string; user_id?: string }
+        Update: { created_at?: string; day?: string; gift?: boolean; habit_id?: string; user_id?: string }
+        Relationships: []
+      }
+      streak_gifts: {
+        Row: { created_at: string; from_user_id: string; id: string; reason: string; used_at: string | null; user_id: string }
+        Insert: { created_at?: string; from_user_id: string; id?: string; reason?: string; used_at?: string | null; user_id: string }
+        Update: { created_at?: string; from_user_id?: string; id?: string; reason?: string; used_at?: string | null; user_id?: string }
         Relationships: []
       }
       habit_strength: {
@@ -476,12 +482,13 @@ export type Database = {
       }
       accept_invite: {
         Args: { p_code: string }
-        Returns: { inviter_username: string; pact_proposed: boolean }[]
+        Returns: { inviter_username: string; pact_proposed: boolean; gift_given: boolean }[]
       }
       invite_preview: {
         Args: { p_code: string }
         Returns: { inviter_name: string; inviter_username: string; inviter_avatar: string | null; habit_name: string | null; habit_color: string | null; habit_checkins_30: number | null }[]
       }
+      repair_with_gift: { Args: { p_habit: string; p_day: string }; Returns: boolean }
       shared_streaks: {
         Args: { p_today: string }
         Returns: {

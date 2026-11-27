@@ -66,12 +66,13 @@ function Row({ href, icon: Icon, label, hint, external }: { href: string; icon?:
 async function Hub() {
   const user = await requireUser()
   const supabase = await createClient()
-  const [{ t }, { today }, archived, { data: profile }, { count: highFives }] = await Promise.all([
+  const [{ t }, { today }, archived, { data: profile }, { count: highFives }, { count: spareRepairs }] = await Promise.all([
     getT(),
     getToday(),
     getArchivedCount(user.id),
     supabase.from("profiles").select("username, display_name, is_public, avatar_url").eq("id", user.id).single(),
     supabase.from("cheers").select("id", { count: "exact", head: true }).eq("to_id", user.id).eq("kind", "high_five"),
+    supabase.from("streak_gifts").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("used_at", null),
   ])
   const name = profile?.display_name || profile?.username || ""
 
@@ -94,6 +95,7 @@ async function Hub() {
               {user.email && ` · ${user.email}`}
             </p>
             {Boolean(highFives) && <p className="text-sm text-muted-foreground tabular-nums">{t.cheers.received(highFives!)}</p>}
+            {Boolean(spareRepairs) && <p className="text-sm text-muted-foreground tabular-nums">{t.me.spareRepairs(spareRepairs!)}</p>}
           </div>
         </div>
       )}

@@ -36,7 +36,7 @@ import type { PauseReason } from "@/lib/pause"
 import { completionRate, countInWeek, FREEZES_PER_MONTH, habitStreak, repairCandidate, weekStart } from "@/lib/streaks"
 import { graduation } from "@/lib/strength"
 import { rateStrength, setGraduated } from "@/app/actions/wellbeing"
-import { repairStreak } from "@/app/actions/streaks"
+import { repairStreak, repairWithGift } from "@/app/actions/streaks"
 import { cn } from "@/lib/utils"
 
 import { HabitFormDialog } from "./habit-form-dialog"
@@ -54,6 +54,10 @@ type Props = {
   pauseReasons?: ReadonlyMap<ISODate, PauseReason>
   /** repaired days of this habit */
   repaired?: ReadonlySet<ISODate>
+  /** this habit's monthly repair is already used (a gift repair doesn't count) */
+  monthlyRepairUsed?: boolean
+  /** spare repairs from accepted invites — usable once the monthly one is gone */
+  spareRepairs?: number
   /** weekly "how automatic" reports, newest first */
   strength?: { week: ISODate; score: number }[]
   today: ISODate
@@ -68,7 +72,22 @@ type Props = {
 /** Streak lengths worth a celebration; everyday check-ins get a quiet pop. */
 const MILESTONES = [7, 30, 66, 100, 365]
 
-export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, strength = [], today, onToggle, dragHandle, todayNote, stepsDone = [] }: Props) {
+export function HabitCard({
+  habit,
+  done,
+  mini,
+  paused,
+  pauseReasons,
+  repaired,
+  monthlyRepairUsed = false,
+  spareRepairs = 0,
+  strength = [],
+  today,
+  onToggle,
+  dragHandle,
+  todayNote,
+  stepsDone = [],
+}: Props) {
   const { locale, t } = useI18n()
   const color = habitColor(habit.color)
   const target = habit.target_per_week
@@ -81,8 +100,9 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
     scores: strength.map((s) => s.score),
     completion28: completionRate(done, today, 28, createdOn, target, bridges),
   })
-  const repairedThisMonth = [...(repaired ?? [])].some((d) => d.startsWith(today.slice(0, 7)))
-  const repair = target >= 7 && !paused?.has(today) ? repairCandidate(done, today, bridges, repairedThisMonth) : null
+  // the monthly repair first; when it's used, a spare one from an invite can step in
+  const withGift = monthlyRepairUsed && spareRepairs > 0
+  const repair = target >= 7 && !paused?.has(today) ? repairCandidate(done, today, bridges, monthlyRepairUsed && !withGift) : null
   // a recent break (last check-in within two weeks) of a streak worth caring about
   const lastDone = [...done].sort().at(-1)
   // yesterday was missed: today's check-in would be a comeback (daily habits)
@@ -342,12 +362,17 @@ export function HabitCard({ habit, done, mini, paused, pauseReasons, repaired, s
           className="mt-3"
           title={t.repair.offer(repair.streak)}
           action={
-            <Button size="sm" variant="outline" disabled={pending} onClick={() => run(() => repairStreak(habit.id, repair.day), t.repair.done)}>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={pending}
+              onClick={() => run(() => (withGift ? repairWithGift : repairStreak)(habit.id, repair.day), t.repair.done)}
+            >
               {t.repair.button}
             </Button>
           }
         >
-          {t.repair.hint}
+          {withGift ? t.repair.giftHint : t.repair.hint}
         </Notice>
       ) : recentlyBroken && !doneToday ? (
         <Notice size="sm" className="mt-3">

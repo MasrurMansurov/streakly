@@ -42,9 +42,10 @@ export async function getInviteCode(habitId?: string | null): Promise<{ ok: true
 
 /**
  * Accept an invite (the code from the link, or the cookie the invite page left
- * before sign-up). Follows each other; with a habit attached, a pact proposal.
+ * before sign-up). Follows each other; with a habit attached, a pact proposal;
+ * the first time for this pair, a spare streak repair for both.
  */
-export async function acceptInvite(code?: string): Promise<{ inviter: string; pact: boolean } | null> {
+export async function acceptInvite(code?: string): Promise<{ inviter: string; pact: boolean; gift: boolean } | null> {
   const user = await getCurrentUser()
   // a demo guest accepts after creating an account: the cookie waits until then
   if (!user || user.isGuest) return null
@@ -58,5 +59,5 @@ export async function acceptInvite(code?: string): Promise<{ inviter: string; pa
   if (!row?.inviter_username) return null
   await supabase.from("events").insert({ name: "invite_accepted", props: { pact: row.pact_proposed } })
   refresh()
-  return { inviter: row.inviter_username, pact: row.pact_proposed }
+  return { inviter: row.inviter_username, pact: row.pact_proposed, gift: row.gift_given }
 }

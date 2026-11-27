@@ -43,11 +43,16 @@ test("invite link: a new person signs up through it and gets the pact", async ({
   await page.getByRole("button", { name: "Create account" }).click()
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 })
   await expect(page.getByText("@demo proposes a pact")).toBeVisible({ timeout: 15_000 })
+  // growth plan 3.3: accepting gives both a spare streak repair
+  await expect(page.getByText(/You both get a spare streak repair/)).toBeVisible()
 
   try {
     await page.goto("/friends")
     await expect(page.getByRole("link", { name: /Demo User/ }).first()).toBeVisible()
+    await page.goto("/me")
+    await expect(page.getByText("1 spare streak repair — from invites")).toBeVisible()
   } finally {
+    // deleting the account also removes both gifts (they reference it)
     await page.goto("/settings")
     const username = await page.getByLabel("Username").inputValue()
     await page.getByRole("button", { name: "Delete account…" }).click()

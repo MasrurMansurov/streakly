@@ -8,6 +8,7 @@ import { acceptInvite } from "@/app/actions/invites"
 import { Button } from "@/components/ui/button"
 import { useI18n } from "@/i18n/client"
 import { localizePath } from "@/i18n"
+import { inviteAcceptedMessage } from "@/lib/invite"
 
 /** Signed-in visitor: accept right here, then go to the Today screen. */
 export function AcceptInviteButton({ code }: { code: string }) {
@@ -23,7 +24,7 @@ export function AcceptInviteButton({ code }: { code: string }) {
         start(async () => {
           const res = await acceptInvite(code)
           if (!res) return void toast.info(t.invite.own)
-          toast.success(res.pact ? t.invite.acceptedPact(res.inviter) : t.invite.accepted(res.inviter), { duration: 8000 })
+          toast.success(inviteAcceptedMessage(t.invite, res), { duration: 8000 })
           router.push(localizePath(locale, "/dashboard"))
         })
       }

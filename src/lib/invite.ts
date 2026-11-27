@@ -10,3 +10,15 @@ export function newInviteCode(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(8))
   return Array.from(bytes, (b) => abc[b % abc.length]).join("")
 }
+
+type InviteTexts = {
+  accepted: (name: string) => string
+  acceptedPact: (name: string) => string
+  gift: string
+}
+
+/** The toast after accepting an invite: friends (or a pact to answer), plus the gift when there is one. */
+export function inviteAcceptedMessage(t: InviteTexts, res: { inviter: string; pact: boolean; gift: boolean }): string {
+  const base = res.pact ? t.acceptedPact(res.inviter) : t.accepted(res.inviter)
+  return res.gift ? `${base}. ${t.gift}` : base
+}

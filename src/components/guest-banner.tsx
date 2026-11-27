@@ -11,6 +11,7 @@ import { HourglassIcon } from "lucide-react"
 
 import { convertGuest } from "@/app/actions/demo"
 import { acceptInvite } from "@/app/actions/invites"
+import { inviteAcceptedMessage } from "@/lib/invite"
 import { Notice } from "@/components/notice"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -42,7 +43,7 @@ export function GuestBanner() {
       setOpen(false)
       // an invite opened before the demo applies now that there's an account
       const invite = await acceptInvite().catch(() => null)
-      if (invite) toast.success(invite.pact ? t.invite.acceptedPact(invite.inviter) : t.invite.accepted(invite.inviter), { duration: 8000 })
+      if (invite) toast.success(inviteAcceptedMessage(t.invite, invite), { duration: 8000 })
       router.refresh()
     })
   )

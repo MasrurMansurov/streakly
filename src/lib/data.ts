@@ -98,13 +98,14 @@ async function fetchAllLogs(query: LogQuery): Promise<HabitLog[]> {
   }
 }
 
-export type Repair = { habit_id: string; day: ISODate }
+/** `gift`: made with a spare repair from an invite — it doesn't use up the monthly one. */
+export type Repair = { habit_id: string; day: ISODate; gift: boolean }
 export type Pause = { id: string; start_date: ISODate; end_date: ISODate; reason: PauseReason }
 
 /** Repaired days and vacation ranges of a user (RLS: own, or a public profile's). */
 async function bridgesData(supabase: Awaited<ReturnType<typeof createClient>> | ReturnType<typeof createPublicClient>, userId: string, since: ISODate) {
   const [{ data: repairs }, { data: pauses }] = await Promise.all([
-    supabase.from("habit_repairs").select("habit_id, day").eq("user_id", userId).gte("day", since),
+    supabase.from("habit_repairs").select("habit_id, day, gift").eq("user_id", userId).gte("day", since),
     supabase.from("pauses").select("id, start_date, end_date, reason").eq("user_id", userId).gte("end_date", since).order("start_date"),
   ])
   return { repairs: (repairs ?? []) as Repair[], pauses: (pauses ?? []) as Pause[] }
@@ -116,7 +117,7 @@ export async function getDashboardData() {
   const since = addDays(today, -(HISTORY_DAYS - 1))
 
   // one wave: every query only needs the user and the date range
-  const [habitsRes, logs, profileRes, archivedCount, notesRes, stats, { repairs, pauses }, { data: strengthRows }, { data: moodRows }] = await Promise.all([
+  const [habitsRes, logs, profileRes, archivedCount, notesRes, stats, { repairs, pauses }, { data: strengthRows }, { data: moodRows }, { count: spareRepairs }] = await Promise.all([
     supabase
       .from("habits")
       .select("id, name, description, color, position, target_per_week, created_at, mini_label, cue, graduated_at, is_private, habit_reminders(remind_at), habit_steps(id, title, position)")
@@ -141,6 +142,8 @@ export async function getDashboardData() {
     bridgesData(supabase, user.id, since),
     supabase.from("habit_strength").select("habit_id, week_start, score").eq("user_id", user.id).gte("week_start", addDays(today, -7 * 10)).order("week_start", { ascending: false }),
     supabase.from("daily_moods").select("day, mood, energy").eq("user_id", user.id).gte("day", addDays(today, -90)),
+    // spare streak repairs from accepted invites (growth plan 3.3)
+    supabase.from("streak_gifts").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("used_at", null),
   ])
   if (habitsRes.error) throw habitsRes.error
   // which steps are ticked today (steps exist only on some habits)
@@ -172,6 +175,7 @@ export async function getDashboardData() {
     pauses,
     strength,
     feelings,
+    spareRepairs: spareRepairs ?? 0,
     todayNotes: Object.fromEntries((notesRes.data ?? []).map((n) => [n.habit_id, n.note])) as Record<string, string>,
   }
 }

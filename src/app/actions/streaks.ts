@@ -38,6 +38,26 @@ export async function repairStreak(habitId: string, day: string): Promise<Action
   return { ok: true, message: t.repair.done }
 }
 
+/**
+ * The same repair with a spare one (a gift for an accepted invite), when this
+ * month's repair is already used. The database checks the day and spends the
+ * gift atomically.
+ */
+export async function repairWithGift(habitId: string, day: string): Promise<ActionResult> {
+  const { t, user, supabase } = await setup()
+  if (!z.uuid().safeParse(habitId).success || !isISODate(day)) return { ok: false, error: t.validation.invalidInput }
+  if (!user) return { ok: false, error: t.validation.notSignedIn }
+  const { today } = await getToday()
+  if (day >= today || day < addDays(today, -2)) return { ok: false, error: t.repair.tooOld }
+
+  const { data: spent, error } = await supabase.rpc("repair_with_gift", { p_habit: habitId, p_day: day })
+  if (error) return { ok: false, error: error.code === "42501" ? t.repair.tooOld : t.common.somethingWrong }
+  if (!spent) return { ok: false, error: t.repair.used }
+  await invalidateProfile(supabase, user.id)
+  refresh()
+  return { ok: true, message: t.repair.done }
+}
+
 /** A pause (vacation, illness, rest) from today until `endDate` (at most 30 days). */
 export async function startPause(endDate: string, reason: PauseReason = "vacation"): Promise<ActionResult> {
   const { t, user, supabase } = await setup()

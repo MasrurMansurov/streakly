@@ -70,11 +70,13 @@ type Props = {
   feelings: Record<ISODate, DayFeeling>
   /** who gave a high five / a nudge lately (names) */
   cheers?: { highFives: string[]; nudges: string[] }
+  /** spare streak repairs from accepted invites */
+  spareRepairs?: number
 }
 
 type Toggle = { habitId: string; date: ISODate; done: boolean; mini?: boolean }
 
-export function DashboardView({ habits: serverHabits, logs, today, profile, archivedCount, todayNotes, todaySteps = {}, achievements, pacts, challenges, repairs, pauses, strength, feelings, cheers }: Props) {
+export function DashboardView({ habits: serverHabits, logs, today, profile, archivedCount, todayNotes, todaySteps = {}, achievements, pacts, challenges, repairs, pauses, strength, feelings, cheers, spareRepairs = 0 }: Props) {
   const { locale, t } = useI18n()
   const router = useRouter()
   const [createOpen, setCreateOpen] = useState(false)
@@ -208,6 +210,9 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
     for (const p of pauses) for (const d of daysBetween(p.start_date, p.end_date)) map.set(d, asPauseReason(p.reason))
     return map
   }, [pauses])
+  // the monthly repair is used when a non-gift repair falls in this month
+  const monthlyRepairUsed = (habitId: string) =>
+    repairs.some((r) => r.habit_id === habitId && !r.gift && r.day.startsWith(today.slice(0, 7)))
   const bridgesOf = (habitId: string) => new Set<ISODate>([...pausedDays, ...(repairedByHabit.get(habitId) ?? [])])
 
   const perDay = useMemo(() => {
@@ -438,6 +443,8 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
                 paused={pausedDays}
                 pauseReasons={pauseReasonByDay}
                 repaired={repairedByHabit.get(h.id)}
+                monthlyRepairUsed={monthlyRepairUsed(h.id)}
+                spareRepairs={spareRepairs}
                 strength={strength[h.id]}
                 today={today}
                 onToggle={onToggle}
@@ -470,6 +477,8 @@ export function DashboardView({ habits: serverHabits, logs, today, profile, arch
                     paused={pausedDays}
                 pauseReasons={pauseReasonByDay}
                     repaired={repairedByHabit.get(h.id)}
+                    monthlyRepairUsed={monthlyRepairUsed(h.id)}
+                    spareRepairs={spareRepairs}
                     today={today}
                     onToggle={onToggle}
                     todayNote={todayNotes[h.id]}
