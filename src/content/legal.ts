@@ -23,6 +23,7 @@ const privacy: Record<Locale, LegalDoc> = {
           "Account: your email address and a securely hashed password, or your basic GitHub/Google profile (name, email, avatar) if you sign in with them.",
           "Profile: username, display name, bio, profile photo and whether your profile is public.",
           "Your activity: habits, check-ins, notes on check-ins and the people you follow.",
+          "How you feel: the mood and energy ratings (1–5) you give a day. Only you see them; they are used to compare days with and without a habit.",
           "Pacts and challenges: who you invite, which habit you commit and your check-in days for it. Proof photos and notes you add to a pact check-in.",
           "Reminders: the time, time zone and language you choose, and the push subscription your browser creates when you turn reminders on.",
           "Usage statistics: anonymous page views and performance metrics (Vercel Web Analytics and Speed Insights). They use no cookies and don't identify you.",
@@ -52,7 +53,7 @@ const privacy: Record<Locale, LegalDoc> = {
           "Vercel — hosting; server code runs in Frankfurt, pages are delivered through a global network.",
           "GitHub or Google — only if you choose to sign in with them.",
           "Your browser's push service (e.g. Google, Apple, Mozilla) — to deliver reminders.",
-          "Anthropic (Claude) — only if you ask for the AI letter of the week: your habit names and that week's numbers (no notes, photos or email).",
+          "Anthropic (Claude) — only if you ask for the AI letter of the week: the names of habits that aren't private, that week's numbers and your average mood and energy (no notes, photos or email).",
         ],
         paragraphs: ["These providers process data on our behalf under their own data-protection terms."],
       },
@@ -65,7 +66,7 @@ const privacy: Record<Locale, LegalDoc> = {
       {
         heading: "How long we keep it",
         paragraphs: [
-          "We keep your data while your account exists. When you delete your account, your profile, habits, check-ins, notes, follows, reminders and photo are deleted immediately; copies may remain in hosting providers' backups for a short time before they are overwritten.",
+          "We keep your data while your account exists. When you delete your account, your profile, habits, check-ins, notes, mood and energy ratings, follows, reminders and photo are deleted immediately; copies may remain in hosting providers' backups for a short time before they are overwritten.",
           "Proof photos in pacts are kept for 30 days, and removed sooner when the pact ends.",
         ],
       },
@@ -103,6 +104,7 @@ const privacy: Record<Locale, LegalDoc> = {
           "Аккаунт: email и надёжно захешированный пароль либо базовый профиль GitHub/Google (имя, email, аватар), если вы входите через них.",
           "Профиль: имя пользователя, отображаемое имя, описание, фото и настройка публичности.",
           "Ваша активность: привычки, отметки, заметки к отметкам и люди, на которых вы подписаны.",
+          "Самочувствие: оценки настроения и энергии (1–5), которые вы ставите дню. Их видите только вы; они нужны, чтобы сравнить дни с привычкой и без неё.",
           "Пакты и челленджи: кого вы приглашаете, какую привычку выбрали и дни отметок по ней. Фото и заметки-доказательства, которые вы прикладываете к отметке в пакте.",
           "Напоминания: выбранные время, часовой пояс и язык, а также push-подписка, которую создаёт браузер при включении напоминаний.",
           "Статистика использования: анонимные просмотры страниц и показатели скорости (Vercel Web Analytics и Speed Insights). Они не используют cookie и не определяют вас лично.",
@@ -132,7 +134,7 @@ const privacy: Record<Locale, LegalDoc> = {
           "Vercel — хостинг; серверный код работает во Франкфурте, страницы доставляются через глобальную сеть.",
           "GitHub или Google — только если вы входите через них.",
           "Push-сервис вашего браузера (например, Google, Apple, Mozilla) — для доставки напоминаний.",
-          "Anthropic (Claude) — только если вы попросите ИИ-письмо недели: названия привычек и цифры этой недели (без заметок, фото и email).",
+          "Anthropic (Claude) — только если вы попросите ИИ-письмо недели: названия неприватных привычек, цифры этой недели и средние оценки настроения и энергии (без заметок, фото и email).",
         ],
         paragraphs: ["Эти компании обрабатывают данные по нашему поручению в соответствии со своими условиями защиты данных."],
       },
@@ -145,7 +147,7 @@ const privacy: Record<Locale, LegalDoc> = {
       {
         heading: "Сколько мы храним данные",
         paragraphs: [
-          "Пока существует ваш аккаунт. При удалении аккаунта профиль, привычки, отметки, заметки, подписки, напоминания и фото удаляются сразу; копии могут недолго оставаться в резервных копиях хостинг-провайдеров, пока не будут перезаписаны.",
+          "Пока существует ваш аккаунт. При удалении аккаунта профиль, привычки, отметки, заметки, оценки самочувствия, подписки, напоминания и фото удаляются сразу; копии могут недолго оставаться в резервных копиях хостинг-провайдеров, пока не будут перезаписаны.",
           "Фото-доказательства в пактах хранятся 30 дней и удаляются раньше, если пакт завершён.",
         ],
       },

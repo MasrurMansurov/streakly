@@ -23,7 +23,10 @@ async function all<T>(fetchPage: (from: number, to: number) => PromiseLike<{ dat
 
 export type ExportResult = { ok: true; filename: string; csv: string } | { ok: false; error: string }
 
-/** Every check-in (with its note) as CSV; habits without check-ins get one empty row. */
+/**
+ * Every check-in (with its note) as CSV; habits without check-ins get one empty
+ * row. After a blank line, a second table: the mood and energy ratings per day.
+ */
 export async function exportMyData(): Promise<ExportResult> {
   const { t } = await getActionT()
   const user = await getCurrentUser()
@@ -31,7 +34,7 @@ export async function exportMyData(): Promise<ExportResult> {
   const supabase = await createClient()
 
   try {
-    const [habits, logs, notes] = await Promise.all([
+    const [habits, logs, notes, moods] = await Promise.all([
       all((a, b) =>
         supabase
           .from("habits")
@@ -46,6 +49,7 @@ export async function exportMyData(): Promise<ExportResult> {
       all((a, b) =>
         supabase.from("habit_notes").select("habit_id, log_date, note").eq("user_id", user.id).range(a, b)
       ),
+      all((a, b) => supabase.from("daily_moods").select("day, mood, energy").eq("user_id", user.id).order("day").range(a, b)),
     ])
 
     const noteOf = new Map(notes.map((n) => [`${n.habit_id}|${n.log_date}`, n.note]))
@@ -58,12 +62,18 @@ export async function exportMyData(): Promise<ExportResult> {
       if (own.length === 0) rows.push([...base, null, null])
       for (const l of own) rows.push([...base, l.log_date, noteOf.get(`${h.id}|${l.log_date}`) ?? null])
     }
+    if (moods.length > 0) {
+      rows.push([])
+      rows.push(["day", "mood_1_to_5", "energy_1_to_5"])
+      for (const m of moods) rows.push([m.day, m.mood, m.energy])
+    }
 
     const today = new Date().toISOString().slice(0, 10)
     // BOM so Excel opens UTF-8 (Cyrillic) correctly
     return { ok: true, filename: `streakly-${today}.csv`, csv: "﻿" + toCsv(rows) }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+    console.error("export failed", e instanceof Error ? e.message : e)
+    return { ok: false, error: t.common.somethingWrong }
   }
 }
 

@@ -34,8 +34,9 @@ export async function writeWeeklyLetter(): Promise<ActionResult> {
   const { data: existing } = await supabase.from("weekly_letters").select("week_start").eq("user_id", data.user.id).eq("week_start", week).maybeSingle()
   if (existing) return { ok: true }
 
-  // aggregated facts only — habit names, counts, streaks, patterns, mood averages
-  const habits = data.habits.filter((h) => !h.graduated_at)
+  // aggregated facts only — names of habits that aren't private, counts, streaks,
+  // patterns, mood averages (the disclosure on the Progress page says exactly this)
+  const habits = data.habits.filter((h) => !h.graduated_at && !h.is_private)
   const byHabit = new Map<string, Set<ISODate>>(habits.map((h) => [h.id, new Set()]))
   for (const l of data.logs) byHabit.get(l.habit_id)?.add(l.log_date as ISODate)
   const input = habits.map((h) => ({

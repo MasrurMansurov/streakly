@@ -34,7 +34,8 @@ ${JSON.stringify(
     sameDaysLastWeek: f.review.previous === null ? null : Math.round(f.review.previous * 100) + "%",
     onARoll: f.review.top,
     fallingBehind: f.review.behind,
-    insights: f.insights,
+    // no internal ids leave the server — only what a person would read
+    insights: f.insights.map((i) => ({ ...i, habitId: undefined })),
     moodThisWeek: f.mood,
   },
   null,

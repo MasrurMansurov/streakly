@@ -910,7 +910,7 @@ export const en = {
     subtitle: "A short note about your week, written by AI from your numbers.",
     write: "Write my letter",
     writing: "Writing…",
-    privacy: "To write it, Streakly sends Anthropic (Claude) your habit names and this week's numbers — never notes, photos or your email. One letter per week.",
+    privacy: "To write it, Streakly sends Anthropic (Claude) the names of your habits that aren't private, this week's numbers and your average mood and energy — never notes, photos or your email. One letter per week.",
     unavailable: "The letter isn't available right now",
     noHabits: "Add a habit and check in first",
     failed: "Couldn't write the letter — try again later",
