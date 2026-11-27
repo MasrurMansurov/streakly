@@ -13,19 +13,20 @@ import { getCurrentUser } from "@/lib/data"
 import { createClient } from "@/lib/supabase/server"
 
 /**
- * `home` is where the logo leads: the landing page on public pages (the proxy
- * forwards signed-in people to the app), Today inside the app — no extra hop.
+ * One header for the site and the app. `app` = rendered by the signed-in app:
+ * the logo goes straight to Today (on public pages it goes to "/", and the proxy
+ * forwards signed-in people from there).
  */
-export function SiteHeader({ home = "/" }: { home?: string }) {
+export function SiteHeader({ app = false }: { app?: boolean }) {
   return (
     <header className="sticky top-0 z-40 border-b bg-background">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 px-4 sm:gap-4">
         <div className="flex items-center gap-6">
-          <Logo href={home} />
+          <Logo href={app ? "/dashboard" : "/"} />
           {/* signed in: the app's sections (one nav — header row on desktop, tab bar on phones);
               signed out: the public pages worth a visit (desktop only). Reads the session + URL. */}
           <Suspense fallback={null}>
-            <SessionNav />
+            <SessionNav app={app} />
           </Suspense>
         </div>
         <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
@@ -36,7 +37,7 @@ export function SiteHeader({ home = "/" }: { home?: string }) {
           <ThemeToggle />
           {/* reads the session → streams in behind its own boundary */}
           <Suspense fallback={<Skeleton className="size-8 rounded-full" />}>
-            <UserArea />
+            <UserArea app={app} />
           </Suspense>
         </div>
       </div>
@@ -44,9 +45,13 @@ export function SiteHeader({ home = "/" }: { home?: string }) {
   )
 }
 
-async function SessionNav() {
+/**
+ * Account holders get the app's sections everywhere. A demo guest gets them only
+ * inside the app — on public pages they're a visitor reading about Streakly.
+ */
+async function SessionNav({ app }: { app: boolean }) {
   const [user, { t }] = await Promise.all([getCurrentUser(), getT()])
-  if (user) return <AppNav />
+  if (user && (app || !user.isGuest)) return <AppNav />
   return (
     <nav aria-label={t.nav.main} className="hidden items-center gap-1 md:flex">
       {[
@@ -62,12 +67,22 @@ async function SessionNav() {
   )
 }
 
-async function UserArea() {
+async function UserArea({ app }: { app: boolean }) {
   const [user, { t }] = await Promise.all([getCurrentUser(), getT()])
   if (!user) {
     return (
       <Button size="sm" render={<Link href="/login" />}>
         {t.common.signIn}
+      </Button>
+    )
+  }
+  // a demo guest on a public page: one way back to their demo (no account menu to offer)
+  if (user.isGuest && !app) {
+    return (
+      <Button size="sm" render={<Link href="/dashboard" />}>
+        {/* the short label on phones keeps the header within 320px; the name is always the visible text */}
+        <span className="sm:hidden">{t.demo.backToDemoShort}</span>
+        <span className="max-sm:hidden">{t.demo.backToDemo}</span>
       </Button>
     )
   }

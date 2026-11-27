@@ -57,8 +57,15 @@ test("landing: honest rules instead of a comparison, one closing action", async 
   await expect(page.getByRole("region", { name: "Кто делает Streakly" }).getByText("Масрур Мансуров")).toBeVisible()
 })
 
-test("the closing demo button starts the demo too", async ({ page }) => {
+test("the closing demo button starts the demo; a guest on the site gets a way back", async ({ page }) => {
   await page.goto("/en")
   await page.getByRole("region", { name: "Who builds Streakly" }).getByRole("button", { name: "Try without signing up" }).click()
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 20_000 })
+
+  // a demo guest is not redirected away from the landing page — and sees it as a visitor
+  await page.goto("/en")
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("The habit tracker that forgives")
+  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Today" })).toHaveCount(0)
+  await page.getByRole("banner").getByRole("link", { name: "Back to the demo" }).click()
+  await expect(page).toHaveURL(/\/dashboard$/)
 })

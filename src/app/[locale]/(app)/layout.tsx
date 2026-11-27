@@ -16,7 +16,7 @@ export const metadata: Metadata = { robots: NOINDEX }
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <>
-      <SiteHeader home="/dashboard" />
+      <SiteHeader app />
       <main id="main" className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
         <Suspense fallback={null}>
           <GuestGate />

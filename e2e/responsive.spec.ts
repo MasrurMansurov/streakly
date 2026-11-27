@@ -71,6 +71,18 @@ test.describe("on a 320px phone", () => {
     expect(problems).toEqual([])
   })
 
+  // a demo guest on the site gets "Demo" instead of "Sign in" — still within 320px
+  test("a demo guest's header fits on public pages", async ({ page }) => {
+    await page.goto("/ru/demo")
+    await page.getByRole("button", { name: "Попробовать без регистрации" }).first().click()
+    await expect(page).toHaveURL(/\/dashboard$/, { timeout: 20_000 })
+    for (const path of ["/ru", "/en"]) {
+      await page.goto(path)
+      await expect(page.getByRole("banner").getByRole("link", { name: /^(Демо|Demo)$/ })).toBeVisible()
+      expect(await layoutProblems(page), path).toEqual([])
+    }
+  })
+
   // the case that once widened the archive to 483px: a long name without spaces
   test("a long habit name doesn't widen Today or the archive", async ({ page }) => {
     test.setTimeout(90_000)

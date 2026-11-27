@@ -614,6 +614,8 @@ export const en = {
   },
   demo: {
     try: "Try without signing up",
+    backToDemo: "Back to the demo",
+    backToDemoShort: "Demo",
     tryHint: "A ready-made 2-month example — no email, no password",
     banner: "This is a demo: data is kept for 7 days.",
     bannerHint: "Save your progress so you don't lose it.",
