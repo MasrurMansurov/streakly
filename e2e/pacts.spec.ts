@@ -42,7 +42,8 @@ test("two friends start a pact, see each other's check-ins, then end it", async 
   try {
     // tester invites demo
     await tester.goto("/friends")
-    await tester.getByRole("button", { name: /Start a pact with/ }).first().click()
+    await tester.getByRole("button", { name: /^Actions for Demo User/ }).click()
+    await tester.getByRole("menuitem", { name: /Start a pact with/ }).click()
     await tester.getByRole("radio", { name: "Drink 8 glasses of water" }).click()
     await tester.getByRole("button", { name: "Send invite" }).click()
     await expect(tester.getByText("Invite sent")).toBeVisible()

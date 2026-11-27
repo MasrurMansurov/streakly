@@ -27,7 +27,16 @@ export default async function SettingsPage() {
         <h1 className="text-2xl font-semibold tracking-tight">{t.settings.title}</h1>
         <p className="text-sm text-muted-foreground">{t.settings.subtitle}</p>
       </div>
-      <Suspense fallback={<Skeleton className="h-96 rounded-xl" />}>
+      <Suspense
+        fallback={
+          // cards like the settings themselves
+          <div className="grid gap-4">
+            <Skeleton className="h-56 rounded-xl" />
+            <Skeleton className="h-40 rounded-xl" />
+            <Skeleton className="h-40 rounded-xl" />
+          </div>
+        }
+      >
         <Settings />
       </Suspense>
     </div>

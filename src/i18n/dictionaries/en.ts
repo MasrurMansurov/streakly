@@ -409,6 +409,7 @@ export const en = {
     subtitle: "Check-ins from people you follow, last 7 days.",
     follow: "Follow",
     unfollow: "Unfollow",
+    personActions: (name: string) => `Actions for ${name}`,
     following: "Following",
     followers: (n: number) => `${n} ${p(n, "follower", "followers")}`,
     followingCount: (n: number) => `${n} following`,

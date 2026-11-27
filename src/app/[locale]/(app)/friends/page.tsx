@@ -6,7 +6,7 @@ import { ChallengesCard } from "@/components/challenges/challenges-card"
 import { FollowButton } from "@/components/follow-button"
 import { FriendsTabs } from "@/components/friends-tabs"
 import { IconTile } from "@/components/icon-tile"
-import { PactInviteButton } from "@/components/pact-invite-button"
+import { PersonMenu } from "@/components/person-menu"
 import { InviteDialog } from "@/components/invite-dialog"
 import { Link } from "@/components/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -178,10 +178,12 @@ async function Friends() {
                 </Avatar>
                 <Link href={`/u/${p.username}`} className="min-w-0 flex-1 hover:underline">
                   <div className="truncate font-medium">{p.name}</div>
-                  <div className="truncate text-xs text-muted-foreground">{p.status ? p.status : `@${p.username}`}</div>
+                  <div className="truncate text-xs text-muted-foreground">
+                    {inPact.has(p.username) ? `${t.pacts.inPact} · ` : ""}
+                    {p.status ? p.status : `@${p.username}`}
+                  </div>
                 </Link>
-                <PactInviteButton inviteeId={p.id} name={p.name} habits={myHabits} inPact={inPact.has(p.username)} />
-                <FollowButton profileId={p.id} name={p.name} following signedIn />
+                <PersonMenu profileId={p.id} name={p.name} habits={myHabits} inPact={inPact.has(p.username)} />
               </li>
             ))}
           </ul>

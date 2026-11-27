@@ -36,8 +36,10 @@ test("follow a public profile, see their check-ins, unfollow", async ({ page }) 
   // the feed: one row per person and day, their check-ins as chips
   await expect(page.locator("main section li li", { hasText: "Read 10 pages" }).first()).toBeVisible()
 
+  // the row's "…" menu: start a pact or unfollow
+  await page.getByRole("button", { name: /^Actions for Demo User/ }).click()
   const undone = serverAction(page)
-  await page.getByRole("button", { name: "Following" }).click()
+  await page.getByRole("menuitem", { name: "Unfollow" }).click()
   await undone
   await page.reload()
   await expect(page.getByText("You're not following anyone yet")).toBeVisible()

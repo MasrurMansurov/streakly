@@ -412,6 +412,7 @@ export const ru: Dictionary = {
     subtitle: "Отметки людей, на которых вы подписаны, за 7 дней.",
     follow: "Подписаться",
     unfollow: "Отписаться",
+    personActions: (name: string) => `Действия: ${name}`,
     following: "Вы подписаны",
     followers: (n: number) => `${n} ${p(n, "подписчик", "подписчика", "подписчиков")}`,
     followingCount: (n: number) => `${n} ${p(n, "подписка", "подписки", "подписок")}`,

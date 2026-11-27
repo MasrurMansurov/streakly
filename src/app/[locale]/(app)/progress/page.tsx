@@ -15,7 +15,23 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function ProgressPage() {
   return (
-    <Suspense fallback={<Skeleton className="h-[40rem] rounded-xl" />}>
+    <Suspense
+      fallback={
+        // the page's own shape: title, this week, insights, activity + 30 days
+        <div className="grid gap-6">
+          <div className="grid gap-2">
+            <Skeleton className="h-8 w-40" />
+            <Skeleton className="h-4 w-72 max-w-full" />
+          </div>
+          <Skeleton className="h-40 rounded-xl" />
+          <Skeleton className="h-48 rounded-xl" />
+          <div className="grid gap-4 lg:grid-cols-5">
+            <Skeleton className="h-64 rounded-xl lg:col-span-3" />
+            <Skeleton className="h-64 rounded-xl lg:col-span-2" />
+          </div>
+        </div>
+      }
+    >
       <Progress />
     </Suspense>
   )

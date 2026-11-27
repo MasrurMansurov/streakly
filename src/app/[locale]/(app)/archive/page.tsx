@@ -28,7 +28,16 @@ export default async function ArchivePage() {
           {t.archive.subtitle}
         </p>
       </div>
-      <Suspense fallback={<Skeleton className="h-40 rounded-xl" />}>
+      <Suspense
+        fallback={
+          // rows like the list itself
+          <div className="grid gap-2">
+            {Array.from({ length: 3 }, (_, i) => (
+              <Skeleton key={i} className="h-16 rounded-xl" />
+            ))}
+          </div>
+        }
+      >
         <Archive />
       </Suspense>
     </div>
